@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Models;
+
+use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDatabase;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
+use Stancl\Tenancy\Database\Models\TenantPivot;
+use Stancl\Tenancy\Database\Concerns\MaintenanceMode;
+
+class Tenant extends BaseTenant implements TenantWithDatabase
+{
+    use HasDatabase, HasDomains;
+    use MaintenanceMode;
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password',
+        'password_confirmation',
+    ];
+
+	public static function getCustomColumns(): array
+	{
+		return [
+			'id',
+			'plan',
+			'locale',
+		];
+	}
+
+	public static function getDataColumn(): string
+	{
+	    return 'data';
+	}
+
+	public function users()
+    {
+        return $this->belongsToMany(User::class, 'tenant_users', 'tenant_id', 'global_user_id', 'id', 'global_id')
+            ->using(TenantPivot::class);
+    }
+}

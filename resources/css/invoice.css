@@ -1,0 +1,61 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@500&display=swap');
+
+@font-face {
+  font-family: "Battambang";
+  src: url('https://fonts.googleapis.com/css2?family=Battambang:wght@300;400;900&display=swap');
+}
+
+.table-header {
+  font-family: 'Battambang', cursive;
+  font-weight: 700;
+}
+
+.page-header, .page-header-space {
+  height: 100px;
+}
+
+.page-footer {
+  height: 20px;
+}
+.page-footer-space {
+  height: 5px;
+}
+
+.page-footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid black; /* for demo */
+}
+
+.page-header {
+  position: fixed;
+  /*top: 0mm;*/
+  width: 100%;
+}
+.font-medium {	
+  font-weight: 500
+}
+.page {
+  page-break-after: always;
+}
+tr{
+  page-break-inside: avoid;
+}
+
+@page {
+  margin: 5mm;
+}
+
+@media print {
+   thead {display: table-header-group;} 
+   tfoot {display: table-footer-group;}
+   
+   button {display: none;}
+
+   /*body {margin: 0;}*/
+  .bg-gray-100 {
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Moul&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Battambang:wght@300;400;900&family=Content&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@500&display=swap');
+:root {
+  --light: #edf2f9;
+  --dark: #152e4d;
+  --darker: #12263f;
+  /*  */
+  --color-primary: var(--color-cyan);
+  --color-primary-50: var(--color-cyan-50);
+  --color-primary-100: var(--color-cyan-100);
+  --color-primary-light: var(--color-cyan-light);
+  --color-primary-lighter: var(--color-cyan-lighter);
+  --color-primary-dark: var(--color-cyan-dark);
+  --color-primary-darker: var(--color-cyan-darker);
+  /*  */
+  --color-green: #16a34a;
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-light: #22c55e;
+  --color-green-lighter: #4ade80;
+  --color-green-dark: #15803d;
+  --color-green-darker: #166534;
+  /*  */
+  --color-blue: #2563eb;
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-light: #3b82f6;
+  --color-blue-lighter: #60a5fa;
+  --color-blue-dark: #1d4ed8;
+  --color-blue-darker: #1e40af;
+  /*  */
+  --color-cyan: #0891b2;
+  --color-cyan-50: #ecfeff;
+  --color-cyan-100: #cffafe;
+  --color-cyan-light: #06b6d4;
+  --color-cyan-lighter: #22d3ee;
+  --color-cyan-dark: #0e7490;
+  --color-cyan-darker: #155e75;
+  /*  */
+  --color-teal: #0d9488;
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-light: #14b8a6;
+  --color-teal-lighter: #2dd4bf;
+  --color-teal-dark: #0f766e;
+  --color-teal-darker: #115e59;
+  /*  */
+  --color-fuchsia: #c026d3;
+  --color-fuchsia-50: #fdf4ff;
+  --color-fuchsia-100: #fae8ff;
+  --color-fuchsia-light: #d946ef;
+  --color-fuchsia-lighter: #e879f9;
+  --color-fuchsia-dark: #a21caf;
+  --color-fuchsia-darker: #86198f;
+  /*  */
+  --color-violet: #7c3aed;
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-light: #8b5cf6;
+  --color-violet-lighter: #a78bfa;
+  --color-violet-dark: #6d28d9;
+  --color-violet-darker: #5b21b6;
+}
+
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer components {
+  .toggle:checked + span {
+    @apply top-0 left-6 bg-primary;
+  }
+  .toggle:disabled + span {
+    @apply bg-gray-500 shadow-none;
+  }
+  .toggle:checked:disabled {
+    @apply bg-gray-200;
+  }
+  .toggle:checked:disabled + span {
+    @apply shadow-none bg-primary-lighter;
+  }
+  .toggle:focus + span {
+    @apply ring ring-primary-lighter;
+  }
+
+  input:invalid.invalid,
+  textarea:invalid.invalid {
+    @apply ring ring-danger-light dark:ring-danger;
+  }
+}
+
+.form-label {
+  @apply mb-2 block text-gray-700 select-none;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  @apply p-1 leading-normal block w-full border text-gray-700 bg-white font-sans rounded text-left appearance-none relative focus:border-indigo-400 focus:ring;
+
+  &::placeholder {
+    @apply text-gray-500 opacity-100;
+  }
+}
+
+.form-select {
+  @apply pr-6;
+
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAYAAAAMJL+VAAAABGdBTUEAALGPC/xhBQAAAQtJREFUOBG1lEEOgjAQRalbGj2OG9caOACn4ALGtfEuHACiazceR1PWOH/CNA3aMiTaBDpt/7zPdBKy7M/DCL9pGkvxxVp7KsvyJftL5rZt1865M+Ucq6pyyF3hNcI7Cuu+728QYn/JQA5yKaempxuZmQngOwEaYx55nu+1lQh8GIatMGi+01NwBcEmhxBqK4nAPZJ78K0KKFAJmR3oPp8+Iwgob0Oa6+TLoeCvRx+mTUYf/FVBGTPRwDkfLxnaSrRwcH0FWhNOmrkWYbE2XEicqgSa1J0LQ+aPCuQgZiLnwewbGuz5MGoAhcIkCQcjaTBjMgtXGURMVHC1wcQEy0J+Zlj8bKAnY1/UzDe2dbAVqfXn6wAAAABJRU5ErkJggg==');
+  background-size: 0.7rem;
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+
+  &::-ms-expand {
+    @apply opacity-0;
+  }
+}
+
+.form-input.error,
+.form-textarea.error,
+.form-select.error {
+  @apply border-red-500 focus:ring focus:ring-red-200;
+}
+
+.form-error {
+  @apply text-red-700 mt-2 text-sm;
+}
+
+.text-xxs {
+  font-size: 11px;
+}
+
+.font-khmer-moul {
+  font-family: 'Moul';
+}
+.font-battambang {
+  font-family: 'Battambang';
+}
+
+.font-sans{
+  font-family: 'Open Sans', sans-serif, 'Content';
+}
+
+.pos-nav-bar-h-screen {
+  height:7vh;
+}
+
+.pos-body-h-screen {
+  height:93vh;
+}
+
+.bg-black {
+  background-color: #000000;
+}
+
+.bg-blue-darker {
+  background-color: #2F5597;
+}
+
+.bg-purple-darker {
+  background-color: #2d1153;
+}
+
+.bg-green-darker {
+  background-color: #064E3B;
+}
+
+.bg-pink-darker {
+  background-color: #921b4b;
+}
+
+.bg-olive-darker {
+  background-color: #921717;
+}
+
+.text-black {
+  color: #000000;
+}
+.text-blue-darker {
+  color: #2F5597;
+}
+
+.text-purple-darker {
+  color: #2d1153;
+}
+
+.text-green-darker {
+  color: #064E3B;
+}
+
+.text-primary-darker {
+  color: #005E74;
+}
+
+.text-pink-darker {
+  color: #921b4b;
+}
+
+.text-olive-darker {
+  color: #b11a1a  ;
+}
