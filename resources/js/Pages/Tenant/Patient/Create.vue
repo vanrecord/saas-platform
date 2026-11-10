@@ -1,376 +1,207 @@
 <template>
   <TenantLayout>
     <Head title="Create Patient" />
+    <div class="px-4 py-4">
+      <nav class="flex pt-4 mb-6" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+          <li class="inline-flex items-center">
+            <Link :href="route('tenant.dashboard')" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+              </svg>
+              {{ tm('Home') || 'Home' }}
+            </Link>
+          </li>
+          <li>
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <Link :href="route('patients.index')" class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                {{ tm('Patients') || 'Patients' }}
+              </Link>
+            </div>
+          </li>
+          <li>
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                {{ tm('Create') || 'Create' }}
+              </span>
+            </div>
+          </li>
+        </ol>
+      </nav>
 
-    <div class="max-w-6xl mx-auto space-y-4">
-      <!-- Breadcrumb and Top Actions -->
-      <div class="flex items-center justify-between pb-2">
-        <div class="flex items-center gap-2 text-xs text-slate-500">
-          <Link :href="route('patients.index')" class="hover:text-blue-600 transition-colors">Patients</Link>
-          <span>/</span>
-          <span class="text-slate-800 font-bold">New Patient</span>
-        </div>
+      <form @submit.prevent="submit">
+        <div class="col-span-2 bg-white rounded-md dark:bg-darker shadow-sm">
+          <div class="flex items-center justify-between p-4 border-b dark:border-primary">
+            <h4 class="text-lg font-semibold text-gray-500 dark:text-light">{{ tm('Create_Patient') || 'Create Patient' }}</h4>
+            <button
+              type="button"
+              @click="showEHealthModal = true"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#00a65a] hover:bg-[#008d4c] text-white text-xs font-semibold shadow-sm transition-colors"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01"></path>
+              </svg>
+              <span>e-Health</span>
+            </button>
+          </div>
 
-        <!-- Top Right: e-Health Button -->
-        <button
-          type="button"
-          @click="showEHealthModal = true"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-[#00a65a] hover:bg-[#008d4c] text-white text-xs font-semibold shadow-sm transition-colors"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01"></path>
-          </svg>
-          <span>e-Health</span>
-        </button>
-      </div>
+          <!-- Section 1: Patient Information -->
+          <div class="flex items-center justify-between p-4 border-b bg-gray-50 dark:bg-darker dark:border-primary">
+            <h5 class="text-sm font-semibold text-gray-600 dark:text-light">{{ tm('Patient_Information') || 'Patient Information' }}</h5>
+          </div>
+          <div class="p-4">
+            <div class="flex flex-wrap -mb-8 -mr-6 p-4">
+              <text-input
+                v-model.number="form.id_number"
+                type="number"
+                required="required"
+                :error="form.errors.id_number"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('ID_Patient') || 'ID Patient'"
+              />
+              <text-input
+                v-model="form.firstname"
+                required="required"
+                :error="form.errors.firstname"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('First_Name') || 'First Name'"
+              />
+              <text-input
+                v-model="form.lastname"
+                required="required"
+                :error="form.errors.lastname"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('Last_Name') || 'Last Name'"
+              />
+              <select-input
+                v-model="form.gender"
+                :error="form.errors.gender"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('Gender') || 'Gender'"
+                :options="genderOptions"
+              />
+              <date-input
+                v-model="form.dob"
+                required="required"
+                :label="tm('employee.Date of Birth')"
+                :error="form.errors.dob"
+                :max-date="new Date()"
+                class="pb-2 px-2 w-full lg:w-1/2"
+              />
 
-      <!-- Main Form Card -->
-      <div class="bg-white border border-slate-200 rounded-lg p-6 sm:p-8 shadow-sm">
-        <form @submit.prevent="submit">
-          <!-- 2-Column Layout matching screenshot -->
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            
-            <!-- Left Column: Avatar Box -->
-            <div class="md:col-span-3 flex flex-col items-start">
-              <label class="text-xs font-semibold text-slate-600 mb-2">Avatar</label>
-              
-              <!-- Portrait Box -->
-              <div class="w-32 h-52 border border-slate-300 rounded bg-white p-2 flex flex-col items-center justify-center shadow-inner">
-                <div class="w-full h-full border border-dashed border-slate-300 rounded flex items-center justify-center overflow-hidden bg-slate-50/50">
-                  <img
-                    v-if="avatarPreview"
-                    :src="avatarPreview"
-                    alt="Patient Avatar"
-                    class="w-full h-full object-cover"
-                  />
-                  <!-- Broken/Empty Image Icon matching reference -->
-                  <div v-else class="text-center p-2 text-slate-300 flex flex-col items-center">
-                    <svg class="w-8 h-8 stroke-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                </div>
+              <text-input
+                v-model.number="form.age"
+                type="number"
+                min="0"
+                max="150"
+                :error="form.errors.age"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('Age') || 'Age'"
+              />
+            </div>
+          </div>
+
+          <!-- Section 2: Contact Information -->
+          <div class="flex items-center justify-between mt-6 p-4 border-b bg-gray-50 dark:bg-darker dark:border-primary">
+            <h5 class="text-sm font-semibold text-gray-600 dark:text-light">{{ tm('Contact_Information') || 'Contact Information' }}</h5>
+          </div>
+          <div class="p-4">
+            <div class="flex flex-wrap -mb-8 -mr-6 p-4">
+              <text-input
+                v-model="form.phone"
+                :error="form.errors.phone"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('phone') || 'Phone'"
+              />
+              <text-input
+                v-model="form.email"
+                type="email"
+                :error="form.errors.email"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('Email') || 'Email'"
+              />
+              <text-input
+                v-model="form.profession"
+                :error="form.errors.profession"
+                class="pb-2 pr-6 w-full lg:w-1/2"
+                :label="tm('Profession') || 'Profession / Occupation'"
+              />
+              <textarea-input
+                v-model="form.address"
+                :error="form.errors.address"
+                :rows="3"
+                class="pb-2 pr-6 w-full"
+                :label="tm('Address') || 'Address'"
+              />
+            </div>
+          </div>
+
+          <!-- Section 3: Avatar -->
+          <div class="flex items-center justify-between mt-6 p-4 border-b bg-gray-50 dark:bg-darker dark:border-primary">
+            <h5 class="text-sm font-semibold text-gray-600 dark:text-light">{{ tm('Avatar') || 'Avatar' }}</h5>
+          </div>
+          <div class="p-4">
+            <div class="flex flex-wrap items-center gap-6 p-4">
+              <div class="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 overflow-hidden flex items-center justify-center bg-gray-50">
+                <img v-if="avatarPreview" :src="avatarPreview" alt="Avatar preview" class="w-full h-full object-cover" />
+                <svg v-else class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
               </div>
-
-              <!-- Two Action Buttons Below Avatar Box -->
-              <div class="flex items-center gap-1.5 mt-2">
-                <!-- Red Button: Clear / Remove Avatar -->
-                <button
-                  type="button"
-                  @click="removeAvatar"
-                  title="Remove avatar"
-                  class="w-8 h-8 rounded bg-[#d9534f] hover:bg-[#c9302c] text-white flex items-center justify-center transition-colors shadow-sm"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                </button>
-
-                <!-- Blue Button: Browse / Upload Photo -->
+              <div class="flex items-center gap-3">
                 <button
                   type="button"
                   @click="triggerFileInput"
-                  title="Choose avatar file"
-                  class="w-8 h-8 rounded bg-[#337ab7] hover:bg-[#286090] text-white flex items-center justify-center transition-colors shadow-sm"
+                  class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition"
                 >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                  </svg>
+                  {{ tm('Choose_Avatar') || 'Choose Avatar' }}
                 </button>
+                <button
+                  v-if="avatarPreview"
+                  type="button"
+                  @click="removeAvatar"
+                  class="px-4 py-2 border border-red-300 rounded-md shadow-sm text-xs font-semibold text-red-600 bg-white hover:bg-red-50 transition"
+                >
+                  {{ tm('Remove') || 'Remove' }}
+                </button>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                  @change="handleAvatarChange"
+                  class="hidden"
+                />
               </div>
-
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/svg+xml"
-                @change="handleAvatarChange"
-                class="hidden"
-              />
-
-              <div v-if="form.errors.avatar" class="text-xs text-rose-500 mt-2 font-semibold">
+              <div v-if="form.errors.avatar" class="text-xs text-red-500 font-semibold w-full">
                 {{ form.errors.avatar }}
               </div>
             </div>
+          </div>
 
-            <!-- Right Column: Form Fields with left labels matching reference screenshot -->
-            <div class="md:col-span-9 space-y-3.5">
-              
-              <!-- ID Patient * -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  ID Patient <span class="text-red-500">*</span>
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="number"
-                    v-model.number="form.id_number"
-                    required
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm font-mono text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.id_number" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.id_number }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- First name * -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  First name <span class="text-red-500">*</span>
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="text"
-                    v-model="form.firstname"
-                    required
-                    maxlength="50"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.firstname" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.firstname }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Last name * -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Last name <span class="text-red-500">*</span>
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="text"
-                    v-model="form.lastname"
-                    required
-                    maxlength="50"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.lastname" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.lastname }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Gender -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Gender
-                </label>
-                <div class="flex-1">
-                  <select
-                    v-model="form.gender"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <div v-if="form.errors.gender" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.gender }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Date of birth -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Date of birth
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="date"
-                    v-model="form.dob"
-                    @change="onDobChange"
-                    placeholder="dd/mm/yyyy"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.dob" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.dob }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Age -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Age
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="number"
-                    min="0"
-                    max="150"
-                    v-model.number="form.age"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.age" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.age }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Phone -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Phone
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="text"
-                    v-model="form.phone"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.phone" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.phone }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Email -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Email
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="email"
-                    v-model="form.email"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.email" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.email }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Profession / Occupation -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                  Profession / Occupation
-                </label>
-                <div class="flex-1">
-                  <input
-                    type="text"
-                    v-model="form.profession"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                  <div v-if="form.errors.profession" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.profession }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Address -->
-              <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700 sm:pt-2">
-                  Address
-                </label>
-                <div class="flex-1">
-                  <textarea
-                    v-model="form.address"
-                    rows="3"
-                    class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  ></textarea>
-                  <div v-if="form.errors.address" class="text-xs text-rose-500 mt-1 font-semibold">
-                    {{ form.errors.address }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Additional Migration Fields (Balance, Card Status) -->
-              <div class="pt-2 border-t border-slate-100 space-y-3.5">
-                <!-- Balance -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                    Balance ($)
-                  </label>
-                  <div class="flex-1">
-                    <input
-                      type="number"
-                      step="0.01"
-                      v-model.number="form.balance"
-                      placeholder="0.00"
-                      class="w-full sm:w-48 border border-slate-300 rounded px-3 py-1.5 text-sm font-mono text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <!-- Card Code -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                    Card Code
-                  </label>
-                  <div class="flex-1">
-                    <input
-                      type="text"
-                      v-model="form.card_code"
-                      placeholder="Card barcode or code"
-                      class="w-full border border-slate-300 rounded px-3 py-1.5 text-sm font-mono text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <!-- Card Switches -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <label class="w-full sm:w-44 text-left sm:text-right text-xs font-semibold text-slate-700">
-                    Card Status
-                  </label>
-                  <div class="flex-1 flex items-center gap-6">
-                    <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
-                      <input
-                        type="checkbox"
-                        v-model="form.card_activated"
-                        class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span>Card Activated</span>
-                    </label>
-
-                    <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
-                      <input
-                        type="checkbox"
-                        v-model="form.is_trail_card"
-                        class="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <span>Is Trail Card</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
-                <Link
-                  :href="route('patients.index')"
-                  class="px-4 py-2 rounded text-xs font-bold text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </Link>
-                <button
-                  type="submit"
-                  :disabled="form.processing"
-                  class="px-5 py-2 rounded text-xs font-bold text-white bg-[#2457c5] hover:bg-[#1d48a3] shadow-sm transition-colors disabled:opacity-50"
-                >
-                  {{ form.processing ? 'Saving...' : 'Save Patient' }}
-                </button>
-              </div>
-
+          <!-- Bottom Actions -->
+          <div class="p-4 border-t dark:border-primary">
+            <div class="flex items-center justify-end px-4 py-4 space-x-2">
+              <save-button></save-button>
+              <back-button :url="route('patients.index')"></back-button>
             </div>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
 
     <!-- e-Health Modal -->
-    <div
-      v-if="showEHealthModal"
-      class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4"
-    >
+    <div v-if="showEHealthModal" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
       <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" @click="showEHealthModal = false"></div>
-
       <div class="relative bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2 text-[#00a65a]">
@@ -380,34 +211,13 @@
               <rect x="3" y="14" width="7" height="7"></rect>
               <rect x="14" y="14" width="7" height="7"></rect>
             </svg>
-            <h3 class="text-sm font-bold text-slate-900">e-Health Integration</h3>
+            <h3 class="text-sm font-bold text-slate-900">e-Health Card Reader</h3>
           </div>
-          <button
-            type="button"
-            @click="showEHealthModal = false"
-            class="text-slate-400 hover:text-slate-600"
-          >
-            ✕
-          </button>
+          <button type="button" @click="showEHealthModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
         </div>
-
-        <div class="text-xs text-slate-600 space-y-2">
-          <p>
-            Connect patient profile with national or institutional e-Health registry.
-          </p>
-          <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-800 space-y-1">
-            <div class="font-bold">Status: Ready to Link</div>
-            <div>Patient ID: <span class="font-mono font-bold">{{ form.id_number || 'Auto' }}</span></div>
-            <div>Full Name: <span class="font-bold">{{ `${form.firstname || ''} ${form.lastname || ''}`.trim() || '—' }}</span></div>
-          </div>
-        </div>
-
+        <p class="text-xs text-slate-500">Scan an e-Health QR code or patient membership card to autofill information.</p>
         <div class="flex justify-end pt-2">
-          <button
-            type="button"
-            @click="showEHealthModal = false"
-            class="px-4 py-2 rounded text-xs font-bold text-white bg-[#00a65a] hover:bg-[#008d4c] transition-colors"
-          >
+          <button type="button" @click="showEHealthModal = false" class="px-4 py-2 rounded text-xs font-bold text-white bg-[#00a65a] hover:bg-[#008d4c] transition-colors">
             Close
           </button>
         </div>
@@ -416,73 +226,226 @@
   </TenantLayout>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { Head, Link, useForm } from '@inertiajs/inertia-vue3'
+<script>
+import { defineComponent } from 'vue'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
+import TextInput from '@/Components/Form/TextInput.vue'
+import SelectInput from '@/Components/Forms/SelectInput.vue'
+import TextareaInput from '@/Components/Form/TextareaInput.vue'
+import BackButton from '@/Components/Button/Back.vue'
+import SaveButton from '@/Components/Button/Save.vue'
+import DateInput from "@/Components/Forms/DateInput.vue"
+import { useI18n } from 'vue-i18n'
+import { lang } from '@/Lang'
+import { Head, Link } from '@inertiajs/inertia-vue3'
+import { useToast } from 'vue-toastification'
 
-const props = defineProps({
-  suggestedIdNumber: [Number, String],
-})
 
-const fileInput = ref(null)
-const avatarPreview = ref(null)
-const showEHealthModal = ref(false)
-
-const form = useForm({
-  id_number: props.suggestedIdNumber ? Number(props.suggestedIdNumber) : 571,
-  firstname: '',
-  lastname: '',
-  gender: 'male',
-  dob: '',
-  age: 0,
-  phone: '',
-  email: '',
-  profession: '',
-  address: '',
-  balance: 0.00,
-  card_activated: false,
-  card_code: '',
-  is_trail_card: false,
-  avatar: null,
-})
-
-function triggerFileInput() {
-  fileInput.value?.click()
-}
-
-function handleAvatarChange(e) {
-  const file = e.target.files?.[0]
-  if (file) {
-    form.avatar = file
-    avatarPreview.value = URL.createObjectURL(file)
-  }
-}
-
-function removeAvatar() {
-  form.avatar = null
-  avatarPreview.value = null
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
-}
-
-function onDobChange() {
-  if (form.dob) {
-    const birthDate = new Date(form.dob)
-    const today = new Date()
-    let calculatedAge = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      calculatedAge--
+export default defineComponent({
+  components: {
+    TenantLayout,
+    Head,
+    Link,
+    TextInput,
+    SelectInput,
+    TextareaInput,
+    BackButton,
+    SaveButton,
+    DateInput
+  },
+  props: {
+    suggestedIdNumber: [Number, String],
+  },
+  setup() {
+    const { tm } = useI18n({
+      inheritLocale: true,
+      messages: lang,
+    })
+    const toast = useToast()
+    return { tm, toast }
+  },
+  computed: {
+    genderOptions() {
+      return {
+        '': this.tm('Select_Gender') || 'Select Gender',
+        'M': this.tm('Male') || 'Male',
+        'F': this.tm('Female') || 'Female',
+      }
+    },
+  },
+  data() {
+    return {
+      showEHealthModal: false,
+      avatarPreview: null,
+      isSyncing: false,
+      form: this.$inertia.form({
+        id_number: this.suggestedIdNumber || '',
+        firstname: '',
+        lastname: '',
+        gender: '',
+        dob: '',
+        age: null,
+        phone: '',
+        email: '',
+        profession: '',
+        address: '',
+        avatar: null,
+        remove_avatar: false,
+      }),
     }
-    form.age = Math.max(calculatedAge, 0)
-  }
-}
+  },
+  watch: {
+    'form.dob': function (val) {
+      if (this.isSyncing) return
+      this.syncAgeFromDob(val)
+    },
+    'form.age': function (val) {
+      if (this.isSyncing) return
+      this.syncDobFromAge(val)
+    },
+  },
+  methods: {
+    calculateAgeFromDob(dobVal) {
+      if (!dobVal) return null
+      let birthDate = null
+      if (dobVal instanceof Date) {
+        birthDate = dobVal
+      } else if (typeof dobVal === 'string') {
+        const trimmed = dobVal.trim()
+        if (!trimmed) return null
+        if (trimmed.includes('/')) {
+          const parts = trimmed.split('/')
+          if (parts.length === 3) {
+            birthDate = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]))
+          }
+        } else if (trimmed.includes('-')) {
+          const parts = trimmed.split('-')
+          if (parts.length === 3) {
+            birthDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+          }
+        } else {
+          birthDate = new Date(trimmed)
+        }
+      }
 
-function submit() {
-  form.post(route('patients.store'), {
-    forceFormData: true,
-  })
-}
+      if (!birthDate || isNaN(birthDate.getTime())) return null
+
+      const today = new Date()
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const birthMidnight = new Date(birthDate.getFullYear(), birthDate.getMonth(), birthDate.getDate())
+
+      // Do not allow future Date of Birth
+      if (birthMidnight > todayMidnight) {
+        return null
+      }
+
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const m = today.getMonth() - birthDate.getMonth()
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+      return age >= 0 ? age : null
+    },
+    calculateDobFromAge(ageVal) {
+      if (ageVal === '' || ageVal === null || ageVal === undefined) return null
+      const num = Number(ageVal)
+      if (!Number.isInteger(num) || num < 0 || num > 150) {
+        return null
+      }
+
+      const today = new Date()
+      const birthYear = today.getFullYear() - num
+      let month = today.getMonth() + 1
+      let day = today.getDate()
+
+      // Handle leap year edge case (Feb 29 on non-leap year)
+      if (month === 2 && day === 29) {
+        const isLeapYear = (birthYear % 4 === 0 && birthYear % 100 !== 0) || (birthYear % 400 === 0)
+        if (!isLeapYear) {
+          day = 28
+        }
+      }
+
+      const mm = String(month).padStart(2, '0')
+      const dd = String(day).padStart(2, '0')
+      return `${birthYear}-${mm}-${dd}`
+    },
+    syncAgeFromDob(val) {
+      let dob = typeof val === 'string' ? val : (val instanceof Date ? val : val?.target?.value)
+      if (!dob) {
+        if (this.form.age !== null && this.form.age !== '') {
+          this.isSyncing = true
+          this.form.age = null
+          this.$nextTick(() => { this.isSyncing = false })
+        }
+        return
+      }
+
+      const calculatedAge = this.calculateAgeFromDob(dob)
+      if (calculatedAge !== null) {
+        if (this.form.age !== calculatedAge) {
+          this.isSyncing = true
+          this.form.age = calculatedAge
+          this.$nextTick(() => { this.isSyncing = false })
+        }
+      } else {
+        if (this.form.age !== null) {
+          this.isSyncing = true
+          this.form.age = null
+          this.$nextTick(() => { this.isSyncing = false })
+        }
+      }
+    },
+    syncDobFromAge(val) {
+      if (val === '' || val === null || val === undefined) {
+        if (this.form.dob !== '') {
+          this.isSyncing = true
+          this.form.dob = ''
+          this.$nextTick(() => { this.isSyncing = false })
+        }
+        return
+      }
+
+      const calculatedDob = this.calculateDobFromAge(val)
+      if (calculatedDob !== null) {
+        if (this.form.dob !== calculatedDob) {
+          this.isSyncing = true
+          this.form.dob = calculatedDob
+          this.$nextTick(() => { this.isSyncing = false })
+        }
+      }
+    },
+    onDobChange(val) {
+      this.syncAgeFromDob(val)
+    },
+    triggerFileInput() {
+      this.$refs.fileInput.click()
+    },
+    handleAvatarChange(e) {
+      const file = e.target.files?.[0]
+      if (file) {
+        this.form.avatar = file
+        this.form.remove_avatar = false
+        this.avatarPreview = URL.createObjectURL(file)
+      }
+    },
+    removeAvatar() {
+      this.form.avatar = null
+      this.form.remove_avatar = true
+      this.avatarPreview = null
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = ''
+      }
+    },
+    submit() {
+      this.form.post(this.route('patients.store'), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          this.toast.success(this.tm('PatientCreatedSuccessfully') || 'Patient has been created successfully')
+        },
+      })
+    },
+  },
+})
 </script>

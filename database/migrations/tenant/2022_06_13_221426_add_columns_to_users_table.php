@@ -14,12 +14,15 @@ class AddColumnsToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string("phone")->nullable();
-            $table->date('dob')->nullable();
-            $table->text('website')->nullable();
-            $table->jsonb('social_links')->nullable();
+            $table->string('username')->nullable();
+            $table->boolean('is_super_admin')->nullable()->default(false);
+            $table->string('confirmation_code')->nullable();
+            $table->string('settings')->nullable();
+            $table->integer('hospital_id')->nullable();
+            $table->bigInteger('e_health_physician_code')->nullable();
             $table->integer('level_access')->nullable();
-            $table->boolean('is_active')->nullable()->default(true);
+            $table->boolean('is_api')->nullable()->default(false);
+            $table->boolean('active')->nullable()->default(false);
         });
     }
 
@@ -31,7 +34,7 @@ class AddColumnsToUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(["phone",'dob','website','social_links','level_access','is_active']);
+            $table->dropColumn(["username",'is_super_admin','confirmation_code','settings','hospital_id','e_health_physician_code','level_access','is_api','active']);
         });
     }
 }

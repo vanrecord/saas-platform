@@ -7,6 +7,7 @@
         </label>
         <Toggle 
                 v-onclick="passValue(value)"
+                @change="passValue"
                 v-model="value"
                 :onLabel="active" :offLabel="customizeSwitch ? active : inactive" 
                 :classes="{toggle: 'flex w-20 h-5 rounded-full relative cursor-pointer transition items-center box-content border-2 text-xs leading-none', 
@@ -69,8 +70,15 @@ export default {
             value:this.modelValue
         }
     },
-    emits: ['update:modelValue']
-    ,
+    emits: ['update:modelValue'],
+    watch: {
+        value(val) {
+            this.$emit('update:modelValue', val)
+        },
+        modelValue(val) {
+            this.value = val
+        }
+    },
     methods: {
         focus() {
             this.$refs.input.focus()

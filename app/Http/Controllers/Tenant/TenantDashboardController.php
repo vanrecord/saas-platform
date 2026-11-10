@@ -15,6 +15,8 @@ class TenantDashboardController extends Controller
 {
     public function index(Request $request): Response
     {
+        abort_if(!auth()->user()?->can('dashboard:view'), 403, 'Unauthorized to view dashboard.');
+
         $today = Carbon::today();
 
         $totalPatients = Patient::count();

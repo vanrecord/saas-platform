@@ -58,7 +58,7 @@ class PatientRequest extends FormRequest
             'firstname' => ['required', 'string', 'max:50'],
             'lastname' => ['required', 'string', 'max:50'],
             'gender' => ['nullable', 'string', 'max:10'],
-            'dob' => ['nullable', 'date'],
+            'dob' => ['nullable', 'date', 'before_or_equal:today'],
             'age' => ['nullable', 'integer', 'min:0', 'max:150'],
             'phone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -71,6 +71,15 @@ class PatientRequest extends FormRequest
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:4096'],
             'remove_avatar' => ['nullable', 'boolean'],
             'return_to' => ['nullable', 'string', 'max:50'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'dob.before_or_equal' => 'Date of Birth cannot be in the future.',
+            'age.min' => 'Age must be a non-negative integer.',
+            'age.max' => 'Age cannot exceed 150.',
         ];
     }
 

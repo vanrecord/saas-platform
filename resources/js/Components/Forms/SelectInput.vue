@@ -36,7 +36,8 @@ export default {
             default: null
         },
         modelValue: {
-            type: Array,
+            type: [String, Number, Array, Boolean],
+            default: null,
         },
         placeholder: {
             type: String,

@@ -12,6 +12,14 @@ use App\Http\Controllers\Tenant\DentalViewController;
 use App\Http\Controllers\Tenant\DentalChartController;
 use App\Http\Controllers\Tenant\DentalConditionController;
 use App\Http\Controllers\Tenant\PatientController;
+use App\Http\Controllers\Tenant\SupplierController;
+use App\Http\Controllers\Tenant\ServiceController;
+use App\Http\Controllers\Tenant\ProductController;
+use App\Http\Controllers\Tenant\RoleController;
+use App\Http\Controllers\Tenant\DoctorController;
+use App\Http\Controllers\Tenant\UserController;
+use App\Http\Controllers\Tenant\ServiceCategoryController;
+use App\Http\Controllers\Tenant\ProductCategoryController;
 use App\Http\Controllers\Tenant\Api\DentalChartController as ApiDentalChartController;
 use App\Http\Controllers\Tenant\Api\ChartToothController as ApiChartToothController;
 use App\Http\Controllers\Tenant\Api\ToothFindingController as ApiToothFindingController;
@@ -60,6 +68,30 @@ Route::middleware([
         // Patients Directory
         Route::resource('patients', PatientController::class);
 
+        // Hospital Suppliers
+        Route::resource('suppliers', SupplierController::class);
+
+        // Hospital Services
+        Route::resource('services', ServiceController::class);
+
+        // Hospital Service Categories
+        Route::resource('service-categories', ServiceCategoryController::class);
+
+        // Hospital Product Categories
+        Route::resource('product-categories', ProductCategoryController::class);
+
+        // Hospital Products
+        Route::resource('products', ProductController::class);
+
+        // Roles & Permissions
+        Route::resource('roles', RoleController::class);
+
+        // Tenant Doctors
+        Route::resource('doctors', DoctorController::class);
+
+        // Tenant Users
+        Route::resource('users', UserController::class);
+
         // Billing & Finance (Placeholder views for sidebar completeness)
         Route::get('/invoices', [PatientVisitRegistrationController::class, 'create'])->name('tenant.invoices.index');
         Route::get('/payments', [PatientVisitRegistrationController::class, 'create'])->name('tenant.payments.index');
@@ -68,6 +100,10 @@ Route::middleware([
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('patients/search', [PatientVisitRegistrationController::class, 'searchPatients'])->name('patients.search');
             Route::post('patients/quick-create', [PatientVisitRegistrationController::class, 'quickCreatePatient'])->name('patients.quick-create');
+            Route::get('address/provinces', [SupplierController::class, 'getProvinces'])->name('address.provinces');
+            Route::get('address/districts/{provinceId}', [SupplierController::class, 'getDistricts'])->name('address.districts');
+            Route::get('address/communes/{districtId}', [SupplierController::class, 'getCommunes'])->name('address.communes');
+            Route::get('address/villages/{communeId}', [SupplierController::class, 'getVillages'])->name('address.villages');
             Route::apiResource('patients', ApiPatientController::class);
             Route::apiResource('dental-charts', ApiDentalChartController::class);
             Route::post('dental-charts/{dentalChart}/sync-findings', [ApiDentalChartController::class, 'syncFindings'])->name('dental-charts.sync-findings');

@@ -59,6 +59,17 @@ class Patient extends Model
         return $name !== '' ? $name : ('Patient #' . ($this->id ?? ''));
     }
 
+    public function setGenderAttribute($value): void
+    {
+        if (empty($value)) {
+            $this->attributes['gender'] = null;
+            return;
+        }
+
+        $first = strtoupper(substr(trim((string) $value), 0, 1));
+        $this->attributes['gender'] = $first === 'M' ? 'M' : ($first === 'F' ? 'F' : $value);
+    }
+
     /**
      * Generate next sequential patient id_number.
      */

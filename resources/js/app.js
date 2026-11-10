@@ -19,6 +19,8 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 import '@vueform/toggle/themes/default.css';
 import 'flowbite';
 import 'flatpickr/dist/flatpickr.css';
+import 'v-calendar/dist/style.css';
+import { setupCalendar } from 'v-calendar';
 import  VueHtmlToPaper from './plugins/VueHtmlToPaper'
 import JsonExcel from "./plugins/jsonExcel";
 import * as FilePond from 'filepond';
@@ -51,6 +53,7 @@ createInertiaApp({
             .use(plugin)
             .use(i18n)
             .use(Plugin)
+            .use(setupCalendar, {})
             .use(Toast)
             .use(VueSweetalert2)
             .use(VueHtmlToPaper)

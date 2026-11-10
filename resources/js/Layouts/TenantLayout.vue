@@ -42,16 +42,13 @@
       </div>
 
       <!-- Scrollable Navigation Area -->
-      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6 text-xs">
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 text-xs">
         
-        <!-- SECTION 1: MAIN NAVIGATION -->
         <div>
-          <div v-show="!isSidebarCollapsed" class="px-3 mb-2 text-[10px] font-bold tracking-wider text-[#8F9CAE] uppercase">
-            Main Navigation
-          </div>
           <div class="space-y-1">
             <!-- Dashboard -->
             <Link
+              v-if="can(['all', 'dashboard:view'])"
               :href="route('tenant.dashboard')"
               :class="[
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
@@ -69,6 +66,7 @@
 
             <!-- Register (Active in Reference Screenshot) -->
             <Link
+              v-if="can(['all', 'register:view'])"
               :href="route('tenant.visit.create')"
               :class="[
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
@@ -86,6 +84,7 @@
 
             <!-- Patients -->
             <Link
+              v-if="can(['all', 'patient:view', 'patients', 'patients.index'])"
               :href="route('patients.index')"
               :class="[
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
@@ -103,11 +102,7 @@
           </div>
         </div>
 
-        <!-- SECTION 2: BILLING & FINANCE -->
         <div>
-          <div v-show="!isSidebarCollapsed" class="px-3 mb-2 text-[10px] font-bold tracking-wider text-[#8F9CAE] uppercase">
-            Billing & Finance
-          </div>
           <div class="space-y-1">
             <!-- Invoice -->
             <Link
@@ -145,11 +140,7 @@
           </div>
         </div>
 
-        <!-- SECTION 3: CLINICAL & SERVICES -->
         <div>
-          <div v-show="!isSidebarCollapsed" class="px-3 mb-2 text-[10px] font-bold tracking-wider text-[#8F9CAE] uppercase">
-            Clinical & Services
-          </div>
           <div class="space-y-1">
             <!-- Dental Charts with Submenu -->
             <div>
@@ -237,7 +228,16 @@
             </div>
 
             <!-- Hospital -->
-            <div>
+            <div
+              v-if="can([
+                'all',
+                'service:view', 'services', 'services.index', 'services:services:view', 'services:view',
+                'service-category:view', 'service-categories', 'service_categories', 'service-categories.index', 'categories:service_categories:view', 'service_categories:view',
+                'product-category:view', 'product-categories', 'product_categories', 'product-categories.index', 'categories:product_categories:view', 'product_categories:view',
+                'supplier:view', 'suppliers', 'suppliers.index', 'suppliers:suppliers:view', 'suppliers:view',
+                'product:view', 'products', 'products.index', 'products:products:view', 'products:view'
+              ])"
+            >
               <button
                 type="button"
                 @click="clinicalOpen.hospital = !clinicalOpen.hospital"
@@ -259,43 +259,122 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+
+              <!-- Submenu -->
+              <div v-show="!isSidebarCollapsed && clinicalOpen.hospital" class="pl-9 pr-2 py-1 space-y-1">
+                <Link
+                  v-if="can(['all', 'service:view', 'services', 'services.index', 'services:services:view', 'services:view'])"
+                  :href="route('services.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    route().current('services.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Service
+                </Link>
+
+                <Link
+                  v-if="can(['all', 'service-category:view', 'service-categories', 'service_categories', 'service-categories.index', 'categories:service_categories:view', 'service_categories:view'])"
+                  :href="route('service-categories.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    route().current('service-categories.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Service Category
+                </Link>
+
+                <Link
+                  v-if="can(['all', 'product-category:view', 'product-categories', 'product_categories', 'product-categories.index', 'categories:product_categories:view', 'product_categories:view'])"
+                  :href="route('product-categories.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    route().current('product-categories.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Product Category
+                </Link>
+
+                <Link
+                  v-if="can(['all', 'supplier:view', 'suppliers', 'suppliers.index', 'suppliers:suppliers:view', 'suppliers:view'])"
+                  :href="route('suppliers.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    route().current('suppliers.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Supplier
+                </Link>
+
+                <Link
+                  v-if="can(['all', 'product:view', 'products', 'products.index', 'products:products:view', 'products:view'])"
+                  :href="route('products.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    route().current('products.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Product
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- SECTION 4: ADMINISTRATION -->
         <div>
-          <div v-show="!isSidebarCollapsed" class="px-3 mb-2 text-[10px] font-bold tracking-wider text-[#8F9CAE] uppercase">
-            Administration
-          </div>
           <div class="space-y-1">
-            <a
-              href="#"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+            <Link
+              v-if="can(['all', 'doctor:view', 'doctors', 'doctors.index'])"
+              :href="route('doctors.index')"
+              :class="[
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                route().current('doctors.*')
+                  ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
+              ]"
+            >
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11v6m3-3h-6" />
+              </svg>
+              <span v-show="!isSidebarCollapsed">Doctor</span>
+            </Link>
+
+            <Link
+              v-if="can(['all', 'user:view', 'users', 'users.index'])"
+              :href="route('users.index')"
+              :class="[
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                route().current('users.*')
+                  ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
+              ]"
             >
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <span v-show="!isSidebarCollapsed">Users</span>
-            </a>
+            </Link>
 
-            <a
-              href="#"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+            <Link
+              v-if="can(['all', 'role:view', 'roles', 'roles.index', 'role:view'])"
+              :href="route('roles.index')"
+              :class="[
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                route().current('roles.*')
+                  ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
+              ]"
             >
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               <span v-show="!isSidebarCollapsed">Roles & Permissions</span>
-            </a>
+            </Link>
           </div>
         </div>
 
-        <!-- SECTION 5: SYSTEM -->
         <div>
-          <div v-show="!isSidebarCollapsed" class="px-3 mb-2 text-[10px] font-bold tracking-wider text-[#8F9CAE] uppercase">
-            System
-          </div>
           <div class="space-y-1">
             <a
               href="#"
@@ -532,7 +611,14 @@
 import { ref, computed, reactive } from 'vue'
 import { Head, Link } from '@inertiajs/inertia-vue3'
 import { Inertia } from '@inertiajs/inertia'
+import { useI18n } from 'vue-i18n'
+import { lang } from '@/Lang'
 import QuickCreatePatientModal from '@/Components/Tenant/QuickCreatePatientModal.vue'
+
+const { tm } = useI18n({
+  inheritLocale: true,
+  messages: lang,
+})
 
 const props = defineProps({
   title: {
@@ -549,9 +635,21 @@ const isUserMenuOpen = ref(false)
 const isQuickCreateModalOpen = ref(false)
 
 const clinicalOpen = reactive({
-  charts: true,
-  conditions: false,
-  hospital: false
+  charts: Boolean(route().current('dental.*') || route().current('dental-charts.*') || (!route().current('dental-conditions.*') && !route().current('services.*') && !route().current('suppliers.*') && !route().current('service-categories.*') && !route().current('product-categories.*') && !route().current('products.*'))),
+  conditions: Boolean(route().current('dental-conditions.*')),
+  hospital: Boolean(route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*'))
+})
+
+Inertia.on('navigate', () => {
+  if (route().current('dental-conditions.*')) {
+    clinicalOpen.conditions = true
+  }
+  if (route().current('dental.*') || route().current('dental-charts.*')) {
+    clinicalOpen.charts = true
+  }
+  if (route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')) {
+    clinicalOpen.hospital = true
+  }
 })
 
 const userInitials = computed(() => {

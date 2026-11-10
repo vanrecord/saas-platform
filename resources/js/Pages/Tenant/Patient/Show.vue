@@ -49,14 +49,22 @@
             :href="route('patients.edit', patient.id)"
             class="px-3.5 py-1.5 rounded text-xs font-bold text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors"
           >
-            Edit
+            {{ tm('edit') || 'Edit' }}
           </Link>
+
+          <button
+            type="button"
+            @click="confirmDelete"
+            class="px-3.5 py-1.5 rounded text-xs font-bold text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
+          >
+            {{ tm('delete') || 'Delete' }}
+          </button>
 
           <Link
             :href="route('patients.index')"
             class="px-3.5 py-1.5 rounded text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
           >
-            &larr; Patients
+            &larr; {{ tm('Patients') || 'Patients' }}
           </Link>
         </div>
       </div>
@@ -134,7 +142,7 @@
                 Gender
               </span>
               <span class="flex-1 text-sm capitalize text-slate-800">
-                {{ patient.gender || '—' }}
+                {{ patient.gender === 'M' || patient.gender === 'male' ? 'Male' : (patient.gender === 'F' || patient.gender === 'female' ? 'Female' : (patient.gender || '—')) }}
               </span>
             </div>
 
@@ -320,7 +328,7 @@
             <div class="font-bold">Sync Status: Active</div>
             <div>Patient ID: <span class="font-mono font-bold">{{ patient.id_number || patient.id }}</span></div>
             <div>Full Name: <span class="font-bold">{{ patient.full_name }}</span></div>
-            <div>Gender: <span class="capitalize">{{ patient.gender || '—' }}</span></div>
+            <div>Gender: <span class="capitalize">{{ patient.gender === 'M' || patient.gender === 'male' ? 'Male' : (patient.gender === 'F' || patient.gender === 'female' ? 'Female' : (patient.gender || '—')) }}</span></div>
             <div>Date of Birth: <span class="font-mono">{{ patient.dob || '—' }}</span></div>
           </div>
         </div>
@@ -342,11 +350,44 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, Link } from '@inertiajs/inertia-vue3'
+import { Inertia } from '@inertiajs/inertia'
+import Swal from 'sweetalert2'
+import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
+import { lang } from '@/Lang'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 
-defineProps({
+const props = defineProps({
   patient: Object,
 })
 
+const { tm } = useI18n({
+  inheritLocale: true,
+  messages: lang,
+})
+
 const showEHealthModal = ref(false)
+
+const confirmDelete = () => {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it!',
+    customClass: {
+      confirmButton: 'inline-flex items-center mx-2 px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring focus:ring-gray-300 disabled:opacity-25 transition bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 dark:focus:ring-offset-darker',
+      cancelButton: 'inline-flex items-center justify-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none focus:border-red-700 focus:ring focus:ring-red-200 active:bg-red-600 disabled:opacity-25 transition',
+    },
+    buttonsStyling: false,
+  }).then(result => {
+    if (result.value) {
+      Inertia.delete(route('patients.destroy', props.patient.id), {
+        onSuccess: () => {
+          useToast().success(tm('PatientDeletedSuccessfully') || 'Patient deleted successfully')
+        },
+      })
+    }
+  })
+}
 </script>

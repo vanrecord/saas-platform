@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\PatientRequest;
-use App\Models\Tenant\Patient;
+use App\Repositories\PatientRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,62 +12,36 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use ProtoneMedia\LaravelQueryBuilderInertiaJs\InertiaTable;
 
 class PatientController extends Controller
 {
-    public function index(Request $request): Response
+    protected PatientRepositoryInterface $patient;
+
+    public function __construct(PatientRepositoryInterface $patient)
     {
-        $query = Patient::query()->withCount(['dentalCharts']);
+        $this->patient = $patient;
+    }
 
-        // Search filter
-        if ($request->filled('search')) {
-            $search = trim($request->query('search'));
-            $term = mb_strtolower($search, 'UTF-8');
+    public function index(): Response
+    {
+        abort_if(!auth()->user()?->can('patient:view'), 403, 'Unauthorized to view patients.');
 
-            $query->where(function ($q) use ($term, $search) {
-                $q->whereRaw('LOWER(firstname) LIKE ?', ["%{$term}%"])
-                  ->orWhereRaw('LOWER(lastname) LIKE ?', ["%{$term}%"])
-                  ->orWhereRaw("LOWER(CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, ''))) LIKE ?", ["%{$term}%"])
-                  ->orWhereRaw('LOWER(phone) LIKE ?', ["%{$term}%"])
-                  ->orWhereRaw('LOWER(email) LIKE ?', ["%{$term}%"]);
+        $patients = $this->patient->getDataTable();
+        $view = 'Tenant/Patient/Index';
 
-                if (is_numeric($search)) {
-                    $q->orWhere('id_number', (int) $search)
-                      ->orWhere('id', (int) $search);
-                }
-            });
-        }
-
-        // Sorting
-        $allowedSorts = [
-            'id', 'firstname', 'lastname', 'gender', 'age', 'dob',
-            'id_number', 'balance', 'card_activated', 'created_at',
-        ];
-
-        $sortBy = $request->query('sort_by', 'id');
-        $sortDir = strtolower($request->query('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
-
-        if (!in_array($sortBy, $allowedSorts, true)) {
-            $sortBy = 'id';
-        }
-
-        $query->orderBy($sortBy, $sortDir);
-
-        $patients = $query->paginate(15)->withQueryString();
-
-        return Inertia::render('Tenant/Patient/Index', [
+        return Inertia::render($view, [
             'patients' => $patients,
-            'filters' => [
-                'search' => $request->query('search', ''),
-                'sort_by' => $sortBy,
-                'sort_dir' => $sortDir,
-            ],
-        ]);
+        ])->table(function (InertiaTable $table) {
+            $this->patient->columnsDataTable($table);
+        });
     }
 
     public function create(): Response
     {
-        $suggestedIdNumber = Patient::getNextIdNumber();
+        abort_if(!auth()->user()?->can('patient:create'), 403, 'Unauthorized to create patients.');
+
+        $suggestedIdNumber = $this->patient->getNextIdNumber();
 
         return Inertia::render('Tenant/Patient/Create', [
             'suggestedIdNumber' => $suggestedIdNumber,
@@ -76,20 +50,30 @@ class PatientController extends Controller
 
     public function store(PatientRequest $request): RedirectResponse
     {
+        abort_if(!auth()->user()?->can('patient:save'), 403, 'Unauthorized to save patients.');
+
         $data = $request->validated();
 
-        // Calculate age from dob if not explicitly entered
-        if (!isset($data['age']) && !empty($data['dob'])) {
+        // Treat Date of Birth as authoritative when provided; recalculate age
+        if (!empty($data['dob'])) {
             try {
                 $data['age'] = Carbon::parse($data['dob'])->age;
             } catch (\Throwable $e) {
                 // Ignore parse errors
             }
+        } elseif (isset($data['age']) && $data['age'] !== null && $data['age'] !== '') {
+            $data['dob'] = Carbon::today()->subYearsNoOverflow((int) $data['age'])->format('Y-m-d');
         }
 
         // Convert booleans
         $data['card_activated'] = $request->boolean('card_activated');
         $data['is_trail_card'] = $request->boolean('is_trail_card');
+
+        // Normalize gender to M or F
+        if (!empty($data['gender'])) {
+            $first = strtoupper(substr(trim((string) $data['gender']), 0, 1));
+            $data['gender'] = $first === 'M' ? 'M' : ($first === 'F' ? 'F' : $data['gender']);
+        }
 
         // Handle avatar upload (keep filename short due to varchar(50) limit)
         if ($request->hasFile('avatar')) {
@@ -97,53 +81,81 @@ class PatientController extends Controller
             $extension = $file->getClientOriginalExtension() ?: 'jpg';
             $filename = 'p_' . time() . '_' . Str::lower(Str::random(6)) . '.' . $extension;
             $file->storeAs('avatars', $filename, 'public');
-            $data['avatar'] = 'avatars/' . $filename; // e.g. avatars/p_1730000000_a1b2c3.jpg (30 chars <= 50)
+            $data['avatar'] = 'avatars/' . $filename;
         } else {
             unset($data['avatar']);
         }
 
         unset($data['remove_avatar'], $data['return_to']);
 
-        $patient = Patient::create($data);
+        $patient = $this->patient->create($data);
 
-        return redirect()->route('patients.show', $patient)
+        return redirect()->route('patients.index')
             ->with('success', 'Patient record created successfully.');
     }
 
-    public function show(Patient $patient): Response
+    public function show($id): Response
     {
-        $patient->load([
-            'dentalCharts' => fn ($q) => $q->withCount('teeth')->latest('chart_date'),
-        ]);
+        abort_if(!auth()->user()?->can('patient:view'), 403, 'Unauthorized to view patients.');
+
+        $patient = $this->patient->findWithDetails($id);
+
+        if (!$patient) {
+            abort(404, 'Patient not found');
+        }
 
         return Inertia::render('Tenant/Patient/Show', [
             'patient' => $patient,
         ]);
     }
 
-    public function edit(Patient $patient): Response
+    public function edit($id): Response
     {
+        abort_if(!auth()->user()?->can('patient:edit'), 403, 'Unauthorized to edit patients.');
+
+        $patient = $this->patient->find($id);
+
+        if (!$patient) {
+            abort(404, 'Patient not found');
+        }
+
         return Inertia::render('Tenant/Patient/Edit', [
             'patient' => $patient,
         ]);
     }
 
-    public function update(PatientRequest $request, Patient $patient): RedirectResponse
+    public function update(PatientRequest $request, $id): RedirectResponse
     {
+        abort_if(!auth()->user()?->can('patient:save'), 403, 'Unauthorized to save patients.');
+
+        $patient = $this->patient->find($id);
+
+        if (!$patient) {
+            abort(404, 'Patient not found');
+        }
+
         $data = $request->validated();
 
-        // Calculate age from dob if not explicitly entered
-        if (!isset($data['age']) && !empty($data['dob'])) {
+        // Treat Date of Birth as authoritative when provided; recalculate age
+        if (!empty($data['dob'])) {
             try {
                 $data['age'] = Carbon::parse($data['dob'])->age;
             } catch (\Throwable $e) {
                 // Ignore parse errors
             }
+        } elseif (isset($data['age']) && $data['age'] !== null && $data['age'] !== '') {
+            $data['dob'] = Carbon::today()->subYearsNoOverflow((int) $data['age'])->format('Y-m-d');
         }
 
         // Convert booleans
         $data['card_activated'] = $request->boolean('card_activated');
         $data['is_trail_card'] = $request->boolean('is_trail_card');
+
+        // Normalize gender to M or F
+        if (!empty($data['gender'])) {
+            $first = strtoupper(substr(trim((string) $data['gender']), 0, 1));
+            $data['gender'] = $first === 'M' ? 'M' : ($first === 'F' ? 'F' : $data['gender']);
+        }
 
         // Handle avatar upload or removal
         if ($request->hasFile('avatar')) {
@@ -166,19 +178,25 @@ class PatientController extends Controller
 
         unset($data['remove_avatar'], $data['return_to']);
 
-        $patient->update($data);
+        $this->patient->update($patient, $data);
 
-        return redirect()->route('patients.show', $patient)
+        return redirect()->route('patients.index')
             ->with('success', 'Patient updated successfully.');
     }
 
-    public function destroy(Patient $patient): RedirectResponse
+    public function destroy($id): RedirectResponse
     {
-        if ($patient->avatar && Storage::disk('public')->exists($patient->avatar)) {
-            Storage::disk('public')->delete($patient->avatar);
-        }
+        abort_if(!auth()->user()?->can('patient:delete'), 403, 'Unauthorized to delete patients.');
 
-        $patient->delete();
+        $patient = $this->patient->find($id);
+
+        if ($patient) {
+            if ($patient->avatar && Storage::disk('public')->exists($patient->avatar)) {
+                Storage::disk('public')->delete($patient->avatar);
+            }
+
+            $this->patient->delete($patient);
+        }
 
         return redirect()->route('patients.index')
             ->with('success', 'Patient deleted successfully.');

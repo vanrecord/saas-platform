@@ -41,10 +41,13 @@ class UserTenant extends Authenticatable implements Syncable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'is_active',
+        'active',
         'level_access',
+        'is_super_admin',
         'phone',
         'global_id'
     ];
@@ -68,7 +71,8 @@ class UserTenant extends Authenticatable implements Syncable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'created_at' => 'datetime:d/m/Y H:i'
+        'created_at' => 'datetime:d/m/Y H:i',
+        'is_super_admin' => 'boolean',
     ];
 
     /**
@@ -91,7 +95,7 @@ class UserTenant extends Authenticatable implements Syncable
     }
 
     public function isSuperAdmin(){
-        return $this->getRawOriginal('level_access')==self::SUPER_ADMIN??false;
+        return (bool) $this->is_super_admin || $this->getRawOriginal('level_access') == self::SUPER_ADMIN;
     }
 
     public function isAdmin(){
@@ -105,16 +109,8 @@ class UserTenant extends Authenticatable implements Syncable
 
     public function setLevelAccessAttribute($value)
     {
-        // $this->attributes['level_access'] = $value==2?2:($value?1:0);
         $this->attributes['level_access'] = !is_bool($value)?$value:($value?1:0);
     }
-
-    // public static function booted()
-    // {
-    //     static::creating(function ($user) {
-    //         $user->password = Hash::make($user->password);
-    //     });
-    // }
 
     public function getPermissionArray()
     {
@@ -172,6 +168,16 @@ class UserTenant extends Authenticatable implements Syncable
     public function hospital()
     {
         return $this->hasOne(Hospital::class, 'user_id');
+    }
+
+    public function profile()
+    {
+        return $this->morphOne(\App\Models\Tenant\Profile::class, 'profileable');
+    }
+
+    public function doctor()
+    {
+        return $this->hasOne(\App\Models\Tenant\Doctor::class, 'user_id');
     }
 
     public function getSyncedAttributeNames(): array

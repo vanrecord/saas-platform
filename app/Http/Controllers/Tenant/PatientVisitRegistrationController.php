@@ -20,6 +20,8 @@ class PatientVisitRegistrationController extends Controller
      */
     public function create(Request $request): Response
     {
+        abort_if(!auth()->user()?->can('register:view'), 403, 'Unauthorized to view register.');
+
         $selectedPatient = null;
         if ($request->filled('patient_id')) {
             $selectedPatient = Patient::find($request->query('patient_id'));

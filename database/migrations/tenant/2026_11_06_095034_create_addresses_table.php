@@ -123,11 +123,11 @@ return new class extends Migration
             $table->string('street', 32)->nullable();
             $table->string('city', 32)->nullable();
             $table->string('zip_code', 6)->nullable();
-            $table->integer('province_id');
-            $table->integer('country_id');
-            $table->integer('commune_id');
-            $table->integer('district_id');
-            $table->integer('village_id');
+            $table->integer('province_id')->nullable();
+            $table->integer('country_id')->nullable();
+            $table->integer('commune_id')->nullable();
+            $table->integer('district_id')->nullable();
+            $table->integer('village_id')->nullable();
             $table->integer('addressable_id');
             $table->string('addressable_type');
             $table->timestamps();
