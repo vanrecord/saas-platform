@@ -9,7 +9,7 @@ use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
 use App\Jobs\CreateTenantAdmin;
-use App\Jobs\CreateTenantCompany;
+use App\Jobs\CreateTenantHospital;
 use App\Jobs\InvalidateCache;
 use Stancl\JobPipeline\JobPipeline;
 use Illuminate\Support\Facades\Event;
@@ -33,7 +33,7 @@ class TenancyServiceProvider extends ServiceProvider
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
                     CreateTenantAdmin::class,
-                    CreateTenantCompany::class,
+                    CreateTenantHospital::class,
                     // Jobs\SeedDatabase::class,
 
                     // Your own jobs to prepare the tenant.

@@ -164,6 +164,16 @@ class UserTenant extends Authenticatable implements Syncable
         return User::class;
     }
 
+    public function hospitals()
+    {
+        return $this->hasMany(Hospital::class, 'user_id');
+    }
+
+    public function hospital()
+    {
+        return $this->hasOne(Hospital::class, 'user_id');
+    }
+
     public function getSyncedAttributeNames(): array
     {
         return [

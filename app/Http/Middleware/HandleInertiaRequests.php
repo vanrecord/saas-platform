@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Repositories\CompanyRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use App\Models\User;
@@ -42,15 +41,16 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $logo = null;
-        if(Schema::hasTable('companies')) {
-            $company = \App\Models\Company::first();
-            $logo = !empty($company)&&!empty($company->logo)?$company->logo->first():null;
+        $hospital = null;
+        if (Schema::hasTable('hospitals')) {
+            $hospital = \App\Models\Hospital::first();
         }
 
         $user = $request->user('tenant') ?? $request->user('web') ?? $request->user();
 
         return array_merge(parent::share($request), [
             'user' => $user,
+            'hospital' => $hospital,
             'auth' => [
                 'user' => $user,
                 'can' => $user ? $user->getPermissionArray() : [],

@@ -3,7 +3,6 @@
 namespace App\Actions\Central;
 
 use App\Models\Tenant;
-use App\Repositories\CompanyRepository;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Request;
@@ -14,13 +13,11 @@ use App\Repositories\ProvinceRepository;
 
 class UpdateDomain
 {
-    protected $company;
     protected $province;
     protected $district;
 
     public function __construct()
     {
-        $this->company = App(CompanyRepository::class);
         $this->province = App(ProvinceRepository::class);
         $this->district = App(DistrictRepository::class);
     }
@@ -107,31 +104,20 @@ class UpdateDomain
                 'updated_by'  => $user_id
             ]);
             
-            // Sync company and address to tenant
+            // Sync hospital name to tenant
             try {
-                $province_code = $domain->province?->code;
-                $district_code = $domain->district?->code;
-                $tenant->run(function ($tenant) use ($province_code, $district_code) {
-                    $company = $this->company->first();
-                    if($company){
-                        $company = $this->company->update($company->id, [
-                            'name_international' => $tenant->company,
-                            'phone' => $tenant->phone,
-                            'range' => $tenant->range,
-                            'latlng' => json_encode($tenant->latlng)
-                        ]);
-                        $company->addressable()->update([
-                            'province_id' => $this->province->findBy('code', $province_code)?->id,
-                            'district_id' => $this->district->findBy('code', $district_code)?->id,
-                            'commune_id'  => null,
-                            'village_id'  => null,
+                $tenant->run(function ($tenant) {
+                    $hospital = \App\Models\Hospital::first();
+                    if ($hospital) {
+                        $hospital->update([
+                            'name' => $tenant->company,
                         ]);
                     }
                 });
             } catch (\Throwable $e) {
-                info('Tenant run sync company skipped: ' . $e->getMessage());
+                info('Tenant run sync hospital skipped: ' . $e->getMessage());
             }
-            // End sync company and address to tenant
+            // End sync hospital to tenant
 
             return $domain;
         } catch (\Throwable $th) {

@@ -141,6 +141,23 @@ class CreateNewDomain
                 'created_by' => $user_id,
                 'updated_by' => $user_id
             ]);
+
+            // Ensure Hospital record exists in the tenant database
+            try {
+                $tenant->run(function ($t) use ($input) {
+                    $firstUser = \App\Models\UserTenant::orderBy('id', 'asc')->first();
+                    if ($firstUser) {
+                        $hospitalName = $input['company'] ?? $t->company ?? 'Hospital';
+                        \App\Models\Hospital::firstOrCreate(
+                            ['user_id' => $firstUser->id],
+                            ['name' => $hospitalName]
+                        );
+                    }
+                });
+            } catch (\Throwable $e) {
+                info('CreateNewDomain hospital verification: ' . $e->getMessage());
+            }
+
             return $tenant;
         } catch (\Throwable $th) {
             info('Create domain error: ' . $th->getMessage() . ' ' . $th->getFile() . ':' . $th->getLine());

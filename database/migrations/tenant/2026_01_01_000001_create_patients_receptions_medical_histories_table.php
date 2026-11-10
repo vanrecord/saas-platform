@@ -118,10 +118,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('medical_histories');
+        Schema::dropIfExists('receptions');
         Schema::dropIfExists('patients');
         Schema::dropIfExists('doctors');
-        Schema::dropIfExists('receptions');
-        Schema::dropIfExists('medical_histories');
     }
     
 };
