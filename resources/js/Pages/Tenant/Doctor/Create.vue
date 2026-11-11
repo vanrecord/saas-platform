@@ -290,40 +290,13 @@
                 </div>
               </div>
             </div>
-
-            <!-- Specialties -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-start gap-2">
-              <label class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4 pt-2">
-                {{ tm('Specialties') || 'Specialties' }}
-              </label>
-              <div class="sm:col-span-8">
-                <!-- Multi-select with pills/dropdown -->
-                <div class="border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-dark min-h-[42px] flex flex-wrap gap-1.5 items-center">
-                  <span
-                    v-for="sId in form.specialties"
-                    :key="sId"
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800"
-                  >
-                    {{ getSpecialtyName(sId) }}
-                    <button type="button" @click="toggleSpecialty(sId)" class="hover:text-red-500">×</button>
-                  </span>
-                  <select
-                    @change="onSpecialtySelect"
-                    class="border-0 text-xs text-gray-500 focus:ring-0 py-1 px-1 bg-transparent cursor-pointer flex-1 min-w-[120px]"
-                  >
-                    <option value="">+ Add specialty...</option>
-                    <option
-                      v-for="sp in specialties"
-                      :key="sp.id"
-                      :value="sp.id"
-                      :disabled="form.specialties.includes(sp.id)"
-                    >
-                      {{ sp.name }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
+            <select-input
+              v-model="form.specialties"
+              :error="form.errors.specialties"
+              class="pb-2 pr-6 w-full lg:w-1/2"
+              :label="tm('Specialties')"
+              :options="specialOptions"
+            />
 
             <!-- Description with Rich Text Editor -->
             <div class="pt-2">
@@ -331,25 +304,26 @@
                 {{ tm('Description') || 'Description' }}
               </label>
               <RichTextEditor v-model="form.description" />
+              <!-- <EditorContainerQuill 
+                v-model="form_event.message" 
+                required="required" 
+                :error="form_event.errors.message" 
+                :label="tm('telegramBroadcastMessage.Message')"
+                toolbarType="essential"
+                class="w-full lg:w-1/2 pr-6"
+              /> -->
             </div>
           </div>
         </div>
 
-        <!-- Form Action Footer -->
-        <div class="flex items-center justify-end gap-3 p-4 border-t bg-gray-50/50 dark:bg-dark dark:border-primary">
-          <Link
-            :href="route('doctors.index')"
-            class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-transparent rounded font-semibold text-xs uppercase tracking-widest transition"
-          >
-            {{ tm('Cancel') || 'Cancel' }}
-          </Link>
-          <button
-            type="submit"
-            :disabled="form.processing"
-            class="inline-flex items-center px-5 py-2 bg-[#5b86e5] hover:bg-[#4a72cf] border border-transparent rounded font-semibold text-xs text-white uppercase tracking-widest disabled:opacity-50 transition shadow-sm"
-          >
-            {{ form.processing ? (tm('Saving') || 'Saving...') : (tm('Save') || 'Save') }}
-          </button>
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end px-8 py-4 bg-gray-50 border-t border-gray-100 dark:bg-darker dark:border-primary space-x-2">
+          <save-button :loading="form.processing">
+            {{ tm('Save') }}
+          </save-button>
+          <back-button :url="route('doctors.index')">
+            {{ tm('Cancel') }}
+          </back-button>
         </div>
       </form>
     </div>
@@ -361,6 +335,9 @@ import { defineComponent } from 'vue'
 import { Head, Link } from '@inertiajs/inertia-vue3'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import RichTextEditor from '@/Components/Form/RichTextEditor.vue'
+import SaveButton from '@/Components/Button/Save.vue'
+import BackButton from '@/Components/Button/Back.vue'
+import SelectInput from '@/Components/Forms/SelectInput.vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { lang } from '@/Lang'
@@ -371,9 +348,12 @@ export default defineComponent({
     Head,
     Link,
     RichTextEditor,
+    SaveButton,
+    BackButton,
+    SelectInput
   },
   props: {
-    specialties: {
+    specialOptions: {
       type: Array,
       default: () => [],
     },

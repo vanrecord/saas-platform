@@ -16,6 +16,7 @@ class ToothFinding extends Model
 
     protected $fillable = [
         'chart_tooth_id',
+        'treatment_teeth_id',
         'dental_condition_id',
         'surface',
         'custom_color',
@@ -25,9 +26,9 @@ class ToothFinding extends Model
         'updated_by',
     ];
 
-    public function chartTooth(): BelongsTo
+    public function treatmentTeeth(): BelongsTo
     {
-        return $this->belongsTo(ChartTooth::class, 'chart_tooth_id');
+        return $this->belongsTo(TreatmentTeeth::class, 'treatment_teeth_id');
     }
 
     public function condition(): BelongsTo

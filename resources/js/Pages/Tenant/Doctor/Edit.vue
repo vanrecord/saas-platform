@@ -334,21 +334,14 @@
           </div>
         </div>
 
-        <!-- Form Action Footer -->
-        <div class="flex items-center justify-end gap-3 p-4 border-t bg-gray-50/50 dark:bg-dark dark:border-primary">
-          <Link
-            :href="route('doctors.index')"
-            class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-transparent rounded font-semibold text-xs uppercase tracking-widest transition"
-          >
-            {{ tm('Cancel') || 'Cancel' }}
-          </Link>
-          <button
-            type="submit"
-            :disabled="form.processing"
-            class="inline-flex items-center px-5 py-2 bg-[#5b86e5] hover:bg-[#4a72cf] border border-transparent rounded font-semibold text-xs text-white uppercase tracking-widest disabled:opacity-50 transition shadow-sm"
-          >
-            {{ form.processing ? (tm('Saving') || 'Saving...') : (tm('Save') || 'Save') }}
-          </button>
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end px-8 py-4 bg-gray-50 border-t border-gray-100 dark:bg-darker dark:border-primary space-x-2">
+          <save-button :loading="form.processing">
+            {{ tm('Save') }}
+          </save-button>
+          <back-button :url="route('doctors.index')">
+            {{ tm('Cancel') }}
+          </back-button>
         </div>
       </form>
     </div>
@@ -360,6 +353,8 @@ import { defineComponent } from 'vue'
 import { Head, Link } from '@inertiajs/inertia-vue3'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
 import RichTextEditor from '@/Components/Form/RichTextEditor.vue'
+import SaveButton from '@/Components/Button/Save.vue'
+import BackButton from '@/Components/Button/Back.vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { lang } from '@/Lang'
@@ -370,6 +365,8 @@ export default defineComponent({
     Head,
     Link,
     RichTextEditor,
+    SaveButton,
+    BackButton,
   },
   props: {
     doctor: {

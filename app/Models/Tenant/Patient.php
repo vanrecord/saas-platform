@@ -75,10 +75,8 @@ class Patient extends Model
      */
     public static function getNextIdNumber(): int
     {
-        $maxIdNumber = static::max('id_number');
-        $maxId = static::max('id');
-        $max = max($maxIdNumber ?? 0, $maxId ?? 0);
-        return max($max + 1, 571);
+        $latest = static::whereNotNull('id_number')->orderByDesc('id_number')->withTrashed()->first();
+        return $latest ? ((int) $latest->id_number + 1) : 1;
     }
 
     /**
@@ -153,9 +151,14 @@ class Patient extends Model
         return $this->attributes['profession'] ?? null;
     }
 
-    public function dentalCharts(): HasMany
+    public function medicalHistories(): HasMany
     {
-        return $this->hasMany(DentalChart::class, 'patient_id');
+        return $this->hasMany(MedicalHistory::class, 'patient_id');
+    }
+
+    public function receptions(): HasMany
+    {
+        return $this->hasMany(Reception::class, 'patient_id');
     }
 
     public function visits(): HasMany

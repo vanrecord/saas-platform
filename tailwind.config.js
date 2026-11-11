@@ -21,6 +21,9 @@ export default {
     darkMode: 'class', // or 'media' or false
     theme: {
         extend: {
+            fontSize: {
+                md: ['1rem', { lineHeight: '1.5rem' }],
+            },
             fontFamily: {
                 sans: ['cairo', ...defaultTheme.fontFamily.sans],
             },

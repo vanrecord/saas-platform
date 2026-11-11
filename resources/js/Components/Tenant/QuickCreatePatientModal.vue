@@ -97,13 +97,12 @@
           <!-- Date of Birth & Profession Row -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Date of Birth
-              </label>
-              <input
+              <DateInput
                 v-model="form.dob"
-                type="date"
-                class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm text-[#152B45] focus:border-[#0D63D6] focus:ring-2 focus:ring-blue-100 focus:outline-none transition bg-white"
+                :label="'Date of Birth'"
+                :max-date="new Date()"
+                placeholder="YYYY-MM-DD"
+                class="w-full"
               />
             </div>
 
@@ -163,6 +162,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import axios from 'axios'
+import DateInput from '@/Components/Forms/DateInput.vue'
 
 const props = defineProps({
   show: {

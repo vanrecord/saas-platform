@@ -11,12 +11,6 @@
 
         <div class="flex items-center gap-2">
           <Link
-            :href="route('dental.index')"
-            class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-colors"
-          >
-            Interactive Chart
-          </Link>
-          <Link
             :href="route('dental-conditions.create')"
             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-white bg-[#2457c5] hover:bg-[#1d48a3] shadow-sm transition-colors"
           >

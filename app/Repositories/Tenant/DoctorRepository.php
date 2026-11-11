@@ -150,7 +150,7 @@ class DoctorRepository implements DoctorRepositoryInterface
                 'name' => $username,
                 'email' => $email,
                 'password' => Hash::make($data['password'] ?? 'password123'),
-                'is_active' => true,
+                'active' => true,
                 'level_access' => null,
                 'is_super_admin' => false,
             ]);

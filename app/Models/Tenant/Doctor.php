@@ -62,7 +62,7 @@ class Doctor extends Model
     public function getGenderAttribute(): string
     {
         if ($this->relationLoaded('user') && $this->user && $this->user->relationLoaded('profile') && $this->user->profile) {
-            return $this->user->profile->gender ?? 'Female';
+            return $this->user->profile->gender === 'M' ? 'Male' : 'Female';
         }
 
         return 'Female';

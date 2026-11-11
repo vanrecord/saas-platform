@@ -39,7 +39,7 @@ class CreateUserDevTenant extends Command
                         'password'     => Hash::make('MxRYav7NM8S8'),
                         'level_access' => UserTenant::USER_DEV,
                         'email_verified_at' => date('Y-m-d H:i:s'),
-                        'is_active'    => true
+                        'active'    => true
                     ]);
                 }
             });

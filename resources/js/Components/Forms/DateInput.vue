@@ -19,7 +19,7 @@
             v-on="inputEvents"
             :placeholder="placeholder || 'YYYY-MM-DD'"
             class="w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-sm text-gray-700 focus:outline-none focus:ring focus:ring-primary-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"
-            :class="{ 'border-red-500 ring-1 ring-red-500': error }"
+            :class="[{ 'border-red-500 ring-1 ring-red-500': error }, inputClass]"
           />
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <CalendarIcon class="h-5 w-5 text-gray-400" />
@@ -63,12 +63,16 @@ export default {
       default: null,
     },
     minDate: {
-      type: String,
+      type: [String, Date, Object],
       default: null,
     },
     maxDate: {
-      type: String,
+      type: [String, Date, Object],
       default: null,
+    },
+    inputClass: {
+      type: String,
+      default: '',
     },
   },
   emits: ['update:modelValue'],

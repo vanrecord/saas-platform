@@ -104,7 +104,7 @@
                 :label="tm('employee.Date of Birth')"
                 :error="form.errors.dob"
                 :max-date="new Date()"
-                class="pb-2 px-2 w-full lg:w-1/2"
+                class="pb-2 pr-6 w-full lg:w-1/2"
               />
               <text-input
                 v-model.number="form.age"

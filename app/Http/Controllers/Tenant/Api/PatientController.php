@@ -15,7 +15,7 @@ class PatientController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Patient::query()->withCount(['dentalCharts']);
+        $query = Patient::query()->withCount(['medicalHistories']);
 
         if ($request->filled('search')) {
             $search = trim($request->query('search'));
@@ -78,7 +78,7 @@ class PatientController extends Controller
     public function show(Patient $patient): JsonResponse
     {
         $patient->load([
-            'dentalCharts' => fn ($q) => $q->withCount('teeth')->latest('chart_date'),
+            'medicalHistories' => fn ($q) => $q->latest('date'),
         ]);
 
         return response()->json(['data' => $patient]);

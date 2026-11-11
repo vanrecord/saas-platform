@@ -120,9 +120,20 @@ class PatientRepository extends BaseRepository implements PatientRepositoryInter
         $table->column(key: 'created_at', label: 'Created Date', sortable: true);
     }
 
+    public function getLatestId()
+    {
+        return $this->createModel()->where("id_number", '!=', null)->orderBy('id_number', 'desc')->withTrashed()->first();
+    }
+
     public function getNextIdNumber(): int
     {
-        return Patient::getNextIdNumber();
+        $patient_id = 0;
+        $IdPatient = $this->getLatestId();
+        if ($IdPatient) {
+            $patient_id = (int) $IdPatient->id_number;
+        }
+
+        return $patient_id + 1;
     }
 
     public function findWithDetails($id)
@@ -130,7 +141,7 @@ class PatientRepository extends BaseRepository implements PatientRepositoryInter
         $patient = $this->find($id);
         if ($patient) {
             $patient->load([
-                'dentalCharts' => fn ($q) => $q->withCount('teeth')->latest('chart_date'),
+                'medicalHistories' => fn ($q) => $q->latest('date'),
                 'visits' => fn ($q) => $q->latest(),
             ]);
         }

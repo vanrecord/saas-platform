@@ -9,16 +9,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('settings', function (Blueprint $table): void {
-            $table->increments('id');
-
-            $table->string('group');
-            $table->string('name');
-            $table->boolean('locked')->default(false);
-            $table->json('payload');
-
-            $table->timestamps();
-
-            $table->unique(['group', 'name']);
+            $table->string('setting_key',100)->index()->unique('key');
+			$table->text('setting_value',65535)->nullable();
         });
     }
 

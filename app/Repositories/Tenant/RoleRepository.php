@@ -246,6 +246,24 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                     ],
                 ],
             ],
+            'settings' => [
+                'id' => 'settings',
+                'title' => 'Settings',
+                'type' => 'group',
+                'menus' => [
+                    [
+                        'id' => 'payment-method',
+                        'title' => 'Payment Method',
+                        'permissions' => [
+                            ['key' => 'payment-method:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'payment-method:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'payment-method:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'payment-method:save', 'action' => 'save', 'label' => 'Save'],
+                            ['key' => 'payment-method:delete', 'action' => 'delete', 'label' => 'Delete'],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 }

@@ -8,7 +8,6 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('tooth_findings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('chart_tooth_id')->constrained('chart_teeth')->cascadeOnDelete();
             $table->foreignId('dental_condition_id')->nullable()->constrained('dental_conditions')->nullOnDelete();
             $table->string('surface', 12); // top, bottom, left, right, center, whole
             $table->string('custom_color', 7)->nullable();
@@ -18,7 +17,7 @@ return new class extends Migration {
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
-            $table->index(['chart_tooth_id', 'surface']);
+            $table->index([ 'surface']);
         });
     }
 

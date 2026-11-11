@@ -17,8 +17,8 @@
               <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
               </svg>
-              <Link :href="route('patients.index')" class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                {{ tm('Patients') || 'Patients' }}
+              <Link :href="backUrl" class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                {{ returnTo === 'register' ? (tm('Return_to_Register') || 'Return to Register') : (tm('Patients') || 'Patients') }}
               </Link>
             </div>
           </li>
@@ -96,7 +96,7 @@
                 :label="tm('employee.Date of Birth')"
                 :error="form.errors.dob"
                 :max-date="new Date()"
-                class="pb-2 px-2 w-full lg:w-1/2"
+                class="pb-2 pr-6 w-full lg:w-1/2"
               />
 
               <text-input
@@ -192,7 +192,7 @@
           <div class="p-4 border-t dark:border-primary">
             <div class="flex items-center justify-end px-4 py-4 space-x-2">
               <save-button></save-button>
-              <back-button :url="route('patients.index')"></back-button>
+              <back-button :url="backUrl"></back-button>
             </div>
           </div>
         </div>
@@ -255,6 +255,10 @@ export default defineComponent({
   },
   props: {
     suggestedIdNumber: [Number, String],
+    returnTo: {
+      type: String,
+      default: '',
+    },
   },
   setup() {
     const { tm } = useI18n({
@@ -265,6 +269,12 @@ export default defineComponent({
     return { tm, toast }
   },
   computed: {
+    backUrl() {
+      if (this.returnTo === 'register' || this.form?.return_to === 'register') {
+        return route('tenant.visit.create')
+      }
+      return route('patients.index')
+    },
     genderOptions() {
       return {
         '': this.tm('Select_Gender') || 'Select Gender',
@@ -291,6 +301,7 @@ export default defineComponent({
         address: '',
         avatar: null,
         remove_avatar: false,
+        return_to: this.returnTo || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('return_to') || '' : ''),
       }),
     }
   },

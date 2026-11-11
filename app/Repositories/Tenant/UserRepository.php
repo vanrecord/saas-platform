@@ -112,7 +112,7 @@ class UserRepository implements TenantUserRepositoryInterface
                 'name' => $username,
                 'email' => $email,
                 'password' => Hash::make($data['password'] ?? 'password123'),
-                'is_active' => isset($data['active']) ? (bool) $data['active'] : (isset($data['is_active']) ? (bool) $data['is_active'] : true),
+                'active' => isset($data['active']) ? (bool) $data['active'] : (isset($data['is_active']) ? (bool) $data['is_active'] : true),
                 'level_access' => null,
                 'is_super_admin' => false,
             ]);

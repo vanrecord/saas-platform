@@ -37,14 +37,22 @@ class PatientController extends Controller
         });
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         abort_if(!auth()->user()?->can('patient:create'), 403, 'Unauthorized to create patients.');
 
-        $suggestedIdNumber = $this->patient->getNextIdNumber();
+        $patient_id = 0;
+        $IdPatient = $this->patient->getLatestId();
+        if ($IdPatient) {
+            $patient_id = $IdPatient->id_number;
+        }
+
+        $suggestedIdNumber = $patient_id + 1;
+        $returnTo = $request->query('return_to');
 
         return Inertia::render('Tenant/Patient/Create', [
             'suggestedIdNumber' => $suggestedIdNumber,
+            'returnTo' => $returnTo,
         ]);
     }
 
@@ -86,9 +94,15 @@ class PatientController extends Controller
             unset($data['avatar']);
         }
 
+        $returnTo = $request->input('return_to');
         unset($data['remove_avatar'], $data['return_to']);
 
         $patient = $this->patient->create($data);
+
+        if ($returnTo === 'register') {
+            return redirect()->route('tenant.visit.create', ['patient_id' => $patient->id])
+                ->with('success', 'Patient record created successfully.');
+        }
 
         return redirect()->route('patients.index')
             ->with('success', 'Patient record created successfully.');

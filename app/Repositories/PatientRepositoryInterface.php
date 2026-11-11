@@ -10,6 +10,8 @@ interface PatientRepositoryInterface
 
     public function getNextIdNumber(): int;
 
+    public function getLatestId();
+
     public function find($id, array $columns = ['*']);
 
     public function findWithDetails($id);

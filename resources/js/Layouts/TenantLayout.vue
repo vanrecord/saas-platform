@@ -42,7 +42,7 @@
       </div>
 
       <!-- Scrollable Navigation Area -->
-      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 text-xs">
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 text-sm">
         
         <div>
           <div class="space-y-1">
@@ -51,7 +51,7 @@
               v-if="can(['all', 'dashboard:view'])"
               :href="route('tenant.dashboard')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('tenant.dashboard')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -69,7 +69,7 @@
               v-if="can(['all', 'register:view'])"
               :href="route('tenant.visit.create')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('tenant.visit.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -87,7 +87,7 @@
               v-if="can(['all', 'patient:view', 'patients', 'patients.index'])"
               :href="route('patients.index')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('patients.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -106,10 +106,10 @@
           <div class="space-y-1">
             <!-- Invoice -->
             <Link
-              :href="route('tenant.invoices.index')"
+              :href="route('invoices.index')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
-                route().current('tenant.invoices.*')
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                route().current('invoices.*') || route().current('tenant.invoices.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
               ]"
@@ -125,7 +125,7 @@
             <Link
               :href="route('tenant.payments.index')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('tenant.payments.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -142,59 +142,12 @@
 
         <div>
           <div class="space-y-1">
-            <!-- Dental Charts with Submenu -->
-            <div>
-              <button
-                type="button"
-                @click="clinicalOpen.charts = !clinicalOpen.charts"
-                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
-              >
-                <div class="flex items-center gap-3">
-                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span v-show="!isSidebarCollapsed">Dental Charts</span>
-                </div>
-                <svg
-                  v-show="!isSidebarCollapsed"
-                  :class="['w-3.5 h-3.5 text-slate-400 transition-transform duration-200', clinicalOpen.charts ? 'rotate-180' : '']"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              
-              <!-- Submenu -->
-              <div v-show="!isSidebarCollapsed && clinicalOpen.charts" class="pl-9 pr-2 py-1 space-y-1">
-                <Link
-                  :href="route('dental.index')"
-                  :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
-                    route().current('dental.index') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
-                  ]"
-                >
-                  Interactive Odontogram
-                </Link>
-                <Link
-                  :href="route('dental-charts.index')"
-                  :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
-                    route().current('dental-charts.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
-                  ]"
-                >
-                  Examination Charts
-                </Link>
-              </div>
-            </div>
-
             <!-- Conditions with Submenu -->
             <div>
               <button
                 type="button"
                 @click="clinicalOpen.conditions = !clinicalOpen.conditions"
-                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
               >
                 <div class="flex items-center gap-3">
                   <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +171,7 @@
                 <Link
                   :href="route('dental-conditions.index')"
                   :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
                     route().current('dental-conditions.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
                   ]"
                 >
@@ -241,7 +194,7 @@
               <button
                 type="button"
                 @click="clinicalOpen.hospital = !clinicalOpen.hospital"
-                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
               >
                 <div class="flex items-center gap-3">
                   <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +219,7 @@
                   v-if="can(['all', 'service:view', 'services', 'services.index', 'services:services:view', 'services:view'])"
                   :href="route('services.index')"
                   :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
                     route().current('services.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
                   ]"
                 >
@@ -277,7 +230,7 @@
                   v-if="can(['all', 'service-category:view', 'service-categories', 'service_categories', 'service-categories.index', 'categories:service_categories:view', 'service_categories:view'])"
                   :href="route('service-categories.index')"
                   :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
                     route().current('service-categories.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
                   ]"
                 >
@@ -288,7 +241,7 @@
                   v-if="can(['all', 'product-category:view', 'product-categories', 'product_categories', 'product-categories.index', 'categories:product_categories:view', 'product_categories:view'])"
                   :href="route('product-categories.index')"
                   :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
                     route().current('product-categories.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
                   ]"
                 >
@@ -299,7 +252,7 @@
                   v-if="can(['all', 'supplier:view', 'suppliers', 'suppliers.index', 'suppliers:suppliers:view', 'suppliers:view'])"
                   :href="route('suppliers.index')"
                   :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
                     route().current('suppliers.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
                   ]"
                 >
@@ -310,7 +263,7 @@
                   v-if="can(['all', 'product:view', 'products', 'products.index', 'products:products:view', 'products:view'])"
                   :href="route('products.index')"
                   :class="[
-                    'block px-2.5 py-1.5 rounded-md text-xs transition-colors',
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
                     route().current('products.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
                   ]"
                 >
@@ -327,7 +280,7 @@
               v-if="can(['all', 'doctor:view', 'doctors', 'doctors.index'])"
               :href="route('doctors.index')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('doctors.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -344,7 +297,7 @@
               v-if="can(['all', 'user:view', 'users', 'users.index'])"
               :href="route('users.index')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('users.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -360,7 +313,7 @@
               v-if="can(['all', 'role:view', 'roles', 'roles.index', 'role:view'])"
               :href="route('roles.index')"
               :class="[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
                 route().current('roles.*')
                   ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
                   : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
@@ -376,25 +329,58 @@
 
         <div>
           <div class="space-y-1">
-            <a
-              href="#"
-              class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
-            >
-              <div class="flex items-center gap-3">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <!-- Settings with Submenu -->
+            <div>
+              <button
+                type="button"
+                @click="clinicalOpen.settings = !clinicalOpen.settings"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span v-show="!isSidebarCollapsed">Settings</span>
+                </div>
+                <svg
+                  v-show="!isSidebarCollapsed"
+                  :class="['w-3.5 h-3.5 text-slate-400 transition-transform duration-200', clinicalOpen.settings ? 'rotate-180' : '']"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-                <span v-show="!isSidebarCollapsed">Settings</span>
+              </button>
+
+              <!-- Submenu -->
+              <div v-show="!isSidebarCollapsed && clinicalOpen.settings" class="pl-9 pr-2 py-1 space-y-1">
+                <Link
+                  :href="route('settings.invoice-prefixes.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    route().current('settings.invoice-prefixes.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  New Prefix Invoice
+                </Link>
+                <Link
+                  v-if="can(['all', 'payment-method:view', 'payment-method:create', 'payment-method:edit'])"
+                  :href="route('settings.payment-methods.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    route().current('settings.payment-methods.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  {{ tm('Payment_Method') || 'Payment Method' }}
+                </Link>
               </div>
-              <svg v-show="!isSidebarCollapsed" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </a>
+            </div>
 
             <a
               href="#"
-              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
             >
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -475,41 +461,6 @@
 
         <!-- Right Side: Action Buttons & User Menu -->
         <div class="flex items-center gap-2.5 sm:gap-3">
-          
-          <!-- + Patient Action Button (Solid Blue) -->
-          <button
-            type="button"
-            @click="isQuickCreateModalOpen = true"
-            class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0D63D6] hover:bg-[#094bb5] transition-all shadow-xs"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Patient</span>
-          </button>
-
-          <!-- + Chart Action Button (White with blue text & border) -->
-          <Link
-            :href="route('dental-charts.create')"
-            class="hidden sm:inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#0D63D6] bg-white border border-[#0D63D6]/30 hover:bg-blue-50 transition-all shadow-xs"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Chart</span>
-          </Link>
-
-          <!-- Chart Button with Tooth Icon (Light Cyan/Blue) -->
-          <Link
-            :href="route('dental.index')"
-            class="hidden md:inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#0D63D6] bg-[#EBF5FF] hover:bg-[#DCEEFE] transition-all"
-          >
-            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-              <path d="M12 2C8.5 2 6 4.5 6 7c0 1.9.8 3.5 1.5 5.2.7 1.8 1.5 3.8 1.5 5.8 0 1.7 1.3 3 3 3s3-1.3 3-3c0-2 .8-4 1.5-5.8C17.2 10.5 18 8.9 18 7c0-2.5-2.5-5-6-5zm-1 16c-.6 0-1-.4-1-1 0-1.8-.8-3.6-1.5-5.3C7.8 10 7 8.5 7 7c0-1.9 2-3.8 5-3.8s5 1.9 5 3.8c0 1.5-.8 3-1.5 4.7-.7 1.7-1.5 3.5-1.5 5.3 0 .6-.4 1-1 1h-2z"/>
-            </svg>
-            <span>Chart</span>
-          </Link>
-
           <!-- Vertical Divider Line -->
           <div class="h-6 w-px bg-slate-200 mx-1"></div>
 
@@ -635,20 +586,20 @@ const isUserMenuOpen = ref(false)
 const isQuickCreateModalOpen = ref(false)
 
 const clinicalOpen = reactive({
-  charts: Boolean(route().current('dental.*') || route().current('dental-charts.*') || (!route().current('dental-conditions.*') && !route().current('services.*') && !route().current('suppliers.*') && !route().current('service-categories.*') && !route().current('product-categories.*') && !route().current('products.*'))),
   conditions: Boolean(route().current('dental-conditions.*')),
-  hospital: Boolean(route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*'))
+  hospital: Boolean(route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')),
+  settings: Boolean(route().current('settings.*'))
 })
 
 Inertia.on('navigate', () => {
   if (route().current('dental-conditions.*')) {
     clinicalOpen.conditions = true
   }
-  if (route().current('dental.*') || route().current('dental-charts.*')) {
-    clinicalOpen.charts = true
-  }
   if (route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')) {
     clinicalOpen.hospital = true
+  }
+  if (route().current('settings.*')) {
+    clinicalOpen.settings = true
   }
 })
 

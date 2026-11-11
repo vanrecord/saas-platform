@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant\DentalChart;
+use App\Models\Tenant\MedicalHistory;
 use App\Models\Tenant\Patient;
 use App\Models\Tenant\PatientVisit;
 use Carbon\Carbon;
@@ -33,7 +33,7 @@ class TenantDashboardController extends Controller
             ->take(6)
             ->get();
 
-        $totalCharts = DentalChart::count();
+        $totalCharts = MedicalHistory::count();
 
         return Inertia::render('Tenant/Dashboard', [
             'stats' => [

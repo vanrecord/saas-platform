@@ -7,7 +7,7 @@
       class="h-6 w-6 text-blue-500 dark:text-light"
     />
     </span>
-    <span class="text-sm"> {{tm(item.label)}} </span>
+    <span class="text-md"> {{tm(item.label)}} </span>
 </jet-nav-link>
 </template>
 

@@ -61,6 +61,16 @@ createInertiaApp({
             .component("Head",Head)
             .mixin({ methods: { route } })
             .mixin({methods:{
+              tm: function (key) {
+                const res = i18n.global.tm(key);
+                if (typeof res === 'string' && res.length > 0) {
+                  return res;
+                }
+                if (res && typeof res === 'object' && Object.keys(res).length > 0) {
+                  return res;
+                }
+                return '';
+              },
               can: function (permissions) {          
                 var allPermissions = this.$page.props.auth.can;
                 var hasPermission = false;

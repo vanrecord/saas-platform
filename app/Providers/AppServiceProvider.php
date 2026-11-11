@@ -50,6 +50,22 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\DoctorRepositoryInterface::class,
             \App\Repositories\Tenant\DoctorRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\InvoiceRepositoryInterface::class,
+            \App\Repositories\InvoiceRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\InvoicePrefixRepositoryInterface::class,
+            \App\Repositories\InvoicePrefixRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\PaymentRepositoryInterface::class,
+            \App\Repositories\PaymentRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\PaymentMethodRepositoryInterface::class,
+            \App\Repositories\Tenant\PaymentMethodRepository::class
+        );
     }
 
     /**

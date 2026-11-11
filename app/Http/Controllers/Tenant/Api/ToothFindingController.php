@@ -12,9 +12,11 @@ class ToothFindingController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = ToothFinding::query()->with(['condition', 'chartTooth']);
+        $query = ToothFinding::query()->with(['condition', 'treatmentTeeth']);
 
-        if ($request->filled('chart_tooth_id')) {
+        if ($request->filled('treatment_teeth_id')) {
+            $query->where('treatment_teeth_id', $request->integer('treatment_teeth_id'));
+        } elseif ($request->filled('chart_tooth_id')) {
             $query->where('chart_tooth_id', $request->integer('chart_tooth_id'));
         }
 
@@ -32,14 +34,14 @@ class ToothFindingController extends Controller
 
         return response()->json([
             'message' => 'Tooth finding created successfully',
-            'data' => $finding->load('condition', 'chartTooth'),
+            'data' => $finding->load('condition', 'treatmentTeeth'),
         ], 201);
     }
 
     public function show(ToothFinding $toothFinding): JsonResponse
     {
         return response()->json([
-            'data' => $toothFinding->load('condition', 'chartTooth'),
+            'data' => $toothFinding->load('condition', 'treatmentTeeth'),
         ]);
     }
 
@@ -54,7 +56,7 @@ class ToothFindingController extends Controller
 
         return response()->json([
             'message' => 'Tooth finding updated successfully',
-            'data' => $toothFinding->fresh(['condition', 'chartTooth']),
+            'data' => $toothFinding->fresh(['condition', 'treatmentTeeth']),
         ]);
     }
 
