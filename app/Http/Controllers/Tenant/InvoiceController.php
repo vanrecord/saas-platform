@@ -16,11 +16,14 @@ use App\Models\Tenant\Service;
 use App\Models\UserTenant;
 use App\Repositories\InvoicePrefixRepositoryInterface;
 use App\Repositories\InvoiceRepositoryInterface;
+use App\Supports\Trait\ClinicInfoTrait;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,6 +31,8 @@ use ProtoneMedia\LaravelQueryBuilderInertiaJs\InertiaTable;
 
 class InvoiceController extends Controller
 {
+    use ClinicInfoTrait;
+
     protected InvoiceRepositoryInterface $invoiceRepository;
     protected InvoicePrefixRepositoryInterface $prefixRepository;
 
@@ -244,25 +249,111 @@ class InvoiceController extends Controller
 
         $invoice = MedicalHistory::with([
             'patient',
+            'medicalDetails',
             'payments.paymentMethod',
             'payments.verifiedBy.profile',
         ])->findOrFail($id);
 
+        $invoice->recalculateFinancials(false);
+
         $patient = $invoice->patient;
 
-        // Active payment methods
-        $paymentMethods = PaymentMethod::where(function ($q) {
-            $q->whereNull('is_activate')->orWhere('is_activate', true);
-        })->where(function ($q) {
-            $q->whereNull('is_disable')->orWhere('is_disable', false);
-        })
-        ->orderBy('order')
-        ->orderBy('name')
-        ->get();
+        // All active payment methods
+        $allActiveMethods = PaymentMethod::where('is_disable', false)
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
 
-        // Build account options (e.g. from payment methods register_ref or default)
+        // ABA KHQR methods: must be active (is_disable = false) and have valid, non-empty integration datas
+        $abaMethods = $allActiveMethods->filter(function ($pm) {
+            return $pm->hasValidAbaData();
+        })->values();
+
+        // Cash methods: active methods without ABA integration requirements
+        $cashMethods = $allActiveMethods->filter(function ($pm) {
+            return !$pm->hasValidAbaData();
+        })->values();
+
+        // If no dedicated cash-only methods exist, allow active methods in cash selection
+        if ($cashMethods->isEmpty() && $allActiveMethods->isNotEmpty()) {
+            $cashMethods = $allActiveMethods;
+        }
+
+        // Grouping by currency preserving legacy structure
+        $groupedAba = [];
+        foreach ($abaMethods->groupBy('currency') as $curr => $items) {
+            $key = $curr ?: 'USD';
+            $groupedAba[$key] = $items->values()->map(function ($pm) {
+                return [
+                    'id' => $pm->id,
+                    'name' => $pm->name,
+                    'currency' => $pm->currency,
+                    'provider' => $pm->provider,
+                    'register_ref' => $pm->register_ref,
+                    'is_default_payment' => (bool) $pm->is_default_payment,
+                    'order' => $pm->order,
+                ];
+            });
+        }
+
+        $groupedCash = [];
+        foreach ($cashMethods->groupBy('currency') as $curr => $items) {
+            $key = $curr ?: 'CASH PAYMENT';
+            $groupedCash[$key] = $items->values()->map(function ($pm) {
+                return [
+                    'id' => $pm->id,
+                    'name' => $pm->name,
+                    'currency' => $pm->currency,
+                    'provider' => $pm->provider,
+                    'register_ref' => $pm->register_ref,
+                    'is_default_payment' => (bool) $pm->is_default_payment,
+                    'order' => $pm->order,
+                ];
+            });
+        }
+
+        // Default Payment & Auto-Selection logic
+        $hasValidAba = $abaMethods->isNotEmpty();
+        $defaultMethod = $allActiveMethods->firstWhere('is_default_payment', true);
+        if (!$defaultMethod) {
+            $defaultMethod = $allActiveMethods->firstWhere('is_sponsor', true);
+        }
+
+        $activePayment = 'cash';
+        $selectedDefaultMethod = null;
+
+        if ($defaultMethod && !$defaultMethod->is_disable) {
+            if ($defaultMethod->hasValidAbaData()) {
+                // Scenario A: Default Payment is an ABA KHQR method
+                $activePayment = 'khqr';
+                $selectedDefaultMethod = $defaultMethod;
+            } else {
+                // Scenario B: Default Payment is a Cash method
+                $activePayment = 'cash';
+                $selectedDefaultMethod = $defaultMethod;
+            }
+        } else {
+            // Scenario C & D: No valid default payment exists or default is disabled/invalid
+            if ($hasValidAba) {
+                $activePayment = 'khqr';
+                $selectedDefaultMethod = $abaMethods->first();
+            } else {
+                $activePayment = 'cash';
+                $selectedDefaultMethod = $cashMethods->first();
+            }
+        }
+
+        // Safety fallback: if khqr was selected but no valid ABA methods exist
+        if ($activePayment === 'khqr' && !$hasValidAba) {
+            $activePayment = 'cash';
+            $selectedDefaultMethod = $cashMethods->first();
+        }
+
+        $defaultCurrency = $selectedDefaultMethod?->currency ?: ($activePayment === 'khqr' ? 'USD' : 'USD');
+
+        // Build account options (from active payment methods register_ref)
         $accounts = [];
-        foreach ($paymentMethods as $pm) {
+        foreach ($allActiveMethods as $pm) {
             if (!empty($pm->register_ref)) {
                 $curr = $pm->currency ?: 'USD';
                 $acc = $pm->register_ref . '_' . $curr;
@@ -271,23 +362,14 @@ class InvoiceController extends Controller
                 }
             }
         }
-        // Always ensure standard accounts exist with 00047_USD as first if not present
-        if (!in_array('00047_USD', $accounts)) {
-            array_unshift($accounts, '00047_USD');
-        }
-        if (!in_array('00047_KHR', $accounts)) {
-            $accounts[] = '00047_KHR';
-        }
-        if (!in_array('CASH_USD', $accounts)) {
-            $accounts[] = 'CASH_USD';
-        }
 
-        // Transactions list
-        $transactions = $invoice->payments()
-            ->with(['paymentMethod', 'verifiedBy.profile'])
-            ->orderBy('date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get()
+        // Payments collection (already eager loaded)
+        $payments = $invoice->payments;
+
+        // Transactions list sorted by date/id descending
+        $transactions = $payments
+            ->sortByDesc('id')
+            ->values()
             ->map(function ($p) use ($invoice) {
                 return [
                     'id' => $p->id,
@@ -304,12 +386,12 @@ class InvoiceController extends Controller
                 ];
             });
 
-        $totalPaidUsd = (float) $invoice->payments()->where('amount', '>', 0)->sum('amount');
-        $totalPaidKh = (int) $invoice->payments()->where('amount_kh', '>', 0)->sum('amount_kh');
-        $refundedUsd = (float) $invoice->payments()->where('amount', '<', 0)->sum(function ($p) {
+        $totalPaidUsd = (float) $payments->where('amount', '>', 0)->sum('amount');
+        $totalPaidKh = (int) $payments->where('amount_kh', '>', 0)->sum('amount_kh');
+        $refundedUsd = (float) $payments->where('amount', '<', 0)->sum(function ($p) {
             return abs((float) $p->amount);
         });
-        $outstandingBalance = max(0, (float) $invoice->total - $totalPaidUsd + $refundedUsd);
+        $outstandingBalance = max(0, (float) $invoice->balance);
         $availableCredit = $patient ? (float) ($patient->balance ?? 0) : 0.0;
 
         return response()->json([
@@ -332,12 +414,47 @@ class InvoiceController extends Controller
                 'phone' => $patient?->phone,
                 'available_credit' => $availableCredit,
             ],
-            'payment_methods' => $paymentMethods->map(function ($pm) {
+            'active_payment' => $activePayment,
+            'has_valid_aba' => $hasValidAba,
+            'default_method_id' => $selectedDefaultMethod?->id,
+            'default_currency' => $defaultCurrency,
+            'aba_payment_methods' => $abaMethods->map(function ($pm) {
                 return [
                     'id' => $pm->id,
                     'name' => $pm->name,
                     'provider' => $pm->provider,
                     'is_sponsor' => (bool) $pm->is_sponsor,
+                    'is_default_payment' => (bool) $pm->is_default_payment,
+                    'order' => $pm->order,
+                    'qr_code_url' => $pm->qr_code_url,
+                    'register_ref' => $pm->register_ref,
+                    'currency' => $pm->currency,
+                    'safe_datas' => $pm->safe_datas,
+                ];
+            }),
+            'cash_payment_methods' => $cashMethods->map(function ($pm) {
+                return [
+                    'id' => $pm->id,
+                    'name' => $pm->name,
+                    'provider' => $pm->provider,
+                    'is_sponsor' => (bool) $pm->is_sponsor,
+                    'is_default_payment' => (bool) $pm->is_default_payment,
+                    'order' => $pm->order,
+                    'qr_code_url' => $pm->qr_code_url,
+                    'register_ref' => $pm->register_ref,
+                    'currency' => $pm->currency,
+                    'safe_datas' => $pm->safe_datas,
+                ];
+            }),
+            'grouped_aba_methods' => $groupedAba,
+            'grouped_cash_methods' => $groupedCash,
+            'payment_methods' => $allActiveMethods->map(function ($pm) {
+                return [
+                    'id' => $pm->id,
+                    'name' => $pm->name,
+                    'provider' => $pm->provider,
+                    'is_sponsor' => (bool) $pm->is_sponsor,
+                    'is_default_payment' => (bool) $pm->is_default_payment,
                     'order' => $pm->order,
                     'qr_code_url' => $pm->qr_code_url,
                     'register_ref' => $pm->register_ref,
@@ -363,12 +480,27 @@ class InvoiceController extends Controller
 
         $request->validate([
             'payment_method_id' => 'nullable|exists:payment_methods,id',
+            'payment_type' => 'nullable|string|in:khqr,cash',
             'amount' => 'required|numeric|min:0',
             'date' => 'required',
             'payment_account' => 'nullable|string|max:100',
             'apply_credit' => 'nullable|boolean',
             'credit_amount' => 'nullable|numeric|min:0',
         ]);
+
+        if ($methodId = $request->input('payment_method_id')) {
+            $pm = PaymentMethod::find($methodId);
+            if (!$pm || $pm->is_disable) {
+                throw ValidationException::withMessages([
+                    'payment_method_id' => ['The selected payment method is inactive or disabled.'],
+                ]);
+            }
+            if ($request->input('payment_type') === 'khqr' && !$pm->hasValidAbaData()) {
+                throw ValidationException::withMessages([
+                    'payment_method_id' => ['The selected payment method does not have valid ABA integration data.'],
+                ]);
+            }
+        }
 
         return DB::transaction(function () use ($request, $id) {
             $invoice = MedicalHistory::with('patient')->lockForUpdate()->findOrFail($id);
@@ -382,7 +514,10 @@ class InvoiceController extends Controller
 
             $rate = (float) ($invoice->rate ?: 4050.0);
             $paymentDate = $request->input('date') ? Carbon::parse($request->input('date')) : Carbon::now();
-            $paymentAccount = $request->input('payment_account') ?: '00047_USD';
+            $paymentAccount = $request->input('payment_account');
+            if ($paymentAccount === 'null' || empty($paymentAccount)) {
+                $paymentAccount = null;
+            }
 
             // 1. Process Applied Credit if requested
             $appliedCredit = 0.0;
@@ -444,21 +579,10 @@ class InvoiceController extends Controller
             }
 
             // 3. Recalculate invoice balances and status
-            $allPayments = Payment::where('medical_history_id', $invoice->id)->get();
-            $paidUsd = (float) $allPayments->where('amount', '>', 0)->sum('amount');
-            $paidKh = (float) $allPayments->where('amount_kh', '>', 0)->sum('amount_kh');
-            $refunded = (float) $allPayments->where('amount', '<', 0)->sum(fn($p) => abs($p->amount));
-            $newBalance = max(0, (float) $invoice->total - $paidUsd + $refunded);
-
-            $status = MedicalHistory::determineStatus((float) $invoice->total, $paidUsd, $refunded, $newBalance);
-
-            $invoice->update([
-                'paid_usd' => $paidUsd,
-                'paid_kh' => $paidKh,
-                'refunded' => $refunded,
-                'balance' => $newBalance,
-                'status' => $status,
-            ]);
+            $financials = $invoice->recalculateFinancials(true);
+            $paidUsd = $financials['paid_usd'];
+            $paidKh = $financials['paid_kh'];
+            $newBalance = $financials['balance'];
 
             return response()->json([
                 'success' => true,
@@ -494,6 +618,136 @@ class InvoiceController extends Controller
         return Inertia::render('Tenant/Invoice/Statement', [
             'invoice' => $invoice,
             'hospital' => $hospital,
+        ]);
+    }
+
+    /**
+     * Dedicated Invoice Print View matching reference PDF.
+     */
+    public function print($id): Response
+    {
+        abort_if(!auth()->user()?->can('invoice:view') && !auth()->user()?->can('invoice:edit'), 403, 'Unauthorized.');
+
+        $invoice = MedicalHistory::with([
+            'patient.addressRecord.province',
+            'patient.addressRecord.district',
+            'patient.addressRecord.commune',
+            'patient.addressRecord.village',
+            'doctor.user.profile',
+            'assistant.profile',
+            'medicalDetails.detailable',
+            'medicalDetails.treatmentTeeth',
+            'payments.paymentMethod',
+            'prefix',
+        ])->findOrFail($id);
+
+        $clinic = $this->getClinicInfo();
+        $patient = $invoice->patient;
+
+        // Address resolution: column first, then addresses table (as per requirement)
+        $patientAddress = $patient?->formatted_address ?: ($patient?->address ?: '');
+
+        // Doctor details
+        $doctorName = $invoice->doctor?->full_name 
+            ?: ($invoice->doctor?->user?->name ?? '');
+        $doctorPhone = $invoice->doctor?->user?->phone 
+            ?? $invoice->doctor?->user?->profile?->phone 
+            ?? '';
+
+        // Patient details
+        $patientName = $patient?->full_name ?: 'N/A';
+        $patientSex = $patient?->gender ?: $patient?->sex ?: 'M';
+        $patientAge = $patient?->age ?: ($patient?->dob ? Carbon::parse($patient->dob)->age : '');
+        $patientId = $patient ? str_pad((string) ($patient->id_number ?: $patient->id), 6, '0', STR_PAD_LEFT) : '';
+        $patientPhone = $patient?->phone ?: '';
+
+        // Line items
+        $items = [];
+        $subtotal = 0.0;
+        foreach ($invoice->medicalDetails as $idx => $detail) {
+            $qty = max(1, (int) ($detail->quantity ?: 1));
+            $unitPrice = (float) ($detail->unit_price ?: 0.0);
+            $gross = $qty * $unitPrice;
+            $discVal = (float) ($detail->discount ?: 0.0);
+            $discAs = $detail->discount_as ?: '%';
+
+            if ($discAs === '%') {
+                $discPercent = $discVal;
+                $discAmount = $gross * ($discVal / 100);
+            } else {
+                $discAmount = min($gross, $discVal);
+                $discPercent = $gross > 0 ? ($discAmount / $gross) * 100 : 0.0;
+            }
+
+            $amount = (float) ($detail->amount ?? ($gross - $discAmount));
+            $subtotal += $amount;
+
+            $items[] = [
+                'n' => $idx + 1,
+                'name' => $detail->item_name ?: ($detail->detailable?->name ?? 'Treatment #' . ($idx + 1)),
+                'qty' => $qty,
+                'price' => $unitPrice,
+                'disc_percent' => $discPercent,
+                'disc_amount' => $discAmount,
+                'amount' => $amount,
+            ];
+        }
+
+        $rate = (float) ($invoice->rate ?: 4100.0);
+        $overallDiscount = (float) ($invoice->discount_invoice ?: 0.0);
+        $overallDiscountType = $invoice->discount_inv_as ?: '%';
+
+        if ($overallDiscountType === '%') {
+            $overallDiscountAmount = $subtotal * ($overallDiscount / 100);
+        } else {
+            $overallDiscountAmount = $overallDiscount;
+        }
+        $overallDiscountAmount = min($subtotal, max(0, $overallDiscountAmount));
+        $total = max(0, $subtotal - $overallDiscountAmount);
+
+        // Payments and Balance
+        $paidUsd = (float) ($invoice->paid_usd ?? 0.0);
+        $paidKh = (float) ($invoice->paid_kh ?? ($paidUsd * $rate));
+        $balanceUsd = (float) ($invoice->balance ?? max(0, $total - $paidUsd));
+        $balanceKh = (float) round($balanceUsd * $rate);
+
+        // Invoice Number format
+        $invNum = $invoice->invoice_number_formatted ?: $invoice->invoice_number;
+
+        // Quotation number
+        $quoteNum = !empty($invoice->estimate_id) ? sprintf('QUT%06d', $invoice->estimate_id) : null;
+
+        return Inertia::render('Tenant/Invoice/Print', [
+            'invoice' => [
+                'id' => $invoice->id,
+                'number' => $invNum,
+                'quotation_number' => $quoteNum,
+                'date' => $invoice->date ? Carbon::parse($invoice->date)->format('d/m/Y') : Carbon::today()->format('d/m/Y'),
+                'printed_at' => Carbon::now()->format('d/m/Y g:i A'),
+                'subtotal' => $subtotal,
+                'discount' => $overallDiscountAmount,
+                'total' => $total,
+                'rate' => $rate,
+                'paid_usd' => $paidUsd,
+                'paid_kh' => $paidKh,
+                'balance_usd' => $balanceUsd,
+                'balance_kh' => $balanceKh,
+                'items' => $items,
+                'doctor' => [
+                    'name' => $doctorName,
+                    'phone' => $doctorPhone,
+                ],
+                'patient' => [
+                    'name' => $patientName,
+                    'sex' => $patientSex,
+                    'age' => $patientAge,
+                    'id' => $patientId,
+                    'phone' => $patientPhone,
+                    'address' => $patientAddress,
+                ],
+                'cashier_name' => $invoice->assistant?->name ?? auth()->user()?->name ?? 'fwta owner',
+            ],
+            'clinic' => $clinic,
         ]);
     }
 }

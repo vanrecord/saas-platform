@@ -42,7 +42,6 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
                 'id',
                 'name',
                 'description',
-                'qr_code',
                 'print',
                 'is_sponsor',
                 'provider',
@@ -122,18 +121,25 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
                 PaymentMethod::query()->update(['print' => false]);
             }
 
-            // Upload QR Code if provided
-            if ($qrCode && $qrCode->isValid()) {
-                $ext = $qrCode->getClientOriginalExtension() ?: 'png';
-                $filename = 'pm_qr_' . Str::random(20) . '.' . $ext;
-                $data['qr_code'] = $qrCode->storeAs('payment_methods', $filename, 'public');
-            }
-
             if (!isset($data['order']) || $data['order'] === '' || $data['order'] === null) {
                 $data['order'] = $this->getNextOrder();
             }
 
-            return PaymentMethod::create($data);
+            unset($data['qr_code']);
+
+            $paymentMethod = PaymentMethod::create($data);
+
+            // Upload QR Code if provided using Spatie MediaLibrary
+            if ($qrCode && $qrCode->isValid()) {
+                $fileName     = $qrCode->getClientOriginalName();
+                $extension    = explode('.', $fileName);
+                $extension    = strtolower(end($extension));
+                $newFileName  = md5(date('YmdHis') . $fileName) . '.' . $extension;
+
+                $paymentMethod->addMedia($qrCode)->usingFileName($newFileName)->toMediaCollection('qrcode');
+            }
+
+            return $paymentMethod;
         });
     }
 
@@ -150,20 +156,19 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
 
             // Handle QR Code replacement or removal
             if ($removeQrCode) {
-                if ($paymentMethod->qr_code && Storage::disk('public')->exists($paymentMethod->qr_code)) {
-                    Storage::disk('public')->delete($paymentMethod->qr_code);
-                }
-                $data['qr_code'] = null;
+                $paymentMethod->clearMediaCollection('qrcode');
             } elseif ($qrCode && $qrCode->isValid()) {
-                if ($paymentMethod->qr_code && Storage::disk('public')->exists($paymentMethod->qr_code)) {
-                    Storage::disk('public')->delete($paymentMethod->qr_code);
-                }
-                $ext = $qrCode->getClientOriginalExtension() ?: 'png';
-                $filename = 'pm_qr_' . Str::random(20) . '.' . $ext;
-                $data['qr_code'] = $qrCode->storeAs('payment_methods', $filename, 'public');
-            } else {
-                unset($data['qr_code']);
+                $paymentMethod->clearMediaCollection('qrcode');
+
+                $fileName     = $qrCode->getClientOriginalName();
+                $extension    = explode('.', $fileName);
+                $extension    = strtolower(end($extension));
+                $newFileName  = md5(date('YmdHis') . $fileName) . '.' . $extension;
+
+                $paymentMethod->addMedia($qrCode)->usingFileName($newFileName)->toMediaCollection('qrcode');
             }
+
+            unset($data['qr_code'], $data['remove_qr_code']);
 
             // Handle API key preservation in datas if masked
             if (isset($data['datas']) && is_array($data['datas'])) {
@@ -186,9 +191,7 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
     public function deletePaymentMethod(PaymentMethod $paymentMethod): bool
     {
         return DB::transaction(function () use ($paymentMethod) {
-            if ($paymentMethod->qr_code && Storage::disk('public')->exists($paymentMethod->qr_code)) {
-                Storage::disk('public')->delete($paymentMethod->qr_code);
-            }
+            $paymentMethod->clearMediaCollection('qrcode');
 
             return (bool) $paymentMethod->delete();
         });
@@ -198,5 +201,37 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
     {
         $max = PaymentMethod::max('order');
         return is_numeric($max) ? ((int)$max + 1) : 1;
+    }
+
+    /**
+     * Get active payment methods with valid ABA integration data.
+     */
+    public function activeBanks()
+    {
+        return PaymentMethod::where('is_disable', false)
+            ->whereNotNull('datas')
+            ->where('datas', '!=', '')
+            ->where('datas', '!=', '[]')
+            ->where('datas', '!=', '{}');
+    }
+
+    /**
+     * Get default payment method (active only).
+     */
+    public function defaultBank()
+    {
+        // First check for active default payment
+        $default = PaymentMethod::where('is_disable', false)
+            ->where('is_default_payment', true)
+            ->first();
+
+        if ($default) {
+            return $default;
+        }
+
+        // Fallback to active sponsor if any
+        return PaymentMethod::where('is_disable', false)
+            ->where('is_sponsor', true)
+            ->first();
     }
 }

@@ -20,4 +20,8 @@ interface PaymentMethodRepositoryInterface
     public function deletePaymentMethod(PaymentMethod $paymentMethod): bool;
 
     public function getNextOrder(): int;
+
+    public function activeBanks();
+
+    public function defaultBank();
 }

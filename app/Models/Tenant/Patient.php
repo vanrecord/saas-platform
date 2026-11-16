@@ -165,4 +165,34 @@ class Patient extends Model
     {
         return $this->hasMany(PatientVisit::class, 'patient_id');
     }
+
+    public function addressRecord()
+    {
+        return $this->morphOne(\App\Models\Tenant\Address::class, 'addressable');
+    }
+
+    public function getFormattedAddressAttribute(): string
+    {
+        if (!empty($this->attributes['address'])) {
+            return $this->attributes['address'];
+        }
+
+        $addr = $this->relationLoaded('addressRecord')
+            ? $this->addressRecord
+            : $this->addressRecord()->with(['village', 'commune', 'district', 'province'])->first();
+
+        if ($addr) {
+            $parts = array_filter([
+                $addr->house_number ? 'No. ' . $addr->house_number : null,
+                $addr->street ? 'St. ' . $addr->street : null,
+                $addr->village?->name ?? $addr->village?->name_kh ?? null,
+                $addr->commune?->name ?? $addr->commune?->name_kh ?? null,
+                $addr->district?->name ?? $addr->district?->name_kh ?? null,
+                $addr->province?->name ?? $addr->province?->name_kh ?? $addr->city ?? null,
+            ]);
+            return implode(', ', $parts);
+        }
+
+        return '';
+    }
 }

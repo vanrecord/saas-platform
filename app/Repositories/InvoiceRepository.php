@@ -91,41 +91,24 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
         $statusFilter = AllowedFilter::callback('status', function ($query, $value) {
             $val = strtolower(trim((string) $value));
             if ($val === 'paid' || $val === (string) MedicalHistory::PAID) {
-                $query->where(function ($q) {
-                    $q->where('status', MedicalHistory::PAID)
-                      ->orWhere(function ($sub) {
-                          $sub->where('total', '>', 0)->where('balance', '<=', 0.001);
-                      });
-                });
+                $query->where('status', MedicalHistory::PAID);
             } elseif ($val === 'unpaid' || $val === (string) MedicalHistory::UNPAID) {
-                $query->where(function ($q) {
-                    $q->where('status', MedicalHistory::UNPAID)
-                      ->orWhere(function ($sub) {
-                          $sub->where('balance', '>', 0.001)->where('paid_usd', '<=', 0.001);
-                      });
-                });
+                $query->where('status', MedicalHistory::UNPAID);
             } elseif ($val === 'partial' || $val === (string) MedicalHistory::PARTIAL) {
-                $query->where(function ($q) {
-                    $q->where('status', MedicalHistory::PARTIAL)
-                      ->orWhere(function ($sub) {
-                          $sub->where('balance', '>', 0.001)->where('paid_usd', '>', 0.001);
-                      });
-                });
+                $query->where('status', MedicalHistory::PARTIAL);
             } elseif ($val === 'refunded' || $val === (string) MedicalHistory::REFUNED) {
-                $query->where(function ($q) {
-                    $q->where('status', MedicalHistory::REFUNED)
-                      ->orWhere('refunded', '>', 0.001);
-                });
+                $query->where('status', MedicalHistory::REFUNED);
             } elseif ($val === 'partially_refunded' || $val === 'partially refunded' || $val === (string) MedicalHistory::PARTIALLY_REFUNED) {
                 $query->where('status', MedicalHistory::PARTIALLY_REFUNED);
             }
         });
 
-        return QueryBuilder::for(MedicalHistory::class)
+        $paginated = QueryBuilder::for(MedicalHistory::class)
             ->with([
                 'patient',
                 'doctor.user.profile',
                 'assistant.profile',
+                'medicalDetails',
                 'payments',
             ])
             ->defaultSort('-date')
@@ -139,11 +122,6 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'user_id',
                 'visit_type',
                 'diagnosis',
-                'total',
-                'refunded',
-                'balance',
-                'paid_usd',
-                'paid_kh',
                 'status',
                 'created_at',
                 'updated_at',
@@ -156,9 +134,6 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'patient_id',
                 'visit_type',
                 'diagnosis',
-                'total',
-                'refunded',
-                'balance',
                 'created_at',
             ])
             ->allowedFilters([
@@ -175,6 +150,12 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             ])
             ->paginate()
             ->withQueryString();
+
+        $paginated->getCollection()->each(function ($inv) {
+            $inv->recalculateFinancials(false);
+        });
+
+        return $paginated;
     }
 
     public function columnsDataTable($table)
@@ -189,15 +170,15 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
         $table->column(key: 'patient_name', label: 'Patient', sortable: true);
         $table->column(key: 'visit_type', label: 'Visit Type', sortable: true);
         $table->column(key: 'diagnosis', label: 'Diagnosis', sortable: true);
-        $table->column(key: 'total', label: 'Total ($)', sortable: true);
-        $table->column(key: 'refunded', label: 'Refunded ($)', sortable: true);
-        $table->column(key: 'balance', label: 'Balance ($)', sortable: true);
+        $table->column(key: 'total', label: 'Total ($)');
+        $table->column(key: 'refunded', label: 'Refunded ($)');
+        $table->column(key: 'balance', label: 'Balance ($)');
         $table->column(key: 'status', label: 'Status', sortable: true);
     }
 
     public function findWithDetails($id)
     {
-        return MedicalHistory::with([
+        $invoice = MedicalHistory::with([
             'patient',
             'doctor.user.profile',
             'assistant.profile',
@@ -207,6 +188,10 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             'prefix',
             'receptions.doctor.user.profile',
         ])->findOrFail($id);
+
+        $invoice->recalculateFinancials(true);
+
+        return $invoice;
     }
 
     public function generateNextInvoiceNumber(?int $prefixId = null, ?string $dailyDate = null): array
@@ -385,6 +370,9 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'estimate_id' => !empty($data['estimate_id']) ? $data['estimate_id'] : null,
             ]);
 
+            // Recalculate virtual financials in memory
+            $history->recalculateFinancials(false);
+
             // Save details & treatment teeth
             $odontogramFindings = $data['odontogram_findings'] ?? [];
             $processedToothSurfaces = [];
@@ -511,6 +499,9 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'status' => $status,
                 'estimate_id' => !empty($data['estimate_id']) ? $data['estimate_id'] : $history->estimate_id,
             ]);
+
+            // Recalculate virtual financials in memory
+            $history->recalculateFinancials(false);
 
             // Sync details: Keep tracked IDs
             $keptDetailIds = [];

@@ -246,10 +246,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $status = MedicalHistory::determineStatus((float) $invoice->total, $paidUsd, $refunded, $balance);
 
                 $invoice->update([
-                    'paid_usd' => $paidUsd,
-                    'paid_kh' => $paidKh,
-                    'refunded' => $refunded,
-                    'balance' => $balance,
                     'status' => $status,
                 ]);
             }

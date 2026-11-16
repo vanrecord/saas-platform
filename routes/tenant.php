@@ -96,6 +96,7 @@ Route::middleware([
         // Invoice & Billing
         Route::resource('invoices', InvoiceController::class);
         Route::get('/tenant/invoices', [InvoiceController::class, 'index'])->name('tenant.invoices.index');
+        Route::get('/invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
         Route::get('/invoices/{invoice}/payment-history', [InvoiceController::class, 'paymentHistory'])->name('tenant.invoices.payment-history');
         Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'storePayment'])->name('tenant.invoices.payments.store');
         Route::get('/invoices/{invoice}/statement', [InvoiceController::class, 'statement'])->name('tenant.invoices.statement');

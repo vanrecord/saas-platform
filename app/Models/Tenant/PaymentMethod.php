@@ -2,23 +2,29 @@
 
 namespace App\Models\Tenant;
 
+use App\Models\UserTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class PaymentMethod extends Model
+class PaymentMethod extends Model implements HasMedia
 {
     use HasFactory;
+    use InteractsWithMedia;
 
     protected $table = 'payment_methods';
+    protected $primaryKey = 'id';
+    protected $guarded = [];
 
     protected $fillable = [
         'user_id',
         'name',
         'description',
-        'qr_code',
         'print',
         'is_sponsor',
         'provider',
@@ -48,20 +54,71 @@ class PaymentMethod extends Model
     ];
 
     /**
+     * Register Spatie media collection.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('qrcode')
+            ->useDisk('digitalocean')
+            ->singleFile();
+    }
+
+    /**
      * Get the public URL for the QR code image.
      */
     public function getQrCodeUrlAttribute(): ?string
     {
-        $qrCode = $this->attributes['qr_code'] ?? null;
-        if (empty($qrCode)) {
+        $media = $this->getFirstMedia('qrcode');
+        return $media ? $media->getUrl() : null;
+    }
+
+    /**
+     * Relationship to user.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(UserTenant::class, 'user_id');
+    }
+
+    /**
+     * Relationship to payments.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'payment_method_id', 'id');
+    }
+
+    /**
+     * Activity description helper.
+     */
+    public function activityDescription($event, $user = null): string
+    {
+        $userName = $user && method_exists($user, 'profile') && $user->profile
+            ? ($user->profile->fullname ?? $user->name)
+            : ($user->name ?? 'User');
+
+        return 'ExpenseCategory ' . $this->name . ' has been ' . $event . ' by ' . $userName;
+    }
+
+    /**
+     * Find payment method by ID with decoded datas.
+     */
+    public function findPaymentMethodByID($bank_id): ?self
+    {
+        $bank = self::find($bank_id);
+        if (!$bank) {
             return null;
         }
 
-        if (filter_var($qrCode, FILTER_VALIDATE_URL)) {
-            return $qrCode;
+        if (is_array($bank->datas)) {
+            return $bank;
         }
 
-        return Storage::disk('public')->url($qrCode);
+        $bank->datas = !empty($bank->datas)
+            ? (is_string($bank->datas) ? (json_decode($bank->datas, true) ?: []) : $bank->datas)
+            : [];
+
+        return $bank;
     }
 
     /**
@@ -89,19 +146,49 @@ class PaymentMethod extends Model
     }
 
     /**
-     * Relationship to payments.
-     */
-    public function payments(): HasMany
-    {
-        return $this->hasMany(Payment::class, 'payment_method_id');
-    }
-
-    /**
      * Scope for active payment methods.
      */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_disable', false);
+    }
+
+    /**
+     * Scope for active banks / methods with integration data.
+     */
+    public function scopeActiveBanks(Builder $query): Builder
+    {
+        return $query->where('is_disable', false)
+            ->whereNotNull('datas')
+            ->where('datas', '!=', '')
+            ->where('datas', '!=', '[]')
+            ->where('datas', '!=', '{}');
+    }
+
+    /**
+     * Check if payment method has valid, non-empty ABA integration data.
+     */
+    public function hasValidAbaData(): bool
+    {
+        if ($this->is_disable) {
+            return false;
+        }
+
+        $datas = $this->datas;
+        if (is_string($datas)) {
+            $datas = json_decode($datas, true);
+        }
+
+        if (empty($datas) || !is_array($datas)) {
+            return false;
+        }
+
+        // Must have at least one non-empty value (e.g. merchant_id or api_key)
+        $filtered = array_filter($datas, function ($val) {
+            return !is_null($val) && $val !== '';
+        });
+
+        return count($filtered) > 0;
     }
 
     /**

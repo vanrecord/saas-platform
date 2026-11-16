@@ -61,36 +61,30 @@
             </span>
           </div>
 
-          <!-- Payment Methods Selection Grid -->
+          <!-- Payment Methods Selection Grid (Payment Types: ABA KHQR & Cash) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- ABA KHQR Card -->
             <div
-              v-for="method in displayPaymentMethods"
-              :key="method.id"
-              @click="selectPaymentMethod(method)"
-              :class="selectedMethodId === method.id
-                ? 'border-2 border-blue-600 bg-white shadow-xs ring-1 ring-blue-600/20'
-                : 'border border-slate-200/90 hover:border-slate-300 bg-white'"
-              class="rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition select-none"
+              @click="selectPaymentType('khqr')"
+              :class="[
+                activePaymentType === 'khqr'
+                  ? 'border-2 border-blue-600 bg-white shadow-xs ring-1 ring-blue-600/20'
+                  : 'border border-slate-200/90 hover:border-slate-300 bg-white',
+                !hasValidAba ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              ]"
+              class="rounded-xl p-3.5 flex items-center justify-between transition select-none"
             >
               <div class="flex items-center gap-3">
-                <!-- Method Logo / Icon -->
-                <template v-if="isAbaMethod(method)">
-                  <div class="w-10 h-10 rounded-lg bg-[#005a9c] flex items-center justify-center text-white font-black text-xs tracking-tight shadow-xs shrink-0">
-                    ABA
-                  </div>
-                </template>
-                <template v-else>
-                  <div class="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100/60 flex items-center justify-center text-emerald-600 shadow-xs shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                  </div>
-                </template>
-
+                <div class="w-10 h-10 rounded-lg bg-[#005a9c] flex items-center justify-center text-white font-black text-xs tracking-tight shadow-xs shrink-0">
+                  ABA
+                </div>
                 <div>
-                  <div class="text-sm font-bold text-slate-900 leading-snug">{{ method.name }}</div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-900 leading-snug">ABA KHQR</span>
+                    <span v-if="!hasValidAba" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">Unavailable</span>
+                  </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
-                    {{ isAbaMethod(method) ? 'Instant mobile scanning' : 'Manual verification' }}
+                    {{ hasValidAba ? 'Instant mobile scanning' : 'No active ABA integration' }}
                   </div>
                 </div>
               </div>
@@ -98,7 +92,7 @@
               <!-- Right Indicator -->
               <div>
                 <div
-                  v-if="selectedMethodId === method.id"
+                  v-if="activePaymentType === 'khqr'"
                   class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,8 +101,47 @@
                 </div>
                 <div
                   v-else
-                  class="w-3.5 h-3.5 rounded-full"
-                  :class="isAbaMethod(method) ? 'bg-slate-200' : 'bg-emerald-500'"
+                  class="w-3.5 h-3.5 rounded-full bg-slate-200"
+                />
+              </div>
+            </div>
+
+            <!-- Cash / Bank Transfer Card -->
+            <div
+              @click="selectPaymentType('cash')"
+              :class="activePaymentType === 'cash'
+                ? 'border-2 border-blue-600 bg-white shadow-xs ring-1 ring-blue-600/20'
+                : 'border border-slate-200/90 hover:border-slate-300 bg-white'"
+              class="rounded-xl p-3.5 flex items-center justify-between cursor-pointer transition select-none"
+            >
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100/60 flex items-center justify-center text-emerald-600 shadow-xs shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+
+                <div>
+                  <div class="text-sm font-bold text-slate-900 leading-snug">Cash / Bank Transfer</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">
+                    Manual verification
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Indicator -->
+              <div>
+                <div
+                  v-if="activePaymentType === 'cash'"
+                  class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div
+                  v-else
+                  class="w-3.5 h-3.5 rounded-full bg-slate-200"
                 />
               </div>
             </div>
@@ -146,7 +179,30 @@
           </div>
 
           <!-- Form Fields Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+            <!-- Payment Method -->
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                {{ activePaymentType === 'khqr' ? 'ABA BANK / METHOD' : 'PAYMENT METHOD' }}
+              </label>
+              <select
+                v-model="selectedMethodId"
+                @change="onMethodChange"
+                class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-xs"
+              >
+                <option v-if="!currentPaymentMethods || currentPaymentMethods.length === 0" :value="null">
+                  -- No methods available --
+                </option>
+                <template v-for="(methods, groupName) in groupedCurrentMethods" :key="groupName">
+                  <optgroup :label="groupName">
+                    <option v-for="m in methods" :key="m.id" :value="m.id">
+                      {{ m.name }} {{ m.currency ? '(' + m.currency + ')' : '' }}
+                    </option>
+                  </optgroup>
+                </template>
+              </select>
+            </div>
+
             <!-- Payment Account -->
             <div>
               <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
@@ -156,6 +212,7 @@
                 v-model="form.payment_account"
                 class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-xs"
               >
+                <option :value="null">null</option>
                 <option v-for="acc in paymentAccounts" :key="acc" :value="acc">{{ acc }}</option>
               </select>
             </div>
@@ -163,10 +220,12 @@
             <!-- Amount -->
             <div>
               <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                AMOUNT
+                AMOUNT {{ selectedMethodCurrency ? '(' + selectedMethodCurrency + ')' : '($)' }}
               </label>
               <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-sm font-semibold text-slate-400">$</span>
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-sm font-semibold text-slate-400">
+                  {{ selectedMethodCurrency === 'KHR' ? '៛' : '$' }}
+                </span>
                 <input
                   type="number"
                   step="0.01"
@@ -348,12 +407,15 @@ export default {
       invoice: null,
       patient: null,
       availableCredit: 0.0,
-      paymentMethods: [],
-      paymentAccounts: ['00047_USD', '00047_KHR', 'CASH_USD'],
+      activePaymentType: 'cash', // 'khqr' or 'cash'
+      hasValidAba: false,
+      abaPaymentMethods: [],
+      cashPaymentMethods: [],
+      paymentAccounts: [],
       selectedMethodId: null,
       applyCredit: false,
       form: {
-        payment_account: '00047_USD',
+        payment_account: null,
         amount: 0.0,
         date: dayjs().format('YYYY-MM-DD'),
       },
@@ -368,15 +430,32 @@ export default {
     };
   },
   computed: {
-    displayPaymentMethods() {
-      if (this.paymentMethods.length > 0) {
-        return this.paymentMethods;
-      }
-      // Fallback defaults matching UI screenshot
-      return [
-        { id: 1, name: 'ABA KHQR', provider: 'aba' },
-        { id: 2, name: 'Cash / Bank Transfer', provider: null },
-      ];
+    currentPaymentMethods() {
+      return this.activePaymentType === 'khqr' ? this.abaPaymentMethods : this.cashPaymentMethods;
+    },
+    groupedCurrentMethods() {
+      const groups = {};
+      const methods = this.currentPaymentMethods;
+      methods.forEach((m) => {
+        let groupKey = m.currency;
+        if (!groupKey) {
+          groupKey = this.activePaymentType === 'khqr' ? 'USD' : 'CASH PAYMENT';
+        } else {
+          groupKey = `--- ${groupKey} ---`;
+        }
+        if (!groups[groupKey]) {
+          groups[groupKey] = [];
+        }
+        groups[groupKey].push(m);
+      });
+      return groups;
+    },
+    selectedMethod() {
+      if (!this.selectedMethodId) return null;
+      return this.currentPaymentMethods.find((m) => m.id === this.selectedMethodId) || null;
+    },
+    selectedMethodCurrency() {
+      return this.selectedMethod?.currency || (this.activePaymentType === 'khqr' ? 'USD' : null);
     },
     maxAllowedAmount() {
       const balance = Number(this.summary.outstanding_balance) || 0;
@@ -406,21 +485,52 @@ export default {
       this.alertMessage = '';
       this.applyCredit = false;
       this.form.date = dayjs().format('YYYY-MM-DD');
+      this.form.payment_account = null;
+      this.selectedMethodId = null;
     },
-    isAbaMethod(method) {
-      if (!method) return false;
-      const name = (method.name || '').toLowerCase();
-      const prov = (method.provider || '').toLowerCase();
-      return name.includes('aba') || prov === 'aba';
+    selectPaymentType(type) {
+      if (type === 'khqr' && !this.hasValidAba) {
+        this.alertMessage = 'No active ABA KHQR integration available.';
+        this.alertSuccess = false;
+        return;
+      }
+
+      this.activePaymentType = type;
+      this.alertMessage = '';
+
+      if (type === 'khqr') {
+        // Clear previous Cash selection, auto-select default ABA payment method
+        const defaultAba = this.abaPaymentMethods.find((m) => m.is_default_payment) || this.abaPaymentMethods[0];
+        this.selectPaymentMethod(defaultAba || null);
+      } else {
+        // Clear previous ABA selection, auto-select default Cash payment method
+        const defaultCash = this.cashPaymentMethods.find((m) => m.is_default_payment) || this.cashPaymentMethods[0];
+        this.selectPaymentMethod(defaultCash || null);
+      }
     },
     selectPaymentMethod(method) {
+      if (!method) {
+        this.selectedMethodId = null;
+        this.form.payment_account = null;
+        return;
+      }
+
       this.selectedMethodId = method.id;
+
       if (method.register_ref) {
         const acc = `${method.register_ref}_${method.currency || 'USD'}`;
-        if (this.paymentAccounts.includes(acc)) {
-          this.form.payment_account = acc;
+        this.form.payment_account = acc;
+        if (!this.paymentAccounts.includes(acc)) {
+          this.paymentAccounts.push(acc);
         }
+      } else {
+        this.form.payment_account = null;
       }
+    },
+    onMethodChange() {
+      const id = Number(this.selectedMethodId);
+      const method = this.currentPaymentMethods.find((m) => m.id === id);
+      this.selectPaymentMethod(method || null);
     },
     toggleApplyCredit() {
       const credit = Number(this.availableCredit) || 0;
@@ -450,8 +560,10 @@ export default {
         this.invoice = data.invoice;
         this.patient = data.patient;
         this.availableCredit = Number(data.patient?.available_credit) || 0.0;
-        this.paymentMethods = data.payment_methods || [];
-        this.paymentAccounts = data.payment_accounts?.length ? data.payment_accounts : ['00047_USD', '00047_KHR', 'CASH_USD'];
+        this.hasValidAba = !!data.has_valid_aba;
+        this.abaPaymentMethods = data.aba_payment_methods || [];
+        this.cashPaymentMethods = data.cash_payment_methods || [];
+        this.paymentAccounts = data.payment_accounts || [];
         this.transactions = data.transactions || [];
         this.summary = data.summary || {
           total_paid_usd: 0,
@@ -460,11 +572,20 @@ export default {
           available_credit: this.availableCredit,
         };
 
-        // Select default payment method
-        if (!this.selectedMethodId && this.paymentMethods.length > 0) {
-          const aba = this.paymentMethods.find((m) => this.isAbaMethod(m));
-          this.selectedMethodId = aba ? aba.id : this.paymentMethods[0].id;
+        // Determine active payment type based on backend calculation
+        this.activePaymentType = data.active_payment || (this.hasValidAba ? 'khqr' : 'cash');
+
+        // Automatically select the default payment method according to active payment type
+        const defaultId = data.default_method_id;
+        let chosenMethod = null;
+        if (defaultId) {
+          chosenMethod = this.currentPaymentMethods.find((m) => m.id === defaultId);
         }
+        if (!chosenMethod && this.currentPaymentMethods.length > 0) {
+          chosenMethod = this.currentPaymentMethods.find((m) => m.is_default_payment) || this.currentPaymentMethods[0];
+        }
+
+        this.selectPaymentMethod(chosenMethod || null);
 
         // Set default amount to remaining balance
         const outstanding = Number(this.summary.outstanding_balance) || 0.0;
@@ -492,6 +613,7 @@ export default {
       try {
         const payload = {
           payment_method_id: this.selectedMethodId,
+          payment_type: this.activePaymentType,
           amount: amount,
           date: this.form.date,
           payment_account: this.form.payment_account,

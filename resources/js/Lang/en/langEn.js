@@ -872,7 +872,6 @@ const langEn = {
     // Payment Methods
     Payment_Methods: "Payment Methods",
     "Payment Method": "Payment Method",
-    "Payment Methods": "Payment Methods",
     "Create Payment Method": "Create Payment Method",
     "Edit Payment Method": "Edit Payment Method",
     Default_Print: "Default Print",
@@ -951,6 +950,8 @@ const langEn = {
     Integrity_Notice: "Integrity Notice",
     Integrity_Notice_Description: "All visit registrations and billing modifications are executed within secure database transactions. Reusing an existing invoice links a new reception without duplicating invoices.",
     Loading_invoices: "Loading invoices...",
+    Print_Invoice: "Print Invoice",
+    Settings:"Settings"
 };
 
 export default langEn;

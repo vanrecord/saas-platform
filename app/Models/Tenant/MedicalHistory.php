@@ -27,6 +27,13 @@ class MedicalHistory extends Model
 
     protected $table = 'medical_histories';
 
+    /**
+     * In-memory cache of calculated financial summary.
+     * Stored separately from $attributes to ensure Eloquent NEVER queries or writes
+     * non-existent columns (total, balance, paid_usd, etc.) to medical_histories.
+     */
+    protected array $financialSummary = [];
+
     protected $fillable = [
         'doctor_id',
         'user_id',
@@ -55,11 +62,6 @@ class MedicalHistory extends Model
         'prefix_id',
         'visit_type',
         'invoice_number',
-        'total',
-        'balance',
-        'refunded',
-        'paid_usd',
-        'paid_kh',
     ];
 
     protected $casts = [
@@ -72,11 +74,6 @@ class MedicalHistory extends Model
         'invoice_id' => 'integer',
         'invoice_num_year_series' => 'integer',
         'prefix_id' => 'integer',
-        'total' => 'float',
-        'balance' => 'float',
-        'refunded' => 'float',
-        'paid_usd' => 'float',
-        'paid_kh' => 'float',
     ];
 
     protected $appends = [
@@ -85,6 +82,12 @@ class MedicalHistory extends Model
         'patient_name',
         'doctor_name',
         'assistant_name',
+        'total',
+        'balance',
+        'paid_usd',
+        'paid_kh',
+        'refunded',
+        'subtotal',
     ];
 
     public static function statusConf()
@@ -209,10 +212,10 @@ class MedicalHistory extends Model
         }
 
         // Fallback calculation if status column is null or custom
-        $balance = (float) ($this->attributes['balance'] ?? 0);
-        $total = (float) ($this->attributes['total'] ?? 0);
-        $paid = (float) ($this->attributes['paid_usd'] ?? 0);
-        $refunded = (float) ($this->attributes['refunded'] ?? 0);
+        $balance = (float) ($this->balance ?? 0);
+        $total = (float) ($this->total ?? 0);
+        $paid = (float) ($this->paid_usd ?? 0);
+        $refunded = (float) ($this->refunded ?? 0);
 
         $computedStatus = self::determineStatus($total, $paid, $refunded, $balance);
         return self::statusLabel($computedStatus);
@@ -243,5 +246,129 @@ class MedicalHistory extends Model
             return $this->assistant->name ?? '';
         }
         return '';
+    }
+
+    public function getTotalAttribute(): float
+    {
+        if (isset($this->financialSummary['total'])) {
+            return (float) $this->financialSummary['total'];
+        }
+        return (float) ($this->recalculateFinancials(false)['total'] ?? 0.0);
+    }
+
+    public function getBalanceAttribute(): float
+    {
+        if (isset($this->financialSummary['balance'])) {
+            return (float) $this->financialSummary['balance'];
+        }
+        return (float) ($this->recalculateFinancials(false)['balance'] ?? 0.0);
+    }
+
+    public function getPaidUsdAttribute(): float
+    {
+        if (isset($this->financialSummary['paid_usd'])) {
+            return (float) $this->financialSummary['paid_usd'];
+        }
+        return (float) ($this->recalculateFinancials(false)['paid_usd'] ?? 0.0);
+    }
+
+    public function getPaidKhAttribute(): float
+    {
+        if (isset($this->financialSummary['paid_kh'])) {
+            return (float) $this->financialSummary['paid_kh'];
+        }
+        return (float) ($this->recalculateFinancials(false)['paid_kh'] ?? 0.0);
+    }
+
+    public function getRefundedAttribute(): float
+    {
+        if (isset($this->financialSummary['refunded'])) {
+            return (float) $this->financialSummary['refunded'];
+        }
+        return (float) ($this->recalculateFinancials(false)['refunded'] ?? 0.0);
+    }
+
+    public function getSubtotalAttribute(): float
+    {
+        if (isset($this->financialSummary['subtotal'])) {
+            return (float) $this->financialSummary['subtotal'];
+        }
+        return (float) ($this->recalculateFinancials(false)['subtotal'] ?? 0.0);
+    }
+
+    /**
+     * Calculate virtual financials (total, balance, paid_usd, paid_kh, refunded, subtotal)
+     * and optionally save the updated 'status' in the database.
+     */
+    public function recalculateFinancials(bool $save = false): array
+    {
+        // 1. Calculate subtotal from medical details
+        $subtotal = 0.0;
+        $details = $this->relationLoaded('medicalDetails') ? $this->medicalDetails : $this->medicalDetails()->get();
+
+        foreach ($details as $detail) {
+            $qty = (int) ($detail->quantity ?: 1);
+            $unitPrice = (float) ($detail->unit_price ?: 0.0);
+            $gross = $qty * $unitPrice;
+            $disc = (float) ($detail->discount ?: 0.0);
+            $discAs = $detail->discount_as ?: '%';
+
+            if ($discAs === '%') {
+                $discAmt = $gross * ($disc / 100);
+            } else {
+                $discAmt = $disc;
+            }
+            $discAmt = min($gross, max(0, $discAmt));
+            $rowAmount = (float) ($detail->amount ?: max(0, $gross - $discAmt));
+            $subtotal += $rowAmount;
+        }
+
+        // 2. Invoice overall discount
+        $overallDisc = (float) ($this->discount_invoice ?: 0.0);
+        $overallDiscType = $this->discount_inv_as ?: '%';
+        if ($overallDiscType === '%') {
+            $overallDiscAmt = $subtotal * ($overallDisc / 100);
+        } else {
+            $overallDiscAmt = $overallDisc;
+        }
+        $overallDiscAmt = min($subtotal, max(0, $overallDiscAmt));
+        $total = max(0, $subtotal - $overallDiscAmt);
+
+        // 3. Payments and refunds
+        $payments = $this->relationLoaded('payments') ? $this->payments : $this->payments()->get();
+        $paidUsd = (float) $payments->where('amount', '>', 0)->sum('amount');
+        $paidKh = (float) $payments->where('amount_kh', '>', 0)->sum('amount_kh');
+        $refunded = (float) $payments->where('amount', '<', 0)->sum(fn($p) => abs((float) $p->amount));
+
+        $rate = (float) ($this->rate ?: 4050.0);
+        if ($paidKh <= 0 && $paidUsd > 0) {
+            $paidKh = (float) round($paidUsd * $rate);
+        }
+
+        $balance = max(0, $total - $paidUsd + $refunded);
+        $balanceKh = (float) round($balance * $rate);
+        $status = self::determineStatus($total, $paidUsd, $refunded, $balance);
+
+        // Save virtual financials ONLY in $financialSummary property (never in $attributes!)
+        $this->financialSummary = [
+            'subtotal' => $subtotal,
+            'discount' => $overallDiscAmt,
+            'total' => $total,
+            'paid_usd' => $paidUsd,
+            'paid_kh' => $paidKh,
+            'refunded' => $refunded,
+            'balance' => $balance,
+            'balance_kh' => $balanceKh,
+            'status' => $status,
+        ];
+
+        // Persist only 'status' since it is a physical database column
+        if ($save && $this->exists && (int) $this->getOriginal('status') !== $status) {
+            $this->updateQuietly([
+                'status' => $status,
+            ]);
+        }
+
+        return $this->financialSummary;
     }
 }

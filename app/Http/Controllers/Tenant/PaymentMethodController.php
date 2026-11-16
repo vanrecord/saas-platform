@@ -53,10 +53,25 @@ class PaymentMethodController extends Controller
             'Unauthorized to save payment methods.'
         );
 
-        $this->paymentMethodRepository->createPaymentMethod(
+        $paymentInfor = $this->paymentMethodRepository->createPaymentMethod(
             $request->validated(),
             $request->file('qr_code')
         );
+
+        $fileQr = !empty($request->qr_code) ? $request->qr_code : "";
+        $qrcode = $fileQr;
+
+        if (!empty($qrcode) && $qrcode != null && $qrcode instanceof \Illuminate\Http\UploadedFile && $qrcode->isValid()) {
+            if (!$paymentInfor->hasMedia('qrcode')) {
+                $file_name     = $qrcode->getClientOriginalName();
+                $extension     = explode(".", $file_name);
+                $extension     = strtolower(end($extension));
+                $new_file_name = md5(date("YmdHis") . $file_name);
+                $new_name      = $new_file_name . '.' . $extension;
+
+                $paymentInfor->addMedia($qrcode)->usingFileName($new_name)->toMediaLibrary('qrcode');
+            }
+        }
 
         return redirect()->route('settings.payment-methods.index')
             ->with('flash.banner', 'Payment Method created successfully')
@@ -94,12 +109,29 @@ class PaymentMethodController extends Controller
             'Unauthorized to update payment methods.'
         );
 
-        $this->paymentMethodRepository->updatePaymentMethod(
+        $paymentInfor = $this->paymentMethodRepository->updatePaymentMethod(
             $paymentMethod,
             $request->validated(),
             $request->file('qr_code'),
             $request->boolean('remove_qr_code')
         );
+
+        $fileQr = !empty($request->qr_code) ? $request->qr_code : "";
+        $qrcode = $fileQr;
+
+        if ($request->boolean('remove_qr_code')) {
+            $paymentInfor->clearMediaCollection('qrcode');
+        } elseif (!empty($qrcode) && $qrcode != null && $qrcode instanceof \Illuminate\Http\UploadedFile && $qrcode->isValid()) {
+            if (!$paymentInfor->hasMedia('qrcode')) {
+                $file_name     = $qrcode->getClientOriginalName();
+                $extension     = explode(".", $file_name);
+                $extension     = strtolower(end($extension));
+                $new_file_name = md5(date("YmdHis") . $file_name);
+                $new_name      = $new_file_name . '.' . $extension;
+
+                $paymentInfor->addMedia($qrcode)->usingFileName($new_name)->toMediaLibrary('qrcode');
+            }
+        }
 
         return redirect()->route('settings.payment-methods.index')
             ->with('flash.banner', 'Payment Method updated successfully')

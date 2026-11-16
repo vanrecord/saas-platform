@@ -68,13 +68,16 @@
           </div>
 
           <div class="flex items-center space-x-2">
-            <button
-              type="button"
-              onclick="window.print()"
-              class="px-3.5 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-lg transition"
+            <a
+              :href="route('invoices.print', invoice.id)"
+              target="_blank"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-lg transition"
             >
-              Print Invoice
-            </button>
+              <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4" />
+              </svg>
+              <span>{{ tm('Print_Invoice') || 'Print Invoice' }}</span>
+            </a>
             <Link
               v-if="can(['all', 'invoice:edit', 'invoice:save'])"
               :href="route('invoices.edit', invoice.id)"
@@ -167,40 +170,52 @@
         <!-- Financial Summary -->
         <div class="flex justify-end mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
           <div class="w-80 text-xs border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden divide-y divide-slate-100 dark:divide-slate-700 shadow-2xs">
+            <div v-if="totals.discount > 0" class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
+              <span class="text-slate-600 dark:text-slate-300">Sub-Total($)</span>
+              <span class="font-mono font-bold text-slate-800 dark:text-white">
+                ${{ totals.subtotal.toFixed(2) }}
+              </span>
+            </div>
+            <div v-if="totals.discount > 0" class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
+              <span class="text-slate-600 dark:text-slate-300">Discount($)</span>
+              <span class="font-mono font-bold text-rose-600">
+                -${{ totals.discount.toFixed(2) }}
+              </span>
+            </div>
             <div class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
               <span class="text-slate-600 dark:text-slate-300">Total($)</span>
               <span class="font-mono font-bold text-slate-800 dark:text-white">
-                ${{ (invoice.total || 0).toFixed(2) }}
+                ${{ totals.total.toFixed(2) }}
               </span>
             </div>
             <div class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
               <span class="text-slate-600 dark:text-slate-300">Paid to date($)</span>
               <span class="font-mono text-slate-800 dark:text-white">
-                ${{ (invoice.paid_usd || 0).toFixed(2) }}
+                ${{ totals.paidUsd.toFixed(2) }}
               </span>
             </div>
             <div class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
               <span class="text-slate-600 dark:text-slate-300">Paid to date(៛)</span>
               <span class="font-mono text-slate-800 dark:text-white">
-                {{ Math.round(invoice.paid_kh || (invoice.paid_usd || 0) * (invoice.rate || 4050)).toLocaleString() }} ៛
+                {{ totals.paidKh.toLocaleString() }} ៛
               </span>
             </div>
             <div class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
               <span class="text-slate-600 dark:text-slate-300">Refunded($)</span>
               <span class="font-mono text-slate-800 dark:text-white">
-                ${{ (invoice.refunded || 0).toFixed(2) }}
+                ${{ totals.refunded.toFixed(2) }}
               </span>
             </div>
             <div class="flex justify-between px-4 py-2 bg-[#8da5e0] text-white font-bold">
               <span>Balance($)</span>
               <span class="font-mono text-sm">
-                ${{ (invoice.balance || 0).toFixed(2) }}
+                ${{ totals.balance.toFixed(2) }}
               </span>
             </div>
             <div class="flex justify-between px-4 py-2 bg-white dark:bg-slate-800">
               <span class="text-slate-600 dark:text-slate-300">Balance(៛)</span>
               <span class="font-mono text-slate-800 dark:text-white">
-                {{ Math.round((invoice.balance || 0) * (invoice.rate || 4050)).toLocaleString() }} ៛
+                {{ totals.balanceKh.toLocaleString() }} ៛
               </span>
             </div>
           </div>
@@ -226,6 +241,85 @@ export default {
     invoice: {
       type: Object,
       required: true,
+    },
+  },
+  computed: {
+    totals() {
+      // 1. Calculate subtotal from line items
+      let subtotal = 0;
+      (this.invoice.medical_details || []).forEach((d) => {
+        const qty = Number(d.quantity) || 1;
+        const unitPrice = Number(d.unit_price) || 0;
+        const gross = qty * unitPrice;
+        const disc = Number(d.discount) || 0;
+        const discAs = d.discount_as || "%";
+        let rowDisc = 0;
+        if (discAs === "%") {
+          rowDisc = gross * (disc / 100);
+        } else {
+          rowDisc = disc;
+        }
+        rowDisc = Math.min(gross, Math.max(0, rowDisc));
+        const amount = d.amount !== undefined && d.amount !== null && Number(d.amount) > 0 
+          ? Number(d.amount) 
+          : Math.max(0, gross - rowDisc);
+        subtotal += amount;
+      });
+
+      // 2. Overall discount
+      const overallDiscVal = Number(this.invoice.discount_invoice) || 0;
+      let overallDiscountAmount = 0;
+      if (this.invoice.discount_inv_as === "%") {
+        overallDiscountAmount = subtotal * (overallDiscVal / 100);
+      } else {
+        overallDiscountAmount = overallDiscVal;
+      }
+      overallDiscountAmount = Math.min(subtotal, Math.max(0, overallDiscountAmount));
+
+      // Total: use invoice.total if > 0, else calculated total
+      const total = Number(this.invoice.total) > 0 
+        ? Number(this.invoice.total) 
+        : Math.max(0, subtotal - overallDiscountAmount);
+
+      const rate = Number(this.invoice.rate) || 4050;
+
+      // 3. Payments & Refunds
+      let paidUsd = Number(this.invoice.paid_usd) || 0;
+      let refunded = Number(this.invoice.refunded) || 0;
+
+      if (this.invoice.payments && this.invoice.payments.length > 0) {
+        let pUsd = 0;
+        let pRef = 0;
+        this.invoice.payments.forEach((p) => {
+          const amt = Number(p.amount) || 0;
+          if (amt > 0) pUsd += amt;
+          else if (amt < 0) pRef += Math.abs(amt);
+        });
+        paidUsd = pUsd;
+        refunded = pRef;
+      }
+
+      let paidKh = Number(this.invoice.paid_kh) > 0 
+        ? Number(this.invoice.paid_kh) 
+        : Math.round(paidUsd * rate);
+
+      // Balance
+      const balance = Number(this.invoice.balance) > 0 && Math.abs(Number(this.invoice.balance) - (total - paidUsd + refunded)) < 0.01
+        ? Number(this.invoice.balance)
+        : Math.max(0, total - paidUsd + refunded);
+
+      const balanceKh = Math.round(balance * rate);
+
+      return {
+        subtotal,
+        discount: overallDiscountAmount,
+        total,
+        paidUsd,
+        paidKh,
+        refunded,
+        balance,
+        balanceKh,
+      };
     },
   },
   methods: {
