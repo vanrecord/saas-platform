@@ -111,16 +111,25 @@
               </div>
 
               <!-- Switches Grid -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 mt-2 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 mt-2 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
                 <!-- Default Print -->
-                <div class="p-3 bg-white dark:bg-slate-700 rounded-md border border-slate-100 dark:border-slate-600">
+                <div class="p-3 bg-white w-full dark:bg-slate-700 rounded-md border border-slate-100 dark:border-slate-600">
                   <switch-input
                     v-model="form.print"
                     :label="tm('Default_Print') || 'Default Print'"
                     :active="tm('Yes') || 'Yes'"
                     :inactive="tm('No') || 'No'"
+                    class="w-full"
                   />
-                  <p class="text-3xs text-slate-400 mt-2 text-center">Selected by default when printing receipts.</p>
+                </div>
+                <div class="p-3 bg-white dark:bg-slate-700 rounded-md border border-slate-100 dark:border-slate-600">
+                  <switch-input
+                      v-model="form.is_default_payment"
+                      :label="tm('Default_Payment') || 'Default Payment'"
+                      :active="tm('Yes') || 'Yes'"
+                      :inactive="tm('No') || 'No'"
+                    />
+                  
                 </div>
 
                 <!-- Disable Switch -->
@@ -131,7 +140,7 @@
                     :active="tm('Inactive') || 'Inactive'"
                     :inactive="tm('Active') || 'Active'"
                   />
-                  <p class="text-3xs text-slate-400 mt-2 text-center">When enabled, hidden from new payment creation.</p>
+                  
                 </div>
 
                 <!-- Is Sponsor -->
@@ -142,7 +151,7 @@
                     :active="tm('Yes') || 'Yes'"
                     :inactive="tm('No') || 'No'"
                   />
-                  <p class="text-3xs text-slate-400 mt-2 text-center">Marks method as sponsored / insurance.</p>
+                  
                 </div>
               </div>
 
@@ -348,28 +357,6 @@
                   </div>
                 </div>
               </transition>
-            </div>
-          </div>
-
-          <!-- Section 3: Default Payment -->
-          <div class="border-t dark:border-primary pt-2">
-            <div class="p-4 border-b bg-gray-50 dark:bg-darker dark:border-primary">
-              <h5 class="text-sm font-semibold text-gray-600 dark:text-light">
-                {{ tm('Default_Payment') || 'Default Payment' }}
-              </h5>
-            </div>
-            <div class="p-5">
-              <div class="max-w-md p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
-                <switch-input
-                  v-model="form.is_default_payment"
-                  :label="tm('Default_Payment') || 'Default Payment'"
-                  :active="tm('Yes') || 'Yes'"
-                  :inactive="tm('No') || 'No'"
-                />
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                  When enabled, this Payment Method is automatically selected as the default method when creating new payments. Only one Payment Method per Tenant can be set as the Default Payment. Setting this will automatically unset any previously configured default method.
-                </p>
-              </div>
             </div>
           </div>
 

@@ -136,7 +136,7 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
                 $extension    = strtolower(end($extension));
                 $newFileName  = md5(date('YmdHis') . $fileName) . '.' . $extension;
 
-                $paymentMethod->addMedia($qrCode)->usingFileName($newFileName)->toMediaCollection('qrcode');
+                $paymentMethod->addMedia($qrCode)->usingFileName($newFileName)->toMediaCollection('qrcode', 'public');
             }
 
             return $paymentMethod;
@@ -165,7 +165,7 @@ class PaymentMethodRepository extends BaseRepository implements PaymentMethodRep
                 $extension    = strtolower(end($extension));
                 $newFileName  = md5(date('YmdHis') . $fileName) . '.' . $extension;
 
-                $paymentMethod->addMedia($qrCode)->usingFileName($newFileName)->toMediaCollection('qrcode');
+                $paymentMethod->addMedia($qrCode)->usingFileName($newFileName)->toMediaCollection('qrcode', 'public');
             }
 
             unset($data['qr_code'], $data['remove_qr_code']);

@@ -179,7 +179,7 @@
           </div>
 
           <!-- Form Fields Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
             <!-- Payment Method -->
             <div>
               <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
@@ -200,20 +200,6 @@
                     </option>
                   </optgroup>
                 </template>
-              </select>
-            </div>
-
-            <!-- Payment Account -->
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                PAYMENT ACCOUNT
-              </label>
-              <select
-                v-model="form.payment_account"
-                class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-xs"
-              >
-                <option :value="null">null</option>
-                <option v-for="acc in paymentAccounts" :key="acc" :value="acc">{{ acc }}</option>
               </select>
             </div>
 

@@ -951,7 +951,10 @@ const langEn = {
     Integrity_Notice_Description: "All visit registrations and billing modifications are executed within secure database transactions. Reusing an existing invoice links a new reception without duplicating invoices.",
     Loading_invoices: "Loading invoices...",
     Print_Invoice: "Print Invoice",
-    Settings:"Settings"
+    Settings:"Settings",
+    Enabled:'Enabled',
+    Disabled:'Disabled',
+    Remove:'Remove'
 };
 
 export default langEn;

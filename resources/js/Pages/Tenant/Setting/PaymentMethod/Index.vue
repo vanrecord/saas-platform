@@ -2,8 +2,6 @@
   <TenantLayout>
     <Head :title="tm('Payment_Methods') || 'Payment Methods'" />
     <div class="px-4 py-4">
-      <jet-banner />
-
       <!-- Breadcrumbs -->
       <nav class="flex pt-4 mb-6" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -103,35 +101,22 @@
               </jet-dropdown>
             </template>
 
-            <!-- 1. Name Column (with QR thumbnail preview if available) -->
+            <!-- 1. Name Column -->
             <template #cell(name)="{ item: method }">
-              <div class="flex items-center space-x-3">
-                <div v-if="method.qr_code_url" class="flex-shrink-0 w-8 h-8 rounded border border-slate-200 overflow-hidden bg-slate-50">
-                  <img :src="method.qr_code_url" :alt="method.name" class="w-full h-full object-cover" />
-                </div>
-                <div v-else class="flex-shrink-0 w-8 h-8 rounded border border-dashed border-slate-200 flex items-center justify-center bg-slate-50 text-slate-400 text-2xs">
-                  <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="7" height="7" stroke-width="2" />
-                    <rect x="14" y="3" width="7" height="7" stroke-width="2" />
-                    <rect x="3" y="14" width="7" height="7" stroke-width="2" />
-                    <rect x="14" y="14" width="7" height="7" stroke-width="2" />
-                  </svg>
-                </div>
-                <div>
-                  <Link
-                    v-if="can(['all', 'payment-method:edit', 'settings.payment-methods.edit'])"
-                    :href="route('settings.payment-methods.edit', method.id)"
-                    class="font-semibold text-primary hover:underline text-xs"
-                  >
-                    {{ method.name }}
-                  </Link>
-                  <span v-else class="font-semibold text-slate-800 dark:text-slate-200 text-xs">
-                    {{ method.name }}
-                  </span>
-                  <span v-if="method.provider" class="ml-1.5 px-1.5 py-0.5 rounded text-3xs font-mono font-bold bg-blue-50 text-[#0D63D6] border border-blue-200">
-                    {{ method.provider }}
-                  </span>
-                </div>
+              <div class="flex items-center">
+                <Link
+                  v-if="can(['all', 'payment-method:edit', 'settings.payment-methods.edit'])"
+                  :href="route('settings.payment-methods.edit', method.id)"
+                  class="font-semibold text-primary hover:underline text-xs"
+                >
+                  {{ method.name }}
+                </Link>
+                <span v-else class="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                  {{ method.name }}
+                </span>
+                <span v-if="method.provider" class="ml-1.5 px-1.5 py-0.5 rounded text-3xs font-mono font-bold bg-blue-50 text-[#0D63D6] border border-blue-200">
+                  {{ method.provider }}
+                </span>
               </div>
             </template>
 
@@ -232,7 +217,6 @@ import { Table } from '@/Components/Datatables'
 import { useI18n } from 'vue-i18n'
 import { lang } from '@/Lang'
 import JetDropdown from '@/Jetstream/Dropdown.vue'
-import JetBanner from '@/Jetstream/Banner.vue'
 import JetNavLink from '@/Jetstream/NavLink.vue'
 import Destory from '@/Libs/Action/Delete.vue'
 import { Head, Link } from '@inertiajs/inertia-vue3'
@@ -251,7 +235,6 @@ export default defineComponent({
     Head,
     Link,
     JetDropdown,
-    JetBanner,
     JetNavLink,
     DotsHorizontalIcon,
     PencilAltIcon,

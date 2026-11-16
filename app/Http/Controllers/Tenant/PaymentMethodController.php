@@ -69,7 +69,7 @@ class PaymentMethodController extends Controller
                 $new_file_name = md5(date("YmdHis") . $file_name);
                 $new_name      = $new_file_name . '.' . $extension;
 
-                $paymentInfor->addMedia($qrcode)->usingFileName($new_name)->toMediaLibrary('qrcode');
+                $paymentInfor->addMedia($qrcode)->usingFileName($new_name)->toMediaCollection('qrcode', 'public');
             }
         }
 
@@ -129,7 +129,7 @@ class PaymentMethodController extends Controller
                 $new_file_name = md5(date("YmdHis") . $file_name);
                 $new_name      = $new_file_name . '.' . $extension;
 
-                $paymentInfor->addMedia($qrcode)->usingFileName($new_name)->toMediaLibrary('qrcode');
+                $paymentInfor->addMedia($qrcode)->usingFileName($new_name)->toMediaCollection('qrcode', 'public');
             }
         }
 

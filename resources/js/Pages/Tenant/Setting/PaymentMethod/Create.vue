@@ -114,7 +114,7 @@
                   :active="tm('Yes') || 'Yes'"
                   :inactive="tm('No') || 'No'"
                 />
-                <p class="text-3xs text-slate-400 mt-2 text-center">Selected by default when printing receipts.</p>
+                
               </div>
 
               <!-- Default Payment -->
@@ -125,7 +125,7 @@
                   :active="tm('Yes') || 'Yes'"
                   :inactive="tm('No') || 'No'"
                 />
-                <p class="text-3xs text-slate-400 mt-2 text-center">Pre-selected by default for new payments.</p>
+                
               </div>
 
               <!-- Disable Switch -->
@@ -136,7 +136,7 @@
                   :active="tm('Inactive') || 'Inactive'"
                   :inactive="tm('Active') || 'Active'"
                 />
-                <p class="text-3xs text-slate-400 mt-2 text-center">When enabled, hidden from new payment creation.</p>
+                
               </div>
 
               <!-- Is Sponsor -->
@@ -147,7 +147,7 @@
                   :active="tm('Yes') || 'Yes'"
                   :inactive="tm('No') || 'No'"
                 />
-                <p class="text-3xs text-slate-400 mt-2 text-center">Marks method as sponsored / insurance.</p>
+                
               </div>
             </div>
 

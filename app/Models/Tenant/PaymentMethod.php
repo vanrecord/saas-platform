@@ -59,7 +59,7 @@ class PaymentMethod extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('qrcode')
-            ->useDisk('digitalocean')
+            ->useDisk('public')
             ->singleFile();
     }
 
@@ -69,7 +69,15 @@ class PaymentMethod extends Model implements HasMedia
     public function getQrCodeUrlAttribute(): ?string
     {
         $media = $this->getFirstMedia('qrcode');
-        return $media ? $media->getUrl() : null;
+        if (! $media) {
+            return null;
+        }
+
+        if ($media->disk === 'public' || $media->disk === 'media') {
+            return assetStorage($media->getUrl());
+        }
+
+        return $media->getUrl();
     }
 
     /**
