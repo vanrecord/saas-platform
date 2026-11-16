@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInterface
@@ -36,20 +37,24 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             }
             $term = strtolower(trim((string) $value));
             $query->where(function ($query) use ($term, $value) {
-                $query->where(DB::raw('LOWER(invoice_number)'), 'LIKE', "%{$term}%")
-                      ->orWhere(DB::raw('LOWER(diagnosis)'), 'LIKE', "%{$term}%")
-                      ->orWhere(DB::raw('LOWER(visit_type)'), 'LIKE', "%{$term}%")
-                      ->orWhereHas('patient', function ($pQuery) use ($term, $value) {
-                          $pQuery->where(DB::raw('LOWER(firstname)'), 'LIKE', "%{$term}%")
-                                 ->orWhere(DB::raw('LOWER(lastname)'), 'LIKE', "%{$term}%")
-                                 ->orWhere(DB::raw("LOWER(CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, '')))"), 'LIKE', "%{$term}%")
-                                 ->orWhere('phone', 'LIKE', "%{$term}%");
+                $query->where(function ($iq) use ($term) {
+                    $iq->where(DB::raw('LOWER(COALESCE(prefix_invoice, \'\'))'), 'LIKE', "%{$term}%")
+                       ->orWhere(DB::raw('CAST(invoice_id AS TEXT)'), 'LIKE', "%{$term}%")
+                       ->orWhere(DB::raw('CAST(invoice_num_year_series AS TEXT)'), 'LIKE', "%{$term}%");
+                })
+                ->orWhere(DB::raw('LOWER(COALESCE(diagnosis, \'\'))'), 'LIKE', "%{$term}%")
+                ->orWhere(DB::raw('LOWER(COALESCE(visit_type, \'\'))'), 'LIKE', "%{$term}%")
+                ->orWhereHas('patient', function ($pQuery) use ($term, $value) {
+                    $pQuery->where(DB::raw('LOWER(COALESCE(firstname, \'\'))'), 'LIKE', "%{$term}%")
+                           ->orWhere(DB::raw('LOWER(COALESCE(lastname, \'\'))'), 'LIKE', "%{$term}%")
+                           ->orWhere(DB::raw("LOWER(CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, '')))"), 'LIKE', "%{$term}%")
+                           ->orWhere('phone', 'LIKE', "%{$term}%");
 
-                          if (is_numeric($value)) {
-                              $pQuery->orWhere('id_number', (int) $value)
-                                     ->orWhere('id', (int) $value);
-                          }
-                      });
+                    if (is_numeric($value)) {
+                        $pQuery->orWhere('id_number', (int) $value)
+                               ->orWhere('id', (int) $value);
+                    }
+                });
 
                 if (is_numeric($value)) {
                     $query->orWhere('estimate_id', (int) $value)
@@ -103,6 +108,23 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             }
         });
 
+        $invoiceFilter = AllowedFilter::callback('invoice_number', function ($query, $value) {
+            $term = strtolower(trim((string) $value));
+            if ($term !== '') {
+                $query->where(function ($q) use ($term) {
+                    $q->where(DB::raw('LOWER(COALESCE(prefix_invoice, \'\'))'), 'LIKE', "%{$term}%")
+                      ->orWhere(DB::raw('CAST(invoice_id AS TEXT)'), 'LIKE', "%{$term}%")
+                      ->orWhere(DB::raw('CAST(invoice_num_year_series AS TEXT)'), 'LIKE', "%{$term}%");
+
+                    if (is_numeric($term)) {
+                        $q->orWhere('id', (int) $term)
+                          ->orWhere('invoice_id', (int) $term)
+                          ->orWhere('invoice_num_year_series', (int) $term);
+                    }
+                });
+            }
+        });
+
         $paginated = QueryBuilder::for(MedicalHistory::class)
             ->with([
                 'patient',
@@ -111,11 +133,10 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'medicalDetails',
                 'payments',
             ])
-            ->defaultSort('-date')
+            ->defaultSort('-date', '-id')
             ->allowedFields([
                 'id',
                 'date',
-                'invoice_number',
                 'estimate_id',
                 'patient_id',
                 'doctor_id',
@@ -129,15 +150,39 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             ->allowedSorts([
                 'id',
                 'date',
-                'invoice_number',
                 'estimate_id',
                 'patient_id',
                 'visit_type',
                 'diagnosis',
+                'status',
                 'created_at',
+                AllowedSort::callback('invoice_number', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy('invoice_num_year_series', $dir)
+                          ->orderBy('invoice_id', $dir)
+                          ->orderBy('id', $dir);
+                }),
+                AllowedSort::callback('patient_id_number', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy(
+                        Patient::select('id_number')
+                            ->whereColumn('patients.id', 'medical_histories.patient_id')
+                            ->limit(1),
+                        $dir
+                    );
+                }),
+                AllowedSort::callback('patient_name', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy(
+                        Patient::select(DB::raw("CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, ''))"))
+                            ->whereColumn('patients.id', 'medical_histories.patient_id')
+                            ->limit(1),
+                        $dir
+                    );
+                }),
             ])
             ->allowedFilters([
-                'invoice_number',
+                $invoiceFilter,
                 'estimate_id',
                 'visit_type',
                 'diagnosis',

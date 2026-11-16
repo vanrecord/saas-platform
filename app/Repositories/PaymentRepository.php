@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
@@ -36,10 +37,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $query->where(function ($q) use ($term, $value) {
                 $q->where(DB::raw('LOWER(COALESCE(txnref, \'\'))'), 'LIKE', "%{$term}%")
                   ->orWhere(DB::raw('LOWER(COALESCE(currency, \'\'))'), 'LIKE', "%{$term}%")
-                  ->orWhere(DB::raw('LOWER(COALESCE(status, \'\'))'), 'LIKE', "%{$term}%")
                   ->orWhereHas('medicalHistory', function ($mQuery) use ($term) {
-                      $mQuery->where(DB::raw('LOWER(COALESCE(invoice_number, \'\'))'), 'LIKE', "%{$term}%")
-                             ->orWhere(DB::raw('LOWER(COALESCE(prefix_invoice, \'\'))'), 'LIKE', "%{$term}%");
+                      $mQuery->where(DB::raw('LOWER(COALESCE(prefix_invoice, \'\'))'), 'LIKE', "%{$term}%")
+                             ->orWhere(DB::raw('CAST(invoice_id AS TEXT)'), 'LIKE', "%{$term}%")
+                             ->orWhere(DB::raw('CAST(invoice_num_year_series AS TEXT)'), 'LIKE', "%{$term}%")
+                             ->orWhere(DB::raw('CAST(id AS TEXT)'), 'LIKE', "%{$term}%");
                   })
                   ->orWhereHas('patient', function ($pQuery) use ($term) {
                       $pQuery->where(DB::raw('LOWER(COALESCE(firstname, \'\'))'), 'LIKE', "%{$term}%")
@@ -50,6 +52,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                   ->orWhereHas('paymentMethod', function ($pmQuery) use ($term) {
                       $pmQuery->where(DB::raw('LOWER(COALESCE(name, \'\'))'), 'LIKE', "%{$term}%");
                   });
+
+                if (str_contains($term, 'refund')) {
+                    $q->orWhere('amount', '<', 0);
+                } elseif (str_contains($term, 'complete')) {
+                    $q->orWhere('amount', '>=', 0);
+                }
 
                 if (is_numeric($value)) {
                     $q->orWhere('amount', (float) $value)
@@ -95,8 +103,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $term = strtolower(trim((string) $value));
             if ($term !== '') {
                 $query->whereHas('medicalHistory', function ($q) use ($term) {
-                    $q->where(DB::raw('LOWER(COALESCE(invoice_number, \'\'))'), 'LIKE', "%{$term}%")
-                      ->orWhere(DB::raw('LOWER(COALESCE(prefix_invoice, \'\'))'), 'LIKE', "%{$term}%");
+                    $q->where(DB::raw('LOWER(COALESCE(prefix_invoice, \'\'))'), 'LIKE', "%{$term}%")
+                      ->orWhere(DB::raw('CAST(invoice_id AS TEXT)'), 'LIKE', "%{$term}%")
+                      ->orWhere(DB::raw('CAST(invoice_num_year_series AS TEXT)'), 'LIKE', "%{$term}%");
 
                     if (is_numeric($term)) {
                         $q->orWhere('id', (int) $term)
@@ -109,8 +118,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $statusFilter = AllowedFilter::callback('status', function ($query, $value) {
             $val = strtolower(trim((string) $value));
-            if ($val !== '' && $val !== 'all') {
-                $query->where(DB::raw('LOWER(status)'), $val);
+            if ($val === 'refunded') {
+                $query->where('amount', '<', 0);
+            } elseif ($val === 'completed') {
+                $query->where('amount', '>=', 0);
             }
         });
 
@@ -121,19 +132,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'paymentMethod',
                 'verifiedBy.profile',
             ])
-            ->defaultSort('-date')
+            ->defaultSort('-date', '-id')
             ->allowedFields([
                 'id',
                 'date',
                 'patient_id',
                 'medical_history_id',
                 'payment_method_id',
-                'user_id',
                 'amount',
                 'amount_kh',
                 'currency',
                 'txnref',
-                'status',
                 'created_at',
                 'updated_at',
             ])
@@ -144,8 +153,43 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'amount_kh',
                 'currency',
                 'txnref',
-                'status',
                 'created_at',
+                AllowedSort::callback('status', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy(DB::raw("CASE WHEN amount < 0 THEN 'refunded' ELSE 'completed' END"), $dir);
+                }),
+                AllowedSort::callback('patient_name', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy(
+                        Patient::select(DB::raw("CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, ''))"))
+                            ->whereColumn('patients.id', 'payments.patient_id')
+                            ->limit(1),
+                        $dir
+                    );
+                }),
+                AllowedSort::callback('invoice_number', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy(
+                        MedicalHistory::select('invoice_num_year_series')
+                            ->whereColumn('medical_histories.id', 'payments.medical_history_id')
+                            ->limit(1),
+                        $dir
+                    )->orderBy(
+                        MedicalHistory::select('id')
+                            ->whereColumn('medical_histories.id', 'payments.medical_history_id')
+                            ->limit(1),
+                        $dir
+                    );
+                }),
+                AllowedSort::callback('payment_method_name', function ($query, $descending) {
+                    $dir = $descending ? 'desc' : 'asc';
+                    $query->orderBy(
+                        PaymentMethod::select('name')
+                            ->whereColumn('payment_methods.id', 'payments.payment_method_id')
+                            ->limit(1),
+                        $dir
+                    );
+                }),
             ])
             ->allowedFilters([
                 AllowedFilter::exact('patient_id'),
@@ -167,9 +211,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $table->withGlobalSearch();
         $table->column(key: 'actions', label: 'Action');
         $table->column(key: 'date', label: 'Date', sortable: true);
-        $table->column(key: 'patient_name', label: 'Patient');
-        $table->column(key: 'invoice_number', label: 'Invoice #', searchable: true);
-        $table->column(key: 'payment_method_name', label: 'Payment Method');
+        $table->column(key: 'patient_name', label: 'Patient', sortable: true);
+        $table->column(key: 'invoice_number', label: 'Invoice #', sortable: true, searchable: true);
+        $table->column(key: 'payment_method_name', label: 'Payment Method', sortable: true);
         $table->column(key: 'txnref', label: 'txnref', sortable: true, searchable: true);
         $table->column(key: 'amount', label: 'Amount ($)', sortable: true);
         $table->column(key: 'amount_kh', label: 'Amount (៛)', sortable: true);

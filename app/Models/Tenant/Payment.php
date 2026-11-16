@@ -21,12 +21,10 @@ class Payment extends Model
         'amount',
         'amount_kh',
         'payment_method_id',
-        'user_id',
         'credit_balance',
         'deposit_balance',
         'txnref',
         'currency',
-        'status',
     ];
 
     protected $casts = [
@@ -42,6 +40,7 @@ class Payment extends Model
         'invoice_number',
         'payment_method_name',
         'verified_by_name',
+        'status',
     ];
 
     public function medicalHistory(): BelongsTo
@@ -64,9 +63,14 @@ class Payment extends Model
         return $this->belongsTo(UserTenant::class, 'user_id');
     }
 
+    public function getStatusAttribute(): string
+    {
+        return $this->amount < 0 ? 'refunded' : 'completed';
+    }
+
     public function getPatientNameAttribute(): string
     {
-        if (!$this->patient) {
+        if (!$this->relationLoaded('patient') || !$this->patient) {
             return '-';
         }
         $name = trim(($this->patient->firstname ?? '') . ' ' . ($this->patient->lastname ?? ''));
@@ -75,20 +79,23 @@ class Payment extends Model
 
     public function getInvoiceNumberAttribute(): string
     {
-        if ($this->medicalHistory) {
-            return $this->medicalHistory->invoice_number_formatted ?: ($this->medicalHistory->invoice_number ?: '#' . $this->medicalHistory->id);
+        if (!$this->relationLoaded('medicalHistory') || !$this->medicalHistory) {
+            return $this->medical_history_id ? '#' . $this->medical_history_id : '-';
         }
-        return $this->medical_history_id ? '#' . $this->medical_history_id : '-';
+        return $this->medicalHistory->invoice_number_formatted ?: ($this->medicalHistory->invoice_number ?: '#' . $this->medicalHistory->id);
     }
 
     public function getPaymentMethodNameAttribute(): string
     {
-        return $this->paymentMethod?->name ?: '-';
+        if (!$this->relationLoaded('paymentMethod') || !$this->paymentMethod) {
+            return '-';
+        }
+        return $this->paymentMethod->name ?: '-';
     }
 
     public function getVerifiedByNameAttribute(): string
     {
-        if (!$this->verifiedBy) {
+        if (!$this->relationLoaded('verifiedBy') || !$this->verifiedBy) {
             return '-';
         }
         return $this->verifiedBy->profile?->full_name ?: ($this->verifiedBy->name ?: 'User #' . $this->verifiedBy->id);

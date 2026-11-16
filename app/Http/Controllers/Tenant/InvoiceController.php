@@ -312,44 +312,25 @@ class InvoiceController extends Controller
             });
         }
 
-        // Default Payment & Auto-Selection logic
+        // Default Payment & Auto-Selection logic:
+        // Only auto-select if a payment method explicitly has is_default_payment = true.
         $hasValidAba = $abaMethods->isNotEmpty();
         $defaultMethod = $allActiveMethods->firstWhere('is_default_payment', true);
-        if (!$defaultMethod) {
-            $defaultMethod = $allActiveMethods->firstWhere('is_sponsor', true);
-        }
 
-        $activePayment = 'cash';
+        $activePayment = $hasValidAba ? 'khqr' : 'cash';
         $selectedDefaultMethod = null;
 
         if ($defaultMethod && !$defaultMethod->is_disable) {
             if ($defaultMethod->hasValidAbaData()) {
-                // Scenario A: Default Payment is an ABA KHQR method
                 $activePayment = 'khqr';
                 $selectedDefaultMethod = $defaultMethod;
             } else {
-                // Scenario B: Default Payment is a Cash method
                 $activePayment = 'cash';
                 $selectedDefaultMethod = $defaultMethod;
             }
-        } else {
-            // Scenario C & D: No valid default payment exists or default is disabled/invalid
-            if ($hasValidAba) {
-                $activePayment = 'khqr';
-                $selectedDefaultMethod = $abaMethods->first();
-            } else {
-                $activePayment = 'cash';
-                $selectedDefaultMethod = $cashMethods->first();
-            }
         }
 
-        // Safety fallback: if khqr was selected but no valid ABA methods exist
-        if ($activePayment === 'khqr' && !$hasValidAba) {
-            $activePayment = 'cash';
-            $selectedDefaultMethod = $cashMethods->first();
-        }
-
-        $defaultCurrency = $selectedDefaultMethod?->currency ?: ($activePayment === 'khqr' ? 'USD' : 'USD');
+        $defaultCurrency = $selectedDefaultMethod?->currency ?: 'USD';
 
         // Build account options (from active payment methods register_ref)
         $accounts = [];
@@ -488,6 +469,12 @@ class InvoiceController extends Controller
             'credit_amount' => 'nullable|numeric|min:0',
         ]);
 
+        if ((float) $request->input('amount', 0) > 0 && empty($request->input('payment_method_id'))) {
+            throw ValidationException::withMessages([
+                'payment_method_id' => ['Please select a payment method.'],
+            ]);
+        }
+
         if ($methodId = $request->input('payment_method_id')) {
             $pm = PaymentMethod::find($methodId);
             if (!$pm || $pm->is_disable) {
@@ -540,11 +527,9 @@ class InvoiceController extends Controller
                             'amount' => $appliedCredit,
                             'amount_kh' => (int) round($appliedCredit * $rate),
                             'payment_method_id' => $request->input('payment_method_id'),
-                            'user_id' => auth()->id(),
                             'credit_balance' => $patient->balance,
                             'txnref' => 'CREDIT_APPLIED',
                             'currency' => 'USD',
-                            'status' => 'completed',
                         ]);
 
                         $currentBalance = max(0, $currentBalance - $appliedCredit);
@@ -571,10 +556,8 @@ class InvoiceController extends Controller
                     'amount' => $amount,
                     'amount_kh' => $amountKh,
                     'payment_method_id' => $request->input('payment_method_id'),
-                    'user_id' => auth()->id(),
                     'txnref' => $paymentAccount,
                     'currency' => 'USD',
-                    'status' => 'completed',
                 ]);
             }
 
@@ -592,7 +575,7 @@ class InvoiceController extends Controller
                     'paid_usd' => $paidUsd,
                     'paid_kh' => $paidKh,
                     'balance' => $newBalance,
-                    'status' => $status,
+                    'status' => $financials['status'],
                     'status_label' => $invoice->fresh()->status_label,
                 ],
             ]);

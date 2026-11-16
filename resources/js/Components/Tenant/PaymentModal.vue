@@ -190,15 +190,30 @@
                 @change="onMethodChange"
                 class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-xs"
               >
-                <option v-if="!currentPaymentMethods || currentPaymentMethods.length === 0" :value="null">
+                <option value="">
+                  Select Payment Method
+                </option>
+
+                <option v-if="!currentPaymentMethods || currentPaymentMethods.length === 0" value="" disabled>
                   -- No methods available --
                 </option>
-                <template v-for="(methods, groupName) in groupedCurrentMethods" :key="groupName">
-                  <optgroup :label="groupName">
-                    <option v-for="m in methods" :key="m.id" :value="m.id">
-                      {{ m.name }} {{ m.currency ? '(' + m.currency + ')' : '' }}
-                    </option>
-                  </optgroup>
+
+                <!-- Cash: simple list of payment methods without optgroups -->
+                <template v-if="activePaymentType === 'cash'">
+                  <option v-for="m in currentPaymentMethods" :key="m.id" :value="m.id">
+                    {{ m.name }}{{ m.currency ? ' (' + m.currency + ')' : '' }}
+                  </option>
+                </template>
+
+                <!-- ABA KHQR: group by currency like existing code -->
+                <template v-else>
+                  <template v-for="(methods, groupName) in groupedAbaMethods" :key="groupName">
+                    <optgroup :label="groupName">
+                      <option v-for="m in methods" :key="m.id" :value="m.id">
+                        {{ m.name }} {{ m.currency ? '(' + m.currency + ')' : '' }}
+                      </option>
+                    </optgroup>
+                  </template>
                 </template>
               </select>
             </div>
@@ -398,7 +413,7 @@ export default {
       abaPaymentMethods: [],
       cashPaymentMethods: [],
       paymentAccounts: [],
-      selectedMethodId: null,
+      selectedMethodId: '',
       applyCredit: false,
       form: {
         payment_account: null,
@@ -419,16 +434,12 @@ export default {
     currentPaymentMethods() {
       return this.activePaymentType === 'khqr' ? this.abaPaymentMethods : this.cashPaymentMethods;
     },
-    groupedCurrentMethods() {
+    groupedAbaMethods() {
       const groups = {};
-      const methods = this.currentPaymentMethods;
+      const methods = this.abaPaymentMethods || [];
       methods.forEach((m) => {
-        let groupKey = m.currency;
-        if (!groupKey) {
-          groupKey = this.activePaymentType === 'khqr' ? 'USD' : 'CASH PAYMENT';
-        } else {
-          groupKey = `--- ${groupKey} ---`;
-        }
+        const curr = (m.currency || 'USD').toUpperCase();
+        const groupKey = `--- ${curr} ---`;
         if (!groups[groupKey]) {
           groups[groupKey] = [];
         }
@@ -436,9 +447,12 @@ export default {
       });
       return groups;
     },
+    groupedCurrentMethods() {
+      return this.groupedAbaMethods;
+    },
     selectedMethod() {
       if (!this.selectedMethodId) return null;
-      return this.currentPaymentMethods.find((m) => m.id === this.selectedMethodId) || null;
+      return this.currentPaymentMethods.find((m) => m.id == this.selectedMethodId) || null;
     },
     selectedMethodCurrency() {
       return this.selectedMethod?.currency || (this.activePaymentType === 'khqr' ? 'USD' : null);
@@ -472,7 +486,7 @@ export default {
       this.applyCredit = false;
       this.form.date = dayjs().format('YYYY-MM-DD');
       this.form.payment_account = null;
-      this.selectedMethodId = null;
+      this.selectedMethodId = '';
     },
     selectPaymentType(type) {
       if (type === 'khqr' && !this.hasValidAba) {
@@ -485,18 +499,18 @@ export default {
       this.alertMessage = '';
 
       if (type === 'khqr') {
-        // Clear previous Cash selection, auto-select default ABA payment method
-        const defaultAba = this.abaPaymentMethods.find((m) => m.is_default_payment) || this.abaPaymentMethods[0];
+        // Auto-select if a method has default payment = true; otherwise select '' => 'Select Payment Method'
+        const defaultAba = this.abaPaymentMethods.find((m) => m.is_default_payment);
         this.selectPaymentMethod(defaultAba || null);
       } else {
-        // Clear previous ABA selection, auto-select default Cash payment method
-        const defaultCash = this.cashPaymentMethods.find((m) => m.is_default_payment) || this.cashPaymentMethods[0];
+        // Auto-select if a method has default payment = true; otherwise select '' => 'Select Payment Method'
+        const defaultCash = this.cashPaymentMethods.find((m) => m.is_default_payment);
         this.selectPaymentMethod(defaultCash || null);
       }
     },
     selectPaymentMethod(method) {
       if (!method) {
-        this.selectedMethodId = null;
+        this.selectedMethodId = '';
         this.form.payment_account = null;
         return;
       }
@@ -514,6 +528,10 @@ export default {
       }
     },
     onMethodChange() {
+      if (!this.selectedMethodId) {
+        this.selectPaymentMethod(null);
+        return;
+      }
       const id = Number(this.selectedMethodId);
       const method = this.currentPaymentMethods.find((m) => m.id === id);
       this.selectPaymentMethod(method || null);
@@ -560,15 +578,18 @@ export default {
 
         // Determine active payment type based on backend calculation
         this.activePaymentType = data.active_payment || (this.hasValidAba ? 'khqr' : 'cash');
+        if (!this.hasValidAba) {
+          this.activePaymentType = 'cash';
+        }
 
-        // Automatically select the default payment method according to active payment type
+        // Automatically select the default payment method if default payment = true
         const defaultId = data.default_method_id;
         let chosenMethod = null;
         if (defaultId) {
           chosenMethod = this.currentPaymentMethods.find((m) => m.id === defaultId);
         }
         if (!chosenMethod && this.currentPaymentMethods.length > 0) {
-          chosenMethod = this.currentPaymentMethods.find((m) => m.is_default_payment) || this.currentPaymentMethods[0];
+          chosenMethod = this.currentPaymentMethods.find((m) => m.is_default_payment);
         }
 
         this.selectPaymentMethod(chosenMethod || null);
@@ -593,12 +614,18 @@ export default {
         return;
       }
 
+      if (amount > 0 && !this.selectedMethodId) {
+        this.alertMessage = 'Please select a payment method.';
+        this.alertSuccess = false;
+        return;
+      }
+
       this.submitting = true;
       this.alertMessage = '';
 
       try {
         const payload = {
-          payment_method_id: this.selectedMethodId,
+          payment_method_id: this.selectedMethodId ? Number(this.selectedMethodId) : null,
           payment_type: this.activePaymentType,
           amount: amount,
           date: this.form.date,
@@ -614,8 +641,8 @@ export default {
         // Emit updated invoice so parent DataTable updates balance and status badges
         this.$emit('payment-saved', response.data.invoice);
 
-        // Refresh modal data in real-time
-        await this.fetchPaymentData();
+        // Close popup upon successful payment
+        this.$emit('close');
       } catch (err) {
         console.error('Payment failed:', err);
         const errorMsg =

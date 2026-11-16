@@ -370,7 +370,11 @@ export default {
           this.invoices.data[index].status_label = updatedInvoice.status_label;
         }
       }
-      this.$toast?.success("Payment recorded successfully.");
+      if (this.toast && typeof this.toast.success === "function") {
+        this.toast.success("Payment recorded successfully.");
+      } else if (this.$toast && typeof this.$toast.success === "function") {
+        this.$toast.success("Payment recorded successfully.");
+      }
     },
     formatDate(dateStr) {
       if (!dateStr) return "-";
