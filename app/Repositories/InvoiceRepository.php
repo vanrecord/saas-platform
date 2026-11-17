@@ -253,13 +253,13 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
         }
 
         $prefixName = $prefix ? ($prefix->prefix_name ?: 'INV') : 'INV';
-        $prefixFormat = $prefix ? ($prefix->prefix_format ?: 'Year-Series') : 'Year-Series';
+        $prefixFormat = $prefix ? ($prefix->prefix_format ?: 'year-series') : 'year-series';
         $prefixDbId = $prefix ? $prefix->id : null;
 
         $targetDate = $dailyDate ? Carbon::parse($dailyDate) : Carbon::today();
         $year = $targetDate->format('Y');
 
-        if ($prefixFormat === 'Year-Series') {
+        if (in_array(strtolower((string) $prefixFormat), ['year-series', 'year_series'])) {
             // Concurrency-safe lock in PostgreSQL (order by desc with lockForUpdate)
             $maxYearSeries = DB::table('medical_histories')
                 ->where(function ($q) use ($prefixDbId, $prefixName) {

@@ -508,12 +508,6 @@
                   {{ $page.props.auth?.user?.name }}
                   <span class="block text-[10px] text-slate-400 font-normal">Online (Tenant User)</span>
                 </div>
-                <Link :href="route('tenant.dashboard')" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                  Dashboard
-                </Link>
-                <Link :href="route('dental.index')" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">
-                  Odontogram
-                </Link>
                 <div class="border-t border-slate-100 my-1"></div>
                 <button
                   type="button"

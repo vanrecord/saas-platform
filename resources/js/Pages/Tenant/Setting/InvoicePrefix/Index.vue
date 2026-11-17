@@ -163,8 +163,8 @@
               class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white"
               required
             >
-              <option value="Series">Series (e.g. INV-000001)</option>
-              <option value="Year-Series">Year-Series (e.g. INV-2026-000001)</option>
+              <option value="series">Series (e.g. INV-000001)</option>
+              <option value="year-series">Year-Series (e.g. INV-2026-000001)</option>
             </select>
             <div v-if="form.errors.prefix_format" class="text-xs text-red-500 mt-1">
               {{ form.errors.prefix_format }}
@@ -235,7 +235,7 @@ export default {
       editingId: null,
       form: useForm({
         prefix_name: "INV",
-        prefix_format: "Year-Series",
+        prefix_format: "year-series",
         default_prefix: false,
       }),
     };
@@ -251,7 +251,7 @@ export default {
       this.editingId = null;
       this.form.reset();
       this.form.prefix_name = "INV";
-      this.form.prefix_format = "Year-Series";
+      this.form.prefix_format = "year-series";
       this.form.default_prefix = false;
       this.form.clearErrors();
       this.showModal = true;
@@ -261,7 +261,7 @@ export default {
       this.editingId = prefix.id;
       this.form.clearErrors();
       this.form.prefix_name = prefix.prefix_name;
-      this.form.prefix_format = prefix.prefix_format;
+      this.form.prefix_format = prefix.prefix_format ? prefix.prefix_format.toLowerCase() : "year-series";
       this.form.default_prefix = Boolean(prefix.default_prefix);
       this.showModal = true;
     },

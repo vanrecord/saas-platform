@@ -22,6 +22,11 @@ class Prefix extends Model
         'default_prefix' => 'boolean',
     ];
 
+    public function setPrefixFormatAttribute($value): void
+    {
+        $this->attributes['prefix_format'] = $value ? strtolower(trim((string) $value)) : null;
+    }
+
     public function scopeDefault($query)
     {
         return $query->where('default_prefix', true);

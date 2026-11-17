@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\Doctor;
 use App\Models\Tenant\MedicalHistory;
 use App\Models\Tenant\Patient;
-use App\Models\Tenant\PatientVisit;
 use App\Models\Tenant\Prefix;
 use App\Models\Tenant\Reception;
 use App\Models\UserTenant;
@@ -20,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class PatientVisitRegistrationController extends Controller
+class ReceptionController extends Controller
 {
     protected InvoiceRepositoryInterface $invoiceRepository;
     protected InvoicePrefixRepositoryInterface $prefixRepository;
@@ -65,20 +64,11 @@ class PatientVisitRegistrationController extends Controller
             $doctors = UserTenant::select('id', 'name', 'email')->get();
         }
 
-        if ($doctors->isEmpty()) {
-            $doctors = collect([
-                ['id' => 1, 'name' => 'Dr. Sovann (Dental Surgeon)', 'email' => ''],
-                ['id' => 2, 'name' => 'Dr. Chan (Orthodontist)', 'email' => ''],
-                ['id' => 3, 'name' => 'Dr. Sophea (Pediatric Dentist)', 'email' => ''],
-                ['id' => 4, 'name' => 'Dr. Vicheka (Periodontist)', 'email' => ''],
-            ]);
-        }
-
         return Inertia::render('Tenant/Visit/Register', [
             'selectedPatient' => $selectedPatient,
             'existingInvoices' => $existingInvoices,
             'doctors' => $doctors,
-            'suggestedInvoiceReference' => PatientVisit::generateInvoiceReference(),
+            'suggestedInvoiceReference' => 'INV-' . date('Ymd') . '-0001',
             'tenant' => [
                 'name' => tenant('name') ?? 'Dental Clinic',
                 'company' => tenant('company') ?? tenant('name') ?? 'Dental Clinic • OdontoCare',
@@ -146,33 +136,14 @@ class PatientVisitRegistrationController extends Controller
 
                 // Create Reception linked to the new Invoice
                 Reception::create([
-                    'reception_number' => Reception::generateReceptionNumber(),
                     'patient_id' => $patient->id,
                     'invoice_id' => $invoice->id,
                     'doctor_id' => $doctorId,
                     'reception_date' => Carbon::now(),
                     'visit_type' => $validated['visit_type'],
                     'chief_complaint' => $validated['chief_complaint'] ?? null,
-                    'status' => 'registered',
-                    'notes' => $validated['clinical_notes'] ?? null,
-                    'created_by' => auth()->id(),
-                ]);
-
-                // Keep patient_visits synchronized for dashboard metrics
-                PatientVisit::create([
-                    'patient_id' => $patient->id,
-                    'visit_number' => PatientVisit::generateVisitNumber(),
-                    'workflow_option' => 'new_invoice',
-                    'invoice_reference' => $invoice->invoice_number_formatted,
-                    'visit_type' => $validated['visit_type'],
-                    'doctor_id' => $doctorId,
-                    'doctor_name' => $validated['doctor_name'] ?? 'Attending Dentist',
-                    'chief_complaint' => $validated['chief_complaint'] ?? null,
-                    'clinical_notes' => $validated['clinical_notes'] ?? null,
-                    'reception_type' => $validated['reception_type'] ?? 'Initial Visit (Checked In)',
-                    'outstanding_balance' => 0.00,
-                    'status' => 'checked_in',
-                    'visited_at' => Carbon::now(),
+                    'status' => Reception::REGISTERED,
+                    'notes' => $validated['clinical_notes'] ?? null
                 ]);
 
                 return $invoice;
@@ -184,33 +155,15 @@ class PatientVisitRegistrationController extends Controller
 
                 // Create Reception linked to existing invoice (do NOT duplicate or alter invoice)
                 Reception::create([
-                    'reception_number' => Reception::generateReceptionNumber(),
                     'patient_id' => $patient->id,
                     'invoice_id' => $invoice->id,
                     'doctor_id' => $doctorId,
                     'reception_date' => Carbon::now(),
                     'visit_type' => $validated['visit_type'],
                     'chief_complaint' => $validated['chief_complaint'] ?? null,
-                    'status' => 'registered',
+                    'status' => Reception::REGISTERED,
                     'notes' => $validated['clinical_notes'] ?? null,
                     'created_by' => auth()->id(),
-                ]);
-
-                // Keep patient_visits synchronized for dashboard metrics
-                PatientVisit::create([
-                    'patient_id' => $patient->id,
-                    'visit_number' => PatientVisit::generateVisitNumber(),
-                    'workflow_option' => 'follow_up',
-                    'invoice_reference' => $invoice->invoice_number_formatted,
-                    'visit_type' => $validated['visit_type'],
-                    'doctor_id' => $doctorId,
-                    'doctor_name' => $validated['doctor_name'] ?? 'Attending Dentist',
-                    'chief_complaint' => $validated['chief_complaint'] ?? null,
-                    'clinical_notes' => $validated['clinical_notes'] ?? null,
-                    'reception_type' => $validated['reception_type'] ?? 'Follow-up Consultation',
-                    'outstanding_balance' => (float) ($invoice->balance ?? 0.00),
-                    'status' => 'checked_in',
-                    'visited_at' => Carbon::now(),
                 ]);
 
                 return $invoice;

@@ -22,20 +22,8 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
             </svg>
-            <span>+ Register Visit</span>
+            <span> Register Visit</span>
           </Link>
-
-          <!-- Create Patient Modal Button -->
-          <button
-            type="button"
-            @click="isModalOpen = true"
-            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold text-[#0D63D6] bg-white border border-[#0D63D6]/30 hover:bg-blue-50 transition-all shadow-xs"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            <span>+ Create Patient</span>
-          </button>
         </div>
       </div>
 
@@ -110,7 +98,7 @@
             <span class="text-2xl sm:text-3xl font-extrabold text-[#152B45]">
               ${{ stats.total_revenue }}
             </span>
-            <span class="block text-[11px] text-slate-400 mt-0.5">Recorded patient visits balance</span>
+            <span class="block text-[11px] text-slate-400 mt-0.5">Total collected payments</span>
           </div>
         </div>
 

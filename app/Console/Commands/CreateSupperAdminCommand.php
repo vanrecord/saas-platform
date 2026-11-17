@@ -25,7 +25,7 @@ class CreateSupperAdminCommand extends Command
         $data = [
             'name'         => 'Super Admin',
             'email'        => 'superadmin@pethyoeung.com',
-            'password'     => Hash::make('hmJ$h841uYWv'),
+            'password'     => Hash::make('12345678'),
             'level_access' => User::SUPER_ADMIN,
             'email_verified_at' => date('Y-m-d H:i:s'),
             'is_active'    => true

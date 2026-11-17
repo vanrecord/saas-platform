@@ -121,3 +121,11 @@ if (!function_exists('truncate_string_by_words')) {
     }
 }
 
+if (!function_exists('get_prefix_code')) {
+    function get_prefix_code($code)
+    {
+        if($code == 'visit')
+        return 'VIS';
+    }
+}
+

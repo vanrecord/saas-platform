@@ -163,7 +163,7 @@ class Patient extends Model
 
     public function visits(): HasMany
     {
-        return $this->hasMany(PatientVisit::class, 'patient_id');
+        return $this->hasMany(Reception::class, 'patient_id');
     }
 
     public function addressRecord()

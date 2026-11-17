@@ -83,7 +83,7 @@ class InvoicePrefixRepository extends BaseRepository implements InvoicePrefixRep
             if (!$default) {
                 $default = Prefix::create([
                     'prefix_name' => 'INV',
-                    'prefix_format' => 'Year-Series',
+                    'prefix_format' => 'year-series',
                     'default_prefix' => true,
                 ]);
             } else {

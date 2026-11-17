@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\MedicalHistory;
 use App\Models\Tenant\Patient;
-use App\Models\Tenant\PatientVisit;
+use App\Models\Tenant\Payment;
+use App\Models\Tenant\Reception;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,18 +21,28 @@ class TenantDashboardController extends Controller
         $today = Carbon::today();
 
         $totalPatients = Patient::count();
-        $todayVisits = PatientVisit::whereDate('visited_at', $today)->count();
-        $pendingInvoices = PatientVisit::where('outstanding_balance', '>', 0)
-            ->orWhere('workflow_option', 'new_invoice')
-            ->count();
-        $totalRevenue = PatientVisit::sum('outstanding_balance');
+        $todayVisits = Reception::whereDate('reception_date', $today)->count();
+        $pendingInvoices = MedicalHistory::where(function ($q) {
+            $q->whereNull('status')->orWhere('status', '!=', MedicalHistory::PAID);
+        })->count();
+        $totalRevenue = max(0, (float) (Payment::sum('amount') ?? 0));
 
         $recentPatients = Patient::latest()->take(6)->get();
 
-        $todayAppointments = PatientVisit::with('patient')
-            ->latest('visited_at')
+        $todayAppointments = Reception::with(['patient', 'doctor.user.profile'])
+            ->latest('reception_date')
             ->take(6)
-            ->get();
+            ->get()
+            ->map(function ($rec) {
+                return [
+                    'id' => $rec->id,
+                    'patient' => $rec->patient,
+                    'visit_type' => $rec->visit_type,
+                    'doctor_name' => $rec->doctor?->full_name ?: ($rec->doctor?->user?->name ?? 'Attending Dentist'),
+                    'status' => $rec->status ?? 'checked_in',
+                    'visit_number' => $rec->reception_number,
+                ];
+            });
 
         $totalCharts = MedicalHistory::count();
 

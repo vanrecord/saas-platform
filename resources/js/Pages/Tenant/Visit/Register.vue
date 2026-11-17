@@ -321,14 +321,8 @@
                       v-model="form.visit_type"
                       class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm text-[#152B45] focus:border-[#0D63D6] focus:ring-2 focus:ring-blue-100 focus:outline-none transition bg-white"
                     >
-                      <option value="Initial Consultation">Initial Consultation</option>
-                      <option value="Follow-up Visit">Follow-up Visit</option>
-                      <option value="Emergency Dental Care">Emergency Dental Care</option>
-                      <option value="Routine Dental Cleaning">Routine Dental Cleaning</option>
-                      <option value="Orthodontic Adjustment">Orthodontic Adjustment</option>
-                      <option value="Surgical & Extraction">Surgical & Extraction</option>
-                      <option value="Restorative & Filling">Restorative & Filling</option>
-                      <option value="Endodontic / Root Canal">Endodontic / Root Canal</option>
+                      <option value="New">New</option>
+                      <option value="Follow up">Follow up</option>
                     </select>
                   </div>
 
@@ -552,7 +546,7 @@ const form = reactive({
   patient_id: props.selectedPatient?.id || null,
   workflow_option: 'new_invoice',
   invoice_id: '',
-  visit_type: 'Initial Consultation',
+  visit_type: 'New',
   doctor_id: '',
   doctor_name: '',
   chief_complaint: '',
@@ -587,7 +581,9 @@ function selectWorkflowOption(option) {
   form.workflow_option = option
   if (option === 'new_invoice') {
     form.invoice_id = ''
+    form.visit_type = 'New'
   } else if (option === 'follow_up') {
+    form.visit_type = 'Follow up'
     if (selectedPatient.value && patientInvoices.value.length === 0 && !isLoadingInvoices.value) {
       fetchPatientInvoices(selectedPatient.value.id)
     }
@@ -672,7 +668,7 @@ function resetForm() {
   clearSelectedPatient()
   form.workflow_option = 'new_invoice'
   form.invoice_id = ''
-  form.visit_type = 'Initial Consultation'
+  form.visit_type = 'New'
   form.doctor_id = ''
   form.doctor_name = ''
   form.chief_complaint = ''

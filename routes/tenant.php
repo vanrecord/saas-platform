@@ -7,7 +7,7 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Controllers\Tenant\Auth\AuthenticatedSessionController as TenantAuthController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
-use App\Http\Controllers\Tenant\PatientVisitRegistrationController;
+use App\Http\Controllers\Tenant\ReceptionController;
 use App\Http\Controllers\Tenant\DentalViewController;
 use App\Http\Controllers\Tenant\DentalConditionController;
 use App\Http\Controllers\Tenant\PatientController;
@@ -56,8 +56,8 @@ Route::middleware([
         Route::get('/logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index'])->name('tenant.logs');
 
         // Patient Visit Registration (Main Reference UI)
-        Route::get('/register', [PatientVisitRegistrationController::class, 'create'])->name('tenant.visit.create');
-        Route::post('/register', [PatientVisitRegistrationController::class, 'store'])->name('tenant.visit.store');
+        Route::get('/register', [ReceptionController::class, 'create'])->name('tenant.visit.create');
+        Route::post('/register', [ReceptionController::class, 'store'])->name('tenant.visit.store');
 
         // Interactive Odontogram
         Route::get('/dental', [DentalViewController::class, 'index'])->name('dental.index');
@@ -115,9 +115,9 @@ Route::middleware([
 
         // API Endpoints for Frontend Interactive Chart & AJAX
         Route::prefix('api')->name('api.')->group(function () {
-            Route::get('patients/search', [PatientVisitRegistrationController::class, 'searchPatients'])->name('patients.search');
-            Route::post('patients/quick-create', [PatientVisitRegistrationController::class, 'quickCreatePatient'])->name('patients.quick-create');
-            Route::get('patients/{patient}/invoices', [PatientVisitRegistrationController::class, 'getPatientInvoices'])->name('patients.invoices');
+            Route::get('patients/search', [ReceptionController::class, 'searchPatients'])->name('patients.search');
+            Route::post('patients/quick-create', [ReceptionController::class, 'quickCreatePatient'])->name('patients.quick-create');
+            Route::get('patients/{patient}/invoices', [ReceptionController::class, 'getPatientInvoices'])->name('patients.invoices');
             Route::get('address/provinces', [SupplierController::class, 'getProvinces'])->name('address.provinces');
             Route::get('address/districts/{provinceId}', [SupplierController::class, 'getDistricts'])->name('address.districts');
             Route::get('address/communes/{districtId}', [SupplierController::class, 'getCommunes'])->name('address.communes');

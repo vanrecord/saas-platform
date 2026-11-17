@@ -166,6 +166,11 @@ class MedicalHistory extends Model
         return $this->belongsTo(Prefix::class, 'prefix_id');
     }
 
+    public function setPrefixFormatAttribute($value): void
+    {
+        $this->attributes['prefix_format'] = $value ? strtolower(trim((string) $value)) : null;
+    }
+
     public function medicalDetails(): HasMany
     {
         return $this->hasMany(MedicalDetail::class, 'medical_history_id');
@@ -193,7 +198,7 @@ class MedicalHistory extends Model
         }
 
         $prefix = $this->prefix_invoice ?: 'INV';
-        if ($this->prefix_format === 'Year-Series' || ($this->invoice_num_year_series && !$this->invoice_id)) {
+        if (in_array(strtolower((string) $this->prefix_format), ['year-series', 'year_series']) || ($this->invoice_num_year_series && !$this->invoice_id)) {
             $year = $this->date ? Carbon::parse($this->date)->format('Y') : date('Y');
             $num = $this->invoice_num_year_series ?: $this->invoice_id ?: $this->id;
             return sprintf('%s-%s-%06d', $prefix, $year, $num);
