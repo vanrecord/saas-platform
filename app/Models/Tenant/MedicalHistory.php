@@ -186,6 +186,11 @@ class MedicalHistory extends Model
         return $this->hasMany(Payment::class, 'medical_history_id');
     }
 
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class, 'medical_history_id');
+    }
+
     public function receptions(): HasMany
     {
         return $this->hasMany(Reception::class, 'invoice_id');

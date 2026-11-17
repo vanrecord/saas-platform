@@ -19,6 +19,8 @@ use App\Http\Controllers\Tenant\DoctorController;
 use App\Http\Controllers\Tenant\UserController;
 use App\Http\Controllers\Tenant\InvoiceController;
 use App\Http\Controllers\Tenant\InvoicePrefixController;
+use App\Http\Controllers\Tenant\MedicineController;
+use App\Http\Controllers\Tenant\PrescriptionController;
 use App\Http\Controllers\Tenant\PaymentController;
 use App\Http\Controllers\Tenant\PaymentMethodController;
 use App\Http\Controllers\Tenant\ServiceCategoryController;
@@ -112,6 +114,14 @@ Route::middleware([
         // Payment Method Settings
         Route::resource('settings/payment-methods', PaymentMethodController::class)->names('settings.payment-methods');
         Route::post('settings/payment-methods/{payment_method}', [PaymentMethodController::class, 'update'])->name('settings.payment-methods.update-post');
+
+        // Medicine Settings / Management
+        Route::resource('medicines', MedicineController::class)->except(['show']);
+
+        // Prescription Management
+        Route::get('/prescriptions/{prescription}/print', [PrescriptionController::class, 'print'])->name('prescriptions.print');
+        Route::get('/prescriptions/patient-histories/{patient}', [PrescriptionController::class, 'patientHistories'])->name('prescriptions.patient-histories');
+        Route::resource('prescriptions', PrescriptionController::class);
 
         // API Endpoints for Frontend Interactive Chart & AJAX
         Route::prefix('api')->name('api.')->group(function () {

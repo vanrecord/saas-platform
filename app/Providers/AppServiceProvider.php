@@ -66,6 +66,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\PaymentMethodRepositoryInterface::class,
             \App\Repositories\Tenant\PaymentMethodRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\MedicineRepositoryInterface::class,
+            \App\Repositories\MedicineRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\PrescriptionRepositoryInterface::class,
+            \App\Repositories\PrescriptionRepository::class
+        );
     }
 
     /**

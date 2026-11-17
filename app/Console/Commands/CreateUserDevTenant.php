@@ -36,7 +36,7 @@ class CreateUserDevTenant extends Command
                     $existing = UserTenant::create([
                         'name'         => 'User dev',
                         'email'        => 'dev@pethyoeung.com',
-                        'password'     => Hash::make('MxRYav7NM8S8'),
+                        'password'     => Hash::make('12345678'),
                         'level_access' => UserTenant::USER_DEV,
                         'email_verified_at' => date('Y-m-d H:i:s'),
                         'active'    => true

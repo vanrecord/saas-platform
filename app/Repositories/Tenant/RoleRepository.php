@@ -252,6 +252,16 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                 'type' => 'group',
                 'menus' => [
                     [
+                        'id' => 'medicine',
+                        'title' => 'Medicines',
+                        'permissions' => [
+                            ['key' => 'medicine:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'medicine:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'medicine:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'medicine:delete', 'action' => 'delete', 'label' => 'Delete'],
+                        ],
+                    ],
+                    [
                         'id' => 'payment-method',
                         'title' => 'Payment Method',
                         'permissions' => [

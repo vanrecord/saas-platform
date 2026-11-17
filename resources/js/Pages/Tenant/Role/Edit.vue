@@ -363,6 +363,120 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Subsection 4: Settings (Medicines) -->
+              <div class="mt-6">
+                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  {{ tm('Settings') || 'Settings' }}
+                </div>
+                <div class="space-y-3">
+                  <!-- Medicines Card -->
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ tm('Medicines') || 'Medicines' }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(medicineMenu.actions) }}/{{ medicineMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(medicineMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(medicineMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4 Action Switches -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div
+                        v-for="action in medicineMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                      >
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          {{ action.label }}
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            class="sr-only peer"
+                            :checked="hasPermission(action.permission)"
+                            @change="togglePermission(action.permission)"
+                          />
+                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Prescriptions Card -->
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ tm('Prescriptions') || 'Prescriptions' }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(prescriptionMenu.actions) }}/{{ prescriptionMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(prescriptionMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(prescriptionMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4 Action Switches -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div
+                        v-for="action in prescriptionMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                      >
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          {{ action.label }}
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            class="sr-only peer"
+                            :checked="hasPermission(action.permission)"
+                            @change="togglePermission(action.permission)"
+                          />
+                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Footer Actions -->
@@ -506,6 +620,30 @@ export default defineComponent({
         ],
       }
     },
+    medicineMenu() {
+      return {
+        id: 'medicine',
+        title: this.tm('Medicines') || 'Medicines',
+        actions: [
+          { permission: 'medicine:view', label: this.tm('View') },
+          { permission: 'medicine:create', label: this.tm('Create') },
+          { permission: 'medicine:edit', label: this.tm('Edit') },
+          { permission: 'medicine:delete', label: this.tm('Delete') },
+        ],
+      }
+    },
+    prescriptionMenu() {
+      return {
+        id: 'prescription',
+        title: this.tm('Prescriptions') || 'Prescriptions',
+        actions: [
+          { permission: 'prescription:view', label: this.tm('View') },
+          { permission: 'prescription:create', label: this.tm('Create') },
+          { permission: 'prescription:edit', label: this.tm('Edit') },
+          { permission: 'prescription:delete', label: this.tm('Delete') },
+        ],
+      }
+    },
     allPermissionNames() {
       const list = ['dashboard:view', 'register:view']
       this.hospitalMenus.forEach((m) => {
@@ -513,30 +651,100 @@ export default defineComponent({
       })
       this.roleMenu.actions.forEach((a) => list.push(a.permission))
       this.userMenu.actions.forEach((a) => list.push(a.permission))
+      this.medicineMenu.actions.forEach((a) => {
+        list.push(a.permission)
+        if (a.permission === 'medicine:view') list.push('medicines:medicines:view')
+        if (a.permission === 'medicine:create') list.push('medicines:medicines:create')
+        if (a.permission === 'medicine:edit') list.push('medicines:medicines:edit')
+        if (a.permission === 'medicine:delete') list.push('medicines:medicines:delete')
+      })
+      this.prescriptionMenu.actions.forEach((a) => {
+        list.push(a.permission)
+        if (a.permission === 'prescription:view') list.push('prescriptions:prescriptions:view')
+        if (a.permission === 'prescription:create') list.push('prescriptions:prescriptions:create')
+        if (a.permission === 'prescription:edit') list.push('prescriptions:prescriptions:edit')
+        if (a.permission === 'prescription:delete') list.push('prescriptions:prescriptions:delete')
+      })
       return list
     },
   },
   methods: {
     hasPermission(name) {
-      return this.form.permissions.includes(name)
+      const aliases = {
+        'medicine:view': 'medicines:medicines:view',
+        'medicine:create': 'medicines:medicines:create',
+        'medicine:edit': 'medicines:medicines:edit',
+        'medicine:delete': 'medicines:medicines:delete',
+        'prescription:view': 'prescriptions:prescriptions:view',
+        'prescription:create': 'prescriptions:prescriptions:create',
+        'prescription:edit': 'prescriptions:prescriptions:edit',
+        'prescription:delete': 'prescriptions:prescriptions:delete',
+      }
+      return this.form.permissions.includes(name) || (aliases[name] && this.form.permissions.includes(aliases[name]))
     },
     togglePermission(name) {
+      const aliases = {
+        'medicine:view': 'medicines:medicines:view',
+        'medicine:create': 'medicines:medicines:create',
+        'medicine:edit': 'medicines:medicines:edit',
+        'medicine:delete': 'medicines:medicines:delete',
+        'prescription:view': 'prescriptions:prescriptions:view',
+        'prescription:create': 'prescriptions:prescriptions:create',
+        'prescription:edit': 'prescriptions:prescriptions:edit',
+        'prescription:delete': 'prescriptions:prescriptions:delete',
+      }
+      const alias = aliases[name]
       const index = this.form.permissions.indexOf(name)
       if (index > -1) {
         this.form.permissions.splice(index, 1)
+        if (alias) {
+          const aIdx = this.form.permissions.indexOf(alias)
+          if (aIdx > -1) this.form.permissions.splice(aIdx, 1)
+        }
       } else {
         this.form.permissions.push(name)
+        if (alias && !this.form.permissions.includes(alias)) {
+          this.form.permissions.push(alias)
+        }
       }
     },
     selectMenuAll(actions) {
+      const aliases = {
+        'medicine:view': 'medicines:medicines:view',
+        'medicine:create': 'medicines:medicines:create',
+        'medicine:edit': 'medicines:medicines:edit',
+        'medicine:delete': 'medicines:medicines:delete',
+        'prescription:view': 'prescriptions:prescriptions:view',
+        'prescription:create': 'prescriptions:prescriptions:create',
+        'prescription:edit': 'prescriptions:prescriptions:edit',
+        'prescription:delete': 'prescriptions:prescriptions:delete',
+      }
       actions.forEach((a) => {
         if (!this.form.permissions.includes(a.permission)) {
           this.form.permissions.push(a.permission)
         }
+        const alias = aliases[a.permission]
+        if (alias && !this.form.permissions.includes(alias)) {
+          this.form.permissions.push(alias)
+        }
       })
     },
     clearMenuAll(actions) {
-      const permsToClear = actions.map((a) => a.permission)
+      const aliases = {
+        'medicine:view': 'medicines:medicines:view',
+        'medicine:create': 'medicines:medicines:create',
+        'medicine:edit': 'medicines:medicines:edit',
+        'medicine:delete': 'medicines:medicines:delete',
+        'prescription:view': 'prescriptions:prescriptions:view',
+        'prescription:create': 'prescriptions:prescriptions:create',
+        'prescription:edit': 'prescriptions:prescriptions:edit',
+        'prescription:delete': 'prescriptions:prescriptions:delete',
+      }
+      const permsToClear = []
+      actions.forEach((a) => {
+        permsToClear.push(a.permission)
+        if (aliases[a.permission]) permsToClear.push(aliases[a.permission])
+      })
       this.form.permissions = this.form.permissions.filter((p) => !permsToClear.includes(p))
     },
     getSelectedCount(actions) {

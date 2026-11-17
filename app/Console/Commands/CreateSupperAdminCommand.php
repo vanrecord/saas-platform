@@ -24,7 +24,7 @@ class CreateSupperAdminCommand extends Command
         $this->info('Seeding super admin to central');
         $data = [
             'name'         => 'Super Admin',
-            'email'        => 'superadmin@pethyoeung.com',
+            'email'        => 'superadmin@gmail.com',
             'password'     => Hash::make('12345678'),
             'level_access' => User::SUPER_ADMIN,
             'email_verified_at' => date('Y-m-d H:i:s'),

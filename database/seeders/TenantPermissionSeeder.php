@@ -58,6 +58,28 @@ class TenantPermissionSeeder extends Seeder
             'role:edit',
             'role:save',
             'role:delete',
+
+            // Medicines
+            'medicine:view',
+            'medicine:create',
+            'medicine:edit',
+            'medicine:save',
+            'medicine:delete',
+            'medicines:medicines:view',
+            'medicines:medicines:create',
+            'medicines:medicines:edit',
+            'medicines:medicines:delete',
+
+            // Prescriptions
+            'prescription:view',
+            'prescription:create',
+            'prescription:edit',
+            'prescription:save',
+            'prescription:delete',
+            'prescriptions:prescriptions:view',
+            'prescriptions:prescriptions:create',
+            'prescriptions:prescriptions:edit',
+            'prescriptions:prescriptions:delete',
         ];
 
         $now = now();

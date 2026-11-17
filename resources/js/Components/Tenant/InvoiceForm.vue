@@ -52,21 +52,106 @@
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Patient Name -->
-        <div>
+        <!-- Patient Name with 2-character Auto-suggest Search -->
+        <div class="relative">
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
             {{ tm('Patient_Name') || 'Patient Name' }} <span class="text-red-500">*</span>
           </label>
-          <select
-            v-model="form.patient_id"
-            class="w-full text-xs rounded-lg border-slate-300 shadow-2xs focus:border-primary focus:ring-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-            required
+
+          <!-- Selected Patient Display Card -->
+          <div
+            v-if="selectedPatient"
+            class="flex items-center justify-between p-2 rounded-lg bg-blue-50/70 border border-blue-200 dark:bg-slate-800 dark:border-slate-700 min-h-[38px]"
           >
-            <option value="">{{ tm('Select_Patient') || '-- Choose Patient --' }}</option>
-            <option v-for="p in patients" :key="p.id" :value="p.id">
-              {{ p.full_name }} (#{{ p.id_number || p.id }}) - {{ p.phone || 'No phone' }}
-            </option>
-          </select>
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-6 h-6 rounded-full bg-[#0D63D6] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                {{ patientInitials(selectedPatient) }}
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-slate-800 dark:text-white truncate">
+                  {{ selectedPatient.full_name }}
+                  <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                    #{{ selectedPatient.id_number || selectedPatient.id }}
+                  </span>
+                </div>
+                <div v-if="selectedPatient.phone" class="text-[10px] text-slate-500 truncate">
+                  📞 {{ selectedPatient.phone }}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              @click="clearSelectedPatient"
+              class="ml-2 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 text-[11px] font-bold transition flex-shrink-0"
+            >
+              {{ tm('Change') || 'Change' }}
+            </button>
+          </div>
+
+          <!-- Search Input When No Patient Selected -->
+          <div v-else class="relative">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                v-model="patientSearchQuery"
+                type="text"
+                @input="onPatientSearchInput"
+                :placeholder="tm('Search_patient_placeholder') || 'Search patient (2+ chars)...'"
+                class="w-full text-xs rounded-lg border-slate-300 shadow-2xs focus:border-primary focus:ring-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white pl-8 pr-7 py-2"
+              />
+              <div v-if="isSearchingPatient" class="absolute inset-y-0 right-0 pr-2 flex items-center">
+                <svg class="w-3.5 h-3.5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Auto-suggest Dropdown -->
+            <div
+              v-if="patientSearchResults.length > 0"
+              class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-30 max-h-56 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700"
+            >
+              <button
+                v-for="p in patientSearchResults"
+                :key="p.id"
+                type="button"
+                @click="selectPatient(p)"
+                class="w-full text-left px-3 py-2 hover:bg-[#EBF3FE]/70 dark:hover:bg-slate-700 flex items-center justify-between transition-colors group"
+              >
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-[#0D63D6] dark:text-blue-400 group-hover:bg-[#0D63D6] group-hover:text-white transition flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                    {{ patientInitials(p) }}
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-[#152B45] dark:text-white">
+                      {{ p.full_name }}
+                    </div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                      ID: #{{ p.id_number || p.id }} <span v-if="p.phone" class="ml-1">• 📞 {{ p.phone }}</span>
+                    </div>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-[#0D63D6] group-hover:translate-x-0.5 transition-transform flex-shrink-0">
+                  {{ tm('Select') || 'Select' }} →
+                </span>
+              </button>
+            </div>
+
+            <!-- No Results Notice -->
+            <div
+              v-else-if="patientSearchQuery.trim().length >= 2 && !isSearchingPatient && hasSearchedPatient"
+              class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-2.5 text-center z-30 text-xs text-slate-500"
+            >
+              {{ tm('No_existing_patient_found') || 'No patient found for' }} "<span class="font-bold text-slate-700 dark:text-slate-200">{{ patientSearchQuery }}</span>".
+            </div>
+          </div>
+
           <div v-if="form.errors.patient_id" class="text-xs text-red-500 mt-1">
             {{ form.errors.patient_id }}
           </div>
@@ -1125,6 +1210,7 @@ import { useForm } from "@inertiajs/inertia-vue3";
 import SaveButton from "@/Components/Button/Save.vue";
 import BackButton from "@/Components/Button/Back.vue";
 import DateInput from "@/Components/Forms/DateInput.vue";
+import axios from "axios";
 
 export default {
   components: {
@@ -1222,6 +1308,12 @@ export default {
 
     return {
       isEdit,
+      selectedPatient: null,
+      patientSearchQuery: "",
+      patientSearchResults: [],
+      isSearchingPatient: false,
+      hasSearchedPatient: false,
+      patientSearchTimer: null,
       activeRowIndex: initialItems.length ? 0 : null,
       activeFilter: "all",
       findings: {},
@@ -1288,6 +1380,9 @@ export default {
       return null;
     },
     selectedPatientName() {
+      if (this.selectedPatient) {
+        return this.selectedPatient.full_name || `${this.selectedPatient.firstname || ''} ${this.selectedPatient.lastname || ''}`.trim();
+      }
       if (!this.form.patient_id) return "";
       const p = this.patients.find((item) => item.id === this.form.patient_id);
       return p ? p.full_name : "";
@@ -1355,6 +1450,20 @@ export default {
   },
   mounted() {
     this.restoreExistingFindings();
+    if (this.invoice && this.invoice.patient) {
+      this.selectedPatient = {
+        ...this.invoice.patient,
+        full_name: this.invoice.patient.full_name || `${this.invoice.patient.firstname || ''} ${this.invoice.patient.lastname || ''}`.trim(),
+      };
+    } else if (this.form.patient_id && this.patients && this.patients.length) {
+      const found = this.patients.find((p) => p.id === this.form.patient_id);
+      if (found) {
+        this.selectedPatient = {
+          ...found,
+          full_name: found.full_name || `${found.firstname || ''} ${found.lastname || ''}`.trim(),
+        };
+      }
+    }
   },
   methods: {
     restoreExistingFindings() {
@@ -1845,6 +1954,56 @@ export default {
           },
         });
       }
+    },
+    patientInitials(p) {
+      if (!p) return "?";
+      const first = (p.firstname || "").charAt(0).toUpperCase();
+      const last = (p.lastname || "").charAt(0).toUpperCase();
+      if (first || last) return `${first}${last}`;
+      if (p.full_name) {
+        const parts = p.full_name.trim().split(/\s+/);
+        if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+        return parts[0][0].toUpperCase();
+      }
+      return "?";
+    },
+    onPatientSearchInput() {
+      clearTimeout(this.patientSearchTimer);
+      const q = (this.patientSearchQuery || "").trim();
+
+      if (q.length < 2) {
+        this.patientSearchResults = [];
+        this.isSearchingPatient = false;
+        this.hasSearchedPatient = false;
+        return;
+      }
+
+      this.isSearchingPatient = true;
+      this.patientSearchTimer = setTimeout(async () => {
+        try {
+          const res = await axios.get("/api/patients/search", { params: { q } });
+          this.patientSearchResults = res.data || [];
+          this.hasSearchedPatient = true;
+        } catch (e) {
+          this.patientSearchResults = [];
+        } finally {
+          this.isSearchingPatient = false;
+        }
+      }, 250);
+    },
+    selectPatient(p) {
+      this.selectedPatient = p;
+      this.form.patient_id = p.id;
+      this.patientSearchQuery = "";
+      this.patientSearchResults = [];
+      this.hasSearchedPatient = false;
+    },
+    clearSelectedPatient() {
+      this.selectedPatient = null;
+      this.form.patient_id = "";
+      this.patientSearchQuery = "";
+      this.patientSearchResults = [];
+      this.hasSearchedPatient = false;
     },
   },
 };

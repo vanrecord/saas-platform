@@ -123,6 +123,7 @@
 
             <!-- Payment -->
             <Link
+              v-if="can(['all', 'payment:view', 'payment', 'tenant.payments.index'])"
               :href="route('tenant.payments.index')"
               :class="[
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
@@ -136,6 +137,24 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span v-show="!isSidebarCollapsed">Payment</span>
+            </Link>
+
+            <!-- Prescription (Under Payment Menu) -->
+            <Link
+              v-if="can(['all', 'prescription:view', 'prescriptions:prescriptions:view', 'prescriptions', 'prescriptions.index'])"
+              :href="route('prescriptions.index')"
+              :class="[
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                route().current('prescriptions.*')
+                  ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
+              ]"
+              :title="isSidebarCollapsed ? 'Prescription' : ''"
+            >
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span v-show="!isSidebarCollapsed">Prescription</span>
             </Link>
           </div>
         </div>
@@ -366,6 +385,16 @@
                   New Prefix Invoice
                 </Link>
                 <Link
+                  v-if="can(['all', 'medicine:view', 'medicines:medicines:view', 'medicines', 'medicines.index'])"
+                  :href="route('medicines.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    route().current('medicines.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  {{ tm('Medicines') || 'Medicines' }}
+                </Link>
+                <Link
                   v-if="can(['all', 'payment-method:view', 'payment-method:create', 'payment-method:edit'])"
                   :href="route('settings.payment-methods.index')"
                   :class="[
@@ -582,7 +611,7 @@ const isQuickCreateModalOpen = ref(false)
 const clinicalOpen = reactive({
   conditions: Boolean(route().current('dental-conditions.*')),
   hospital: Boolean(route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')),
-  settings: Boolean(route().current('settings.*'))
+  settings: Boolean(route().current('settings.*') || route().current('medicines.*'))
 })
 
 Inertia.on('navigate', () => {
@@ -592,7 +621,7 @@ Inertia.on('navigate', () => {
   if (route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')) {
     clinicalOpen.hospital = true
   }
-  if (route().current('settings.*')) {
+  if (route().current('settings.*') || route().current('medicines.*')) {
     clinicalOpen.settings = true
   }
 })

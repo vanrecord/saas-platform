@@ -9,6 +9,7 @@ use App\Models\Tenant\Patient;
 use App\Models\Tenant\Payment;
 use App\Models\Tenant\Prefix;
 use App\Models\Tenant\Product;
+use App\Models\Tenant\Reception;
 use App\Models\Tenant\Service;
 use App\Models\Tenant\ToothFinding;
 use App\Models\Tenant\TreatmentTeeth;
@@ -405,7 +406,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'date' => $dailyDate,
                 'visit_type' => $data['visit_type'] ?? 'initial',
                 'diagnosis' => $data['diagnosis'] ?? null,
-                'description' => $data['description'] ?? null,
+                'description' => $data['description'] ?? ($data['examination_notes'] ?? null),
                 'medical_alert' => $data['medical_alert'] ?? null,
                 'rate' => $exchangeRate,
                 'discount_invoice' => $overallDiscount,
@@ -441,6 +442,23 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
 
             // Attach any remaining odontogram findings to first detail
             $this->attachUnassignedOdontogramFindings($history, $odontogramFindings, $processedToothSurfaces);
+
+            // Create Reception linked to the new Invoice
+            $receptionDate = !empty($data['date'])
+                ? (Carbon::parse($data['date'])->isToday() ? Carbon::now() : Carbon::parse($data['date'])->setTimeFrom(Carbon::now()))
+                : Carbon::now();
+
+            Reception::create([
+                'patient_id' => $history->patient_id,
+                'invoice_id' => $history->id,
+                'doctor_id' => $history->doctor_id,
+                'reception_date' => $receptionDate,
+                'visit_type' => $history->visit_type ?: 'initial',
+                'chief_complaint' => $data['chief_complaint'] ?? ($data['diagnosis'] ?? ($data['description'] ?? ($data['examination_notes'] ?? null))),
+                'status' => Reception::REGISTERED,
+                'notes' => $data['clinical_notes'] ?? ($data['notes'] ?? ($data['examination_notes'] ?? ($data['description'] ?? null))),
+                'created_by' => auth()->id() ?? $history->user_id,
+            ]);
 
             return $history;
         });
@@ -605,6 +623,13 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
 
             // Attach any remaining unassigned odontogram findings to first detail
             $this->attachUnassignedOdontogramFindings($history, $odontogramFindings, $processedToothSurfaces);
+
+            // Sync associated reception if exists
+            $history->receptions()->update([
+                'patient_id' => $history->patient_id,
+                'doctor_id' => $history->doctor_id,
+                'visit_type' => $history->visit_type,
+            ]);
 
             return $history;
         });
@@ -805,6 +830,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             $history = MedicalHistory::findOrFail($id);
             $history->medicalDetails()->delete();
             $history->treatmentTeeths()->delete();
+            $history->receptions()->delete();
             return $history->delete();
         });
     }
