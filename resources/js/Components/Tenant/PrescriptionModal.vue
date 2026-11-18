@@ -36,15 +36,30 @@
           <!-- Patient and Medical History Section Card -->
           <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-3.5 bg-white dark:bg-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
             <div class="flex items-center gap-4 flex-wrap flex-1">
-              <!-- Patient Search / Selection (Enter 2+ chars like Visit Registration) -->
+              <!-- Patient Search / Selection -->
               <div class="flex items-center gap-2">
                 <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                  {{ tm('Patient') || 'Patient' }} <span class="text-red-500">*</span>
+                  {{ tm('Patient') || 'Patient' }} <span v-if="!hidePatientSearch && !fixedPatient" class="text-red-500">*</span>
                 </label>
+
+                <!-- Fixed Patient Mode (e.g. from Invoice screen): show only name patient, no need search patient -->
+                <div v-if="hidePatientSearch || fixedPatient" class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 shadow-2xs">
+                    <div class="w-5 h-5 rounded-full bg-[#0D63D6] text-white flex items-center justify-center font-bold text-[9px] flex-shrink-0">
+                      {{ patientInitials(selectedPatient || fixedPatient) }}
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-white">
+                      {{ (selectedPatient && (selectedPatient.full_name || `${selectedPatient.firstname || ''} ${selectedPatient.lastname || ''}`.trim())) || (fixedPatient && (fixedPatient.full_name || `${fixedPatient.firstname || ''} ${fixedPatient.lastname || ''}`.trim())) || 'Patient' }}
+                    </span>
+                    <span v-if="(selectedPatient && (selectedPatient.id_number || selectedPatient.id)) || (fixedPatient && (fixedPatient.id_number || fixedPatient.id))" class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                      #{{ (selectedPatient && (selectedPatient.id_number || selectedPatient.id)) || (fixedPatient && (fixedPatient.id_number || fixedPatient.id)) }}
+                    </span>
+                  </div>
+                </div>
 
                 <!-- When Patient is Selected -->
                 <div
-                  v-if="selectedPatient"
+                  v-else-if="selectedPatient"
                   class="flex items-center justify-between p-1.5 sm:p-2 rounded-lg border border-blue-200 bg-[#EBF3FE]/70 dark:bg-slate-900 dark:border-blue-900/50 min-w-[220px] sm:min-w-[260px]"
                 >
                   <div class="flex items-center gap-2 min-w-0">
@@ -140,7 +155,7 @@
               </div>
 
               <!-- Medical History Dropdown -->
-              <div class="flex items-center gap-2">
+              <div v-if="!hideMedicalHistory" class="flex items-center gap-2">
                 <select
                   v-model="form.medical_history_id"
                   class="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-w-[220px] sm:min-w-[260px]"
@@ -405,6 +420,22 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
+    fixedPatient: {
+      type: Object,
+      default: null,
+    },
+    fixedMedicalHistoryId: {
+      type: [Number, String],
+      default: null,
+    },
+    hideMedicalHistory: {
+      type: Boolean,
+      default: false,
+    },
+    hidePatientSearch: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['close', 'saved'],
   setup() {
@@ -463,9 +494,9 @@ export default defineComponent({
         dose: '',
         qty: '',
         ud: '',
-        morning: true,
+        morning: false,
         afternoon: false,
-        evening: true,
+        evening: false,
         night: false,
         note: '',
       }
@@ -581,21 +612,37 @@ export default defineComponent({
           this.fetchPatientHistories(this.form.patient_id)
         }
       } else {
-        this.selectedPatient = null
-        this.form.patient_id = ''
-        this.form.medical_history_id = ''
+        if (this.fixedPatient) {
+          this.selectedPatient = {
+            ...this.fixedPatient,
+            full_name: this.fixedPatient.full_name || `${this.fixedPatient.firstname || ''} ${this.fixedPatient.lastname || ''}`.trim(),
+          }
+          this.form.patient_id = this.fixedPatient.id
+        } else {
+          this.selectedPatient = null
+          this.form.patient_id = ''
+        }
+        this.form.medical_history_id = this.fixedMedicalHistoryId || ''
         this.form.prescription = ''
         this.form.details = [this.createEmptyRow()]
         this.patientHistories = []
       }
     },
     resetToCreate() {
-      this.selectedPatient = null
+      if (this.fixedPatient) {
+        this.selectedPatient = {
+          ...this.fixedPatient,
+          full_name: this.fixedPatient.full_name || `${this.fixedPatient.firstname || ''} ${this.fixedPatient.lastname || ''}`.trim(),
+        }
+        this.form.patient_id = this.fixedPatient.id
+      } else {
+        this.selectedPatient = null
+        this.form.patient_id = ''
+      }
       this.patientSearchQuery = ''
       this.patientSearchResults = []
       this.hasSearchedPatient = false
-      this.form.patient_id = ''
-      this.form.medical_history_id = ''
+      this.form.medical_history_id = this.fixedMedicalHistoryId || ''
       this.form.prescription = ''
       this.form.details = [this.createEmptyRow()]
       this.patientHistories = []
@@ -609,16 +656,26 @@ export default defineComponent({
       }
     },
     calculateRowTotal(row) {
+      const qty = parseFloat(row.qty) || 0
+
+      // On Invoice screen, the Total field value is Qty
+      if (this.fixedPatient || this.hidePatientSearch || this.fixedMedicalHistoryId) {
+        return qty % 1 === 0 ? qty : qty.toFixed(1)
+      }
+
       const morning = row.morning ? 1 : 0
       const afternoon = row.afternoon ? 1 : 0
       const evening = row.evening ? 1 : 0
       const night = row.night ? 1 : 0
       const times = morning + afternoon + evening + night
-      const count = times > 0 ? times : 1
-      const qty = parseFloat(row.qty) || 0
       const ud = parseFloat(row.ud) || 0
-      const total = qty * count * ud
-      return total % 1 === 0 ? total : total.toFixed(1)
+
+      if (times > 0 && ud > 0) {
+        const total = qty * times * ud
+        return total % 1 === 0 ? total : total.toFixed(1)
+      }
+
+      return qty % 1 === 0 ? qty : qty.toFixed(1)
     },
     focusNote(idx) {
       const ref = this.$refs[`noteInput_${idx}`]

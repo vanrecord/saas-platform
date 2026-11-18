@@ -20,6 +20,7 @@ const langKm = {
   prescriptions: "វេជ្ជបញ្ជា",
   Prescription: "វេជ្ជបញ្ជា",
   prescription: "វេជ្ជបញ្ជា",
+  Add_Prescription: "បន្ថែមវេជ្ជបញ្ជា",
   Create_Prescription: "បង្កើតវេជ្ជបញ្ជា",
   create_prescription: "បង្កើតវេជ្ជបញ្ជា",
   Edit_Prescription: "កែប្រែវេជ្ជបញ្ជា",

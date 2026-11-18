@@ -48,6 +48,7 @@
         :services="services"
         :products="products"
         :conditions="conditions"
+        :medicines="medicines"
       />
     </div>
   </TenantLayout>
@@ -78,6 +79,10 @@ export default {
     services: Array,
     products: Array,
     conditions: Array,
+    medicines: {
+      type: Array,
+      default: () => [],
+    },
   },
 };
 </script>

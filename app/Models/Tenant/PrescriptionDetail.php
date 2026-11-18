@@ -59,13 +59,18 @@ class PrescriptionDetail extends Model
 
     public function getTotalCalculatedAttribute(): float
     {
+        $qty = (float) ($this->dose_amount ?: 1);
+
+        if ($this->relationLoaded('prescription') && $this->prescription && !empty($this->prescription->medical_history_id)) {
+            return $qty;
+        }
+
         $times = 0;
         if ($this->morning) $times++;
         if ($this->afternoon) $times++;
         if ($this->evening) $times++;
         if ($this->night) $times++;
 
-        $qty = (float) ($this->dose_amount ?: 1);
         $duration = (float) ($this->duration ?: ($this->unit_dose ?: 1));
 
         return (float) ($qty * ($times > 0 ? $times : 1) * $duration);

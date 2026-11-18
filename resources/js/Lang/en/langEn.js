@@ -485,6 +485,7 @@ const langEn = {
     prescriptions: "Prescriptions",
     Prescription: "Prescription",
     prescription: "Prescription",
+    Add_Prescription: "Add Prescription",
     Create_Prescription: "Create Prescription",
     create_prescription: "Create Prescription",
     Edit_Prescription: "Edit Prescription",

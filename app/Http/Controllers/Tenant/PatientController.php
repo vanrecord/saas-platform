@@ -83,21 +83,24 @@ class PatientController extends Controller
             $data['gender'] = $first === 'M' ? 'M' : ($first === 'F' ? 'F' : $data['gender']);
         }
 
-        // Handle avatar upload (keep filename short due to varchar(50) limit)
-        if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $extension = $file->getClientOriginalExtension() ?: 'jpg';
-            $filename = 'p_' . time() . '_' . Str::lower(Str::random(6)) . '.' . $extension;
-            $file->storeAs('avatars', $filename, 'public');
-            $data['avatar'] = 'avatars/' . $filename;
-        } else {
-            unset($data['avatar']);
-        }
-
+        $fileAvatar = !empty($request->avatar) ? $request->avatar : '';
+        $avatar = $fileAvatar;
         $returnTo = $request->input('return_to');
-        unset($data['remove_avatar'], $data['return_to']);
+        unset($data['avatar'], $data['remove_avatar'], $data['return_to']);
 
         $patient = $this->patient->create($data);
+
+        if (!empty($avatar) && $avatar != null && $avatar instanceof \Illuminate\Http\UploadedFile && $avatar->isValid()) {
+            if (!$patient->hasMedia('avatar')) {
+                $file_name     = $avatar->getClientOriginalName();
+                $extension     = explode('.', $file_name);
+                $extension     = strtolower(end($extension));
+                $new_file_name = md5(date('YmdHis') . $file_name);
+                $new_name      = $new_file_name . '.' . $extension;
+
+                $patient->addMedia($avatar)->usingFileName($new_name)->toMediaCollection('avatar', 'public');
+            }
+        }
 
         if ($returnTo === 'register') {
             return redirect()->route('tenant.visit.create', ['patient_id' => $patient->id])
@@ -171,28 +174,29 @@ class PatientController extends Controller
             $data['gender'] = $first === 'M' ? 'M' : ($first === 'F' ? 'F' : $data['gender']);
         }
 
-        // Handle avatar upload or removal
-        if ($request->hasFile('avatar')) {
-            if ($patient->avatar && Storage::disk('public')->exists($patient->avatar)) {
-                Storage::disk('public')->delete($patient->avatar);
-            }
-            $file = $request->file('avatar');
-            $extension = $file->getClientOriginalExtension() ?: 'jpg';
-            $filename = 'p_' . time() . '_' . Str::lower(Str::random(6)) . '.' . $extension;
-            $file->storeAs('avatars', $filename, 'public');
-            $data['avatar'] = 'avatars/' . $filename;
-        } elseif ($request->boolean('remove_avatar')) {
-            if ($patient->avatar && Storage::disk('public')->exists($patient->avatar)) {
-                Storage::disk('public')->delete($patient->avatar);
-            }
-            $data['avatar'] = null;
-        } else {
-            unset($data['avatar']);
-        }
+        $fileAvatar = !empty($request->avatar) ? $request->avatar : '';
+        $avatar = $fileAvatar;
 
-        unset($data['remove_avatar'], $data['return_to']);
+        unset($data['avatar'], $data['remove_avatar'], $data['return_to']);
 
         $this->patient->update($patient, $data);
+
+        if ($request->boolean('remove_avatar')) {
+            $patient->clearMediaCollection('avatar');
+            if ($patient->avatar && Storage::disk('public')->exists($patient->avatar)) {
+                Storage::disk('public')->delete($patient->avatar);
+            }
+            $patient->updateQuietly(['avatar' => null]);
+        } elseif (!empty($avatar) && $avatar != null && $avatar instanceof \Illuminate\Http\UploadedFile && $avatar->isValid()) {
+            $patient->clearMediaCollection('avatar');
+            $file_name     = $avatar->getClientOriginalName();
+            $extension     = explode('.', $file_name);
+            $extension     = strtolower(end($extension));
+            $new_file_name = md5(date('YmdHis') . $file_name);
+            $new_name      = $new_file_name . '.' . $extension;
+
+            $patient->addMedia($avatar)->usingFileName($new_name)->toMediaCollection('avatar', 'public');
+        }
 
         return redirect()->route('patients.index')
             ->with('success', 'Patient updated successfully.');
@@ -205,6 +209,7 @@ class PatientController extends Controller
         $patient = $this->patient->find($id);
 
         if ($patient) {
+            $patient->clearMediaCollection('avatar');
             if ($patient->avatar && Storage::disk('public')->exists($patient->avatar)) {
                 Storage::disk('public')->delete($patient->avatar);
             }

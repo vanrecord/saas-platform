@@ -267,6 +267,20 @@
 
     <!-- Section 2: Service & Product Details (Matches Reference Screenshot) -->
     <div class="bg-white dark:bg-darker rounded-xl shadow-xs border border-slate-200 dark:border-slate-700 p-5">
+      <!-- Row above group div button add service (Edit Invoice only) -->
+      <div v-if="isEdit" class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-700">
+        <button
+          type="button"
+          @click="openPrescriptionModal"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#00c0ef] hover:bg-[#00acd6] text-white text-xs font-bold rounded shadow-xs transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>{{ tm('Add_Prescription') || '+ Add Prescription' }}</span>
+        </button>
+      </div>
+
       <!-- 6.1 Top Control Bar -->
       <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-700">
         <!-- Left Buttons -->
@@ -1202,6 +1216,19 @@
         {{ form.processing ? (tm('Saving') || 'Saving...') : (isEdit ? (tm('Update_Invoice') || 'Update Invoice') : (tm('Save_Invoice') || 'Save Invoice')) }}
       </SaveButton>
     </div>
+
+    <!-- Add Prescription Modal -->
+    <PrescriptionModal
+      v-if="isEdit"
+      :show="showPrescriptionModal"
+      :medicines="availableMedicines"
+      :fixed-patient="currentPatientObject"
+      :fixed-medical-history-id="invoice?.id"
+      :hide-medical-history="true"
+      :hide-patient-search="true"
+      @close="closePrescriptionModal"
+      @saved="onPrescriptionSaved"
+    />
   </form>
 </template>
 
@@ -1210,6 +1237,7 @@ import { useForm } from "@inertiajs/inertia-vue3";
 import SaveButton from "@/Components/Button/Save.vue";
 import BackButton from "@/Components/Button/Back.vue";
 import DateInput from "@/Components/Forms/DateInput.vue";
+import PrescriptionModal from "@/Components/Tenant/PrescriptionModal.vue";
 import axios from "axios";
 
 export default {
@@ -1217,6 +1245,7 @@ export default {
     SaveButton,
     BackButton,
     DateInput,
+    PrescriptionModal,
   },
   props: {
     invoice: {
@@ -1256,6 +1285,10 @@ export default {
       default: () => [],
     },
     conditions: {
+      type: Array,
+      default: () => [],
+    },
+    medicines: {
       type: Array,
       default: () => [],
     },
@@ -1308,6 +1341,8 @@ export default {
 
     return {
       isEdit,
+      showPrescriptionModal: false,
+      localMedicines: [],
       selectedPatient: null,
       patientSearchQuery: "",
       patientSearchResults: [],
@@ -1386,6 +1421,24 @@ export default {
       if (!this.form.patient_id) return "";
       const p = this.patients.find((item) => item.id === this.form.patient_id);
       return p ? p.full_name : "";
+    },
+    availableMedicines() {
+      if (this.medicines && this.medicines.length > 0) {
+        return this.medicines;
+      }
+      return this.localMedicines;
+    },
+    currentPatientObject() {
+      if (this.selectedPatient) {
+        return this.selectedPatient;
+      }
+      if (this.invoice && this.invoice.patient) {
+        return this.invoice.patient;
+      }
+      if (this.form.patient_id && this.patients && this.patients.length) {
+        return this.patients.find((p) => p.id === this.form.patient_id) || null;
+      }
+      return null;
     },
     conditionList() {
       if (this.conditions && this.conditions.length > 0) {
@@ -2004,6 +2057,23 @@ export default {
       this.patientSearchQuery = "";
       this.patientSearchResults = [];
       this.hasSearchedPatient = false;
+    },
+    async openPrescriptionModal() {
+      if (!this.availableMedicines || this.availableMedicines.length === 0) {
+        try {
+          const res = await axios.get('/api/medicines');
+          this.localMedicines = res.data || [];
+        } catch (e) {
+          // silent fallback
+        }
+      }
+      this.showPrescriptionModal = true;
+    },
+    closePrescriptionModal() {
+      this.showPrescriptionModal = false;
+    },
+    onPrescriptionSaved() {
+      this.showPrescriptionModal = false;
     },
   },
 };

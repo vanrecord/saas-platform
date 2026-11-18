@@ -88,7 +88,9 @@ class PrescriptionController extends Controller
                 $night = !empty($detail['night']);
 
                 $times = ($morning ? 1 : 0) + ($afternoon ? 1 : 0) + ($evening ? 1 : 0) + ($night ? 1 : 0);
-                $totalPills = $qty * ($times > 0 ? $times : 1) * $duration;
+                $totalPills = !empty($prescription->medical_history_id)
+                    ? $qty
+                    : $qty * ($times > 0 ? $times : 1) * $duration;
 
                 $prescriptionDetail = PrescriptionDetail::create([
                     'prescription_id' => $prescription->id,
@@ -117,7 +119,7 @@ class PrescriptionController extends Controller
 
             DB::commit();
 
-            return redirect()->route('prescriptions.index')
+            return redirect()->back()
                 ->with('success', 'Prescription created successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -178,7 +180,9 @@ class PrescriptionController extends Controller
                 $night = !empty($detail['night']);
 
                 $times = ($morning ? 1 : 0) + ($afternoon ? 1 : 0) + ($evening ? 1 : 0) + ($night ? 1 : 0);
-                $totalPills = $qty * ($times > 0 ? $times : 1) * $duration;
+                $totalPills = !empty($prescription->medical_history_id)
+                    ? $qty
+                    : $qty * ($times > 0 ? $times : 1) * $duration;
 
                 PrescriptionDetail::create([
                     'prescription_id' => $prescription->id,
@@ -207,7 +211,7 @@ class PrescriptionController extends Controller
 
             DB::commit();
 
-            return redirect()->route('prescriptions.index')
+            return redirect()->back()
                 ->with('success', 'Prescription updated successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();

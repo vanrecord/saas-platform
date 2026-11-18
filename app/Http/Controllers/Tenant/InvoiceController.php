@@ -7,6 +7,7 @@ use App\Http\Requests\Tenant\InvoiceRequest;
 use App\Models\Tenant\DentalCondition;
 use App\Models\Tenant\Doctor;
 use App\Models\Tenant\MedicalHistory;
+use App\Models\Tenant\Medicine;
 use App\Models\Tenant\Patient;
 use App\Models\Tenant\Payment;
 use App\Models\Tenant\PaymentMethod;
@@ -106,13 +107,27 @@ class InvoiceController extends Controller
                 'name' => $d->full_name ?: ($d->user?->name ?? 'Doctor #' . $d->id),
             ];
         });
-
-        $assistants = UserTenant::with('profile')->get()->map(function ($u) {
-            return [
-                'id' => $u->id,
-                'name' => $u->profile?->full_name ?: ($u->name ?? 'User #' . $u->id),
-            ];
-        });
+        $assistants = UserTenant::query()
+            ->with(['profile'])
+            ->where(function ($query) {
+                $query->where('is_super_admin', false)
+                    ->orWhereNull('is_super_admin');
+            })
+            ->where(function ($query) {
+                $query->whereNotIn('level_access', [UserTenant::SUPER_ADMIN, UserTenant::ADMIN, UserTenant::USER_DEV])
+                    ->orWhereNull('level_access');
+            })
+            ->doesntHave('doctor')
+            ->whereDoesntHave('roles', function ($query) {
+                $query->whereRaw('LOWER(name) = ?', ['doctor']);
+            })
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->profile?->full_name ?: ($u->name ?? 'User #' . $u->id),
+                ];
+            });
 
         $services = Service::where('status', true)
             ->select('id', 'name', 'price', 'cost', 'code')
@@ -179,12 +194,27 @@ class InvoiceController extends Controller
             ];
         });
 
-        $assistants = UserTenant::with('profile')->get()->map(function ($u) {
-            return [
-                'id' => $u->id,
-                'name' => $u->profile?->full_name ?: ($u->name ?? 'User #' . $u->id),
-            ];
-        });
+        $assistants = UserTenant::query()
+            ->with(['profile'])
+            ->where(function ($query) {
+                $query->where('is_super_admin', false)
+                    ->orWhereNull('is_super_admin');
+            })
+            ->where(function ($query) {
+                $query->whereNotIn('level_access', [UserTenant::SUPER_ADMIN, UserTenant::ADMIN, UserTenant::USER_DEV])
+                    ->orWhereNull('level_access');
+            })
+            ->doesntHave('doctor')
+            ->whereDoesntHave('roles', function ($query) {
+                $query->whereRaw('LOWER(name) = ?', ['doctor']);
+            })
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->profile?->full_name ?: ($u->name ?? 'User #' . $u->id),
+                ];
+            });
 
         $services = Service::where('status', true)
             ->select('id', 'name', 'price', 'cost', 'code')
@@ -201,6 +231,8 @@ class InvoiceController extends Controller
             ->orderBy('id')
             ->get();
 
+        $medicines = Medicine::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Tenant/Invoice/Edit', [
             'invoice' => $invoice,
             'patients' => $patients,
@@ -209,6 +241,7 @@ class InvoiceController extends Controller
             'services' => $services,
             'products' => $products,
             'conditions' => $conditions,
+            'medicines' => $medicines,
         ]);
     }
 

@@ -170,16 +170,8 @@ class DoctorRepository implements DoctorRepositoryInterface
                 $doctor->specialties()->sync($data['specialties']);
             }
 
-            // Store avatar if provided
-            $avatarPath = null;
-            if ($avatar && $avatar->isValid()) {
-                $ext = $avatar->getClientOriginalExtension() ?: 'png';
-                $filename = 'doc_' . $doctor->id . '_' . time() . '.' . $ext;
-                $avatarPath = $avatar->storeAs('avatars', $filename, 'public');
-            }
-
             // Create Profile
-            $user->profile()->create([
+            $profile = $user->profile()->create([
                 'firstname' => $data['firstname'] ?? '',
                 'lastname' => $data['lastname'] ?? '',
                 'gender' => $this->normalizeGender($data['gender'] ?? 'F'),
@@ -187,10 +179,21 @@ class DoctorRepository implements DoctorRepositoryInterface
                 'primary_mobile' => $data['primary_mobile'] ?? null,
                 'secondary_mobile' => $data['secondary_mobile'] ?? null,
                 'description' => $data['description'] ?? null,
-                'avatar' => $avatarPath,
+                'avatar' => null,
                 'is_completed' => true,
                 'is_publish' => true,
             ]);
+
+            // Store avatar if provided using Spatie MediaLibrary
+            if ($avatar && $avatar->isValid()) {
+                $fileName    = $avatar->getClientOriginalName();
+                $extension   = explode('.', $fileName);
+                $extension   = strtolower(end($extension));
+                $newFileName = md5(date('YmdHis') . $fileName) . '.' . $extension;
+
+                $profile->addMedia($avatar)->usingFileName($newFileName)->toMediaCollection('avatar', 'public');
+                $profile->updateQuietly(['avatar' => $newFileName]);
+            }
 
             return $doctor->load(['user.profile', 'specialties']);
         });
@@ -225,23 +228,6 @@ class DoctorRepository implements DoctorRepositoryInterface
             // Profile update
             $profile = $user?->profile;
             $removeAvatar = !empty($data['remove_avatar']);
-            $avatarPath = $profile?->avatar;
-
-            if ($removeAvatar) {
-                if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
-                    Storage::disk('public')->delete($avatarPath);
-                }
-                $avatarPath = null;
-            }
-
-            if ($avatar && $avatar->isValid()) {
-                if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
-                    Storage::disk('public')->delete($avatarPath);
-                }
-                $ext = $avatar->getClientOriginalExtension() ?: 'png';
-                $filename = 'doc_' . $doctor->id . '_' . time() . '.' . $ext;
-                $avatarPath = $avatar->storeAs('avatars', $filename, 'public');
-            }
 
             $profileData = [
                 'firstname' => $data['firstname'] ?? ($profile?->firstname ?? ''),
@@ -251,13 +237,36 @@ class DoctorRepository implements DoctorRepositoryInterface
                 'primary_mobile' => $data['primary_mobile'] ?? null,
                 'secondary_mobile' => $data['secondary_mobile'] ?? null,
                 'description' => $data['description'] ?? null,
-                'avatar' => $avatarPath,
             ];
 
             if ($profile) {
                 $profile->update($profileData);
             } elseif ($user) {
-                $user->profile()->create(array_merge($profileData, ['is_completed' => true]));
+                $profile = $user->profile()->create(array_merge($profileData, ['is_completed' => true, 'is_publish' => true]));
+            }
+
+            // Handle avatar using Spatie MediaLibrary
+            if ($profile) {
+                if ($removeAvatar) {
+                    $profile->clearMediaCollection('avatar');
+                    if ($profile->avatar && Storage::disk('public')->exists($profile->avatar)) {
+                        Storage::disk('public')->delete($profile->avatar);
+                    }
+                    $profile->updateQuietly(['avatar' => null]);
+                } elseif ($avatar && $avatar->isValid()) {
+                    $profile->clearMediaCollection('avatar');
+                    if ($profile->avatar && Storage::disk('public')->exists($profile->avatar)) {
+                        Storage::disk('public')->delete($profile->avatar);
+                    }
+
+                    $fileName    = $avatar->getClientOriginalName();
+                    $extension   = explode('.', $fileName);
+                    $extension   = strtolower(end($extension));
+                    $newFileName = md5(date('YmdHis') . $fileName) . '.' . $extension;
+
+                    $profile->addMedia($avatar)->usingFileName($newFileName)->toMediaCollection('avatar', 'public');
+                    $profile->updateQuietly(['avatar' => $newFileName]);
+                }
             }
 
             return $doctor->load(['user.profile', 'specialties']);
@@ -269,8 +278,11 @@ class DoctorRepository implements DoctorRepositoryInterface
         return DB::transaction(function () use ($doctor) {
             $user = $doctor->user;
 
-            if ($user && $user->profile?->avatar && Storage::disk('public')->exists($user->profile->avatar)) {
-                Storage::disk('public')->delete($user->profile->avatar);
+            if ($user && $user->profile) {
+                $user->profile->clearMediaCollection('avatar');
+                if ($user->profile->avatar && Storage::disk('public')->exists($user->profile->avatar)) {
+                    Storage::disk('public')->delete($user->profile->avatar);
+                }
             }
 
             $doctor->specialties()->detach();

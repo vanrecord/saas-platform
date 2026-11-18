@@ -125,9 +125,14 @@ class DoctorController extends Controller
             abort(404, 'Doctor not found.');
         }
 
+        $data = $request->validated();
+        if ($request->has('remove_avatar')) {
+            $data['remove_avatar'] = $request->boolean('remove_avatar');
+        }
+
         $this->doctorRepository->updateDoctor(
             $doctor,
-            $request->validated(),
+            $data,
             $request->file('avatar')
         );
 

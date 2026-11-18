@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Profile extends Model
+class Profile extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $table = 'profiles';
 
@@ -99,9 +101,24 @@ class Profile extends Model
         return trim("{$this->firstname} {$this->lastname}");
     }
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('avatar')
+            ->useDisk('public')
+            ->singleFile();
+    }
+
     public function getAvatarUrlAttribute(): ?string
     {
-        $avatar = $this->avatar;
+        $media = $this->getFirstMedia('avatar');
+        if ($media) {
+            if ($media->disk === 'public' || $media->disk === 'media') {
+                return assetStorage($media->getUrl());
+            }
+            return $media->getTemporaryUrl(now()->addMinutes(120));
+        }
+
+        $avatar = $this->avatar ?? ($this->attributes['avatar'] ?? null);
         if (empty($avatar)) {
             return null;
         }
@@ -110,6 +127,6 @@ class Profile extends Model
             return $avatar;
         }
 
-        return Storage::disk('public')->url($avatar);
+        return assetStorage(Storage::disk('public')->url($avatar));
     }
 }

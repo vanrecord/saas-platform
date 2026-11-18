@@ -123,31 +123,34 @@ class UserRepository implements TenantUserRepositoryInterface
                 app(PermissionRegistrar::class)->forgetCachedPermissions();
             }
 
-            // Upload avatar
-            $avatarPath = null;
-            if ($avatar && $avatar->isValid()) {
-                $ext = $avatar->getClientOriginalExtension() ?: 'png';
-                $filename = 'u_' . $user->id . '_' . time() . '.' . $ext;
-                $avatarPath = $avatar->storeAs('avatars', $filename, 'public');
-            }
-
             // Format e-Health consult settings
             $consultType = $this->formatConsultType($data);
 
             // Create related Profile
-            $user->profile()->create([
+            $profile = $user->profile()->create([
                 'firstname' => $data['firstname'] ?? '',
                 'lastname' => $data['lastname'] ?? '',
                 'gender' => $this->normalizeGender($data['gender'] ?? 'F'),
                 'date_of_birth' => !empty($data['date_of_birth']) ? $data['date_of_birth'] : null,
                 'primary_mobile' => $data['primary_mobile'] ?? null,
                 'secondary_mobile' => $data['secondary_mobile'] ?? null,
-                'avatar' => $avatarPath,
+                'avatar' => null,
                 'is_publish' => !empty($data['is_publish']),
                 'ehealth_is_doctor_appointment' => !empty($data['ehealth_is_doctor_appointment']),
                 'ehealth_consult_type' => $consultType,
                 'is_completed' => true,
             ]);
+
+            // Upload avatar if provided using Spatie MediaLibrary
+            if ($avatar && $avatar->isValid()) {
+                $fileName    = $avatar->getClientOriginalName();
+                $extension   = explode('.', $fileName);
+                $extension   = strtolower(end($extension));
+                $newFileName = md5(date('YmdHis') . $fileName) . '.' . $extension;
+
+                $profile->addMedia($avatar)->usingFileName($newFileName)->toMediaCollection('avatar', 'public');
+                $profile->updateQuietly(['avatar' => $newFileName]);
+            }
 
             return $user->load(['profile', 'roles']);
         });
@@ -167,7 +170,7 @@ class UserRepository implements TenantUserRepositoryInterface
             $user->name = $username;
             $user->email = $email;
             if (isset($data['active']) || isset($data['is_active'])) {
-                $user->is_active = isset($data['active']) ? (bool) $data['active'] : (bool) $data['is_active'];
+                $user->active = isset($data['active']) ? (bool) $data['active'] : (bool) $data['is_active'];
             }
             if (!empty($data['password'])) {
                 $user->password = Hash::make($data['password']);
@@ -185,23 +188,6 @@ class UserRepository implements TenantUserRepositoryInterface
             }
 
             $profile = $user->profile;
-            $avatarPath = $profile?->avatar;
-
-            // Handle avatar
-            if ($avatar && $avatar->isValid()) {
-                if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
-                    Storage::disk('public')->delete($avatarPath);
-                }
-                $ext = $avatar->getClientOriginalExtension() ?: 'png';
-                $filename = 'u_' . $user->id . '_' . time() . '.' . $ext;
-                $avatarPath = $avatar->storeAs('avatars', $filename, 'public');
-            } elseif ($removeAvatar) {
-                if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
-                    Storage::disk('public')->delete($avatarPath);
-                }
-                $avatarPath = null;
-            }
-
             $consultType = $this->formatConsultType($data);
 
             $profileData = [
@@ -211,7 +197,6 @@ class UserRepository implements TenantUserRepositoryInterface
                 'date_of_birth' => !empty($data['date_of_birth']) ? $data['date_of_birth'] : null,
                 'primary_mobile' => $data['primary_mobile'] ?? null,
                 'secondary_mobile' => $data['secondary_mobile'] ?? null,
-                'avatar' => $avatarPath,
                 'is_publish' => !empty($data['is_publish']),
                 'ehealth_is_doctor_appointment' => !empty($data['ehealth_is_doctor_appointment']),
                 'ehealth_consult_type' => $consultType,
@@ -221,7 +206,29 @@ class UserRepository implements TenantUserRepositoryInterface
             if ($profile) {
                 $profile->update($profileData);
             } else {
-                $user->profile()->create($profileData);
+                $profile = $user->profile()->create($profileData);
+            }
+
+            // Handle avatar using Spatie MediaLibrary
+            if ($removeAvatar) {
+                $profile->clearMediaCollection('avatar');
+                if ($profile->avatar && Storage::disk('public')->exists($profile->avatar)) {
+                    Storage::disk('public')->delete($profile->avatar);
+                }
+                $profile->updateQuietly(['avatar' => null]);
+            } elseif ($avatar && $avatar->isValid()) {
+                $profile->clearMediaCollection('avatar');
+                if ($profile->avatar && Storage::disk('public')->exists($profile->avatar)) {
+                    Storage::disk('public')->delete($profile->avatar);
+                }
+
+                $fileName    = $avatar->getClientOriginalName();
+                $extension   = explode('.', $fileName);
+                $extension   = strtolower(end($extension));
+                $newFileName = md5(date('YmdHis') . $fileName) . '.' . $extension;
+
+                $profile->addMedia($avatar)->usingFileName($newFileName)->toMediaCollection('avatar', 'public');
+                $profile->updateQuietly(['avatar' => $newFileName]);
             }
 
             return $user->fresh(['profile', 'roles']);
@@ -236,11 +243,14 @@ class UserRepository implements TenantUserRepositoryInterface
                 return false;
             }
 
-            if ($user->profile?->avatar && Storage::disk('public')->exists($user->profile->avatar)) {
-                Storage::disk('public')->delete($user->profile->avatar);
+            if ($user->profile) {
+                $user->profile->clearMediaCollection('avatar');
+                if ($user->profile->avatar && Storage::disk('public')->exists($user->profile->avatar)) {
+                    Storage::disk('public')->delete($user->profile->avatar);
+                }
+                $user->profile->delete();
             }
 
-            $user->profile()?->delete();
             $user->roles()->detach();
             $user->delete();
 

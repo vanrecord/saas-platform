@@ -70,6 +70,7 @@ Route::middleware([
 
         // Patients Directory
         Route::resource('patients', PatientController::class);
+        Route::post('patients/{patient}', [PatientController::class, 'update'])->name('patients.update-post');
 
         // Hospital Suppliers
         Route::resource('suppliers', SupplierController::class);
@@ -91,9 +92,11 @@ Route::middleware([
 
         // Tenant Doctors
         Route::resource('doctors', DoctorController::class);
+        Route::post('doctors/{doctor}', [DoctorController::class, 'update'])->name('doctors.update-post');
 
         // Tenant Users
         Route::resource('users', UserController::class);
+        Route::post('users/{user}', [UserController::class, 'update'])->name('users.update-post');
 
         // Invoice & Billing
         Route::resource('invoices', InvoiceController::class);
@@ -125,6 +128,9 @@ Route::middleware([
 
         // API Endpoints for Frontend Interactive Chart & AJAX
         Route::prefix('api')->name('api.')->group(function () {
+            Route::get('medicines', function () {
+                return response()->json(\App\Models\Tenant\Medicine::orderBy('name')->get(['id', 'name']));
+            })->name('medicines.list');
             Route::get('patients/search', [ReceptionController::class, 'searchPatients'])->name('patients.search');
             Route::post('patients/quick-create', [ReceptionController::class, 'quickCreatePatient'])->name('patients.quick-create');
             Route::get('patients/{patient}/invoices', [ReceptionController::class, 'getPatientInvoices'])->name('patients.invoices');
