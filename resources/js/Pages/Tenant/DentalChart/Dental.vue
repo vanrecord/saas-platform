@@ -442,7 +442,7 @@
           <!-- Paper Footer -->
           <div class="paper-foot">
             <span>FDI Two-Digit World Dental Federation Numbering System</span>
-            <span>OdontoCare Dental System &middot; {{ new Date().getFullYear() }}</span>
+            <span>Dental System &middot; {{ new Date().getFullYear() }}</span>
           </div>
         </div>
       </div>

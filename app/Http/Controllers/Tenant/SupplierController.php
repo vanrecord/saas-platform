@@ -20,8 +20,30 @@ class SupplierController extends Controller
         $this->supplier = $supplier;
     }
 
+    protected function authorizePermission(string $permission): void
+    {
+        $user = auth()->user();
+        if (!$user) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return;
+        }
+
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return;
+        }
+
+        if (!$user->can($permission)) {
+            abort(403, "Unauthorized: missing {$permission} permission.");
+        }
+    }
+
     public function index(): Response
     {
+        $this->authorizePermission('supplier:view');
+
         $suppliers = $this->supplier->getDataTable();
 
         return Inertia::render('Tenant/Supplier/Index', [
@@ -33,6 +55,8 @@ class SupplierController extends Controller
 
     public function create(): Response
     {
+        $this->authorizePermission('supplier:create');
+
         $provinces = $this->supplier->getProvinces();
 
         return Inertia::render('Tenant/Supplier/Create', [
@@ -42,6 +66,8 @@ class SupplierController extends Controller
 
     public function store(SupplierRequest $request): RedirectResponse
     {
+        $this->authorizePermission('supplier:save');
+
         $data = $request->validated();
 
         $supplier = $this->supplier->create([
@@ -60,6 +86,8 @@ class SupplierController extends Controller
 
     public function show($id): Response
     {
+        $this->authorizePermission('supplier:view');
+
         $supplier = $this->supplier->findWithAddress($id);
 
         if (!$supplier) {
@@ -73,6 +101,8 @@ class SupplierController extends Controller
 
     public function edit($id): Response
     {
+        $this->authorizePermission('supplier:edit');
+
         $supplier = $this->supplier->findWithAddress($id);
 
         if (!$supplier) {
@@ -89,6 +119,8 @@ class SupplierController extends Controller
 
     public function update(SupplierRequest $request, $id): RedirectResponse
     {
+        $this->authorizePermission('supplier:save');
+
         $supplier = $this->supplier->find($id);
 
         if (!$supplier) {
@@ -113,6 +145,8 @@ class SupplierController extends Controller
 
     public function destroy($id): RedirectResponse
     {
+        $this->authorizePermission('supplier:delete');
+
         $supplier = $this->supplier->find($id);
 
         if ($supplier) {

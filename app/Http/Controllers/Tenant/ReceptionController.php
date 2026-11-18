@@ -71,7 +71,7 @@ class ReceptionController extends Controller
             'suggestedInvoiceReference' => 'INV-' . date('Ymd') . '-0001',
             'tenant' => [
                 'name' => tenant('name') ?? 'Dental Clinic',
-                'company' => tenant('company') ?? tenant('name') ?? 'Dental Clinic • OdontoCare',
+                'company' => tenant('company') ?? tenant('name') ?? 'Dental Clinic',
                 'logo' => tenant('logo') ?? null,
             ],
         ]);

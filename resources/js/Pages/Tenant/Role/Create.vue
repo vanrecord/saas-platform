@@ -120,12 +120,12 @@
                 </div>
               </div>
 
-              <!-- Subsection 1: View-Only Modules (Dashboard & Register) -->
+              <!-- Subsection 1: View-Only Modules (Dashboard, Register & Payment) -->
               <div class="mb-6">
                 <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                   {{ tm('Overview_and_Registration') }}
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <!-- Dashboard Card (View Only) -->
                   <div class="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-dark">
                     <div class="flex items-center gap-3">
@@ -143,15 +143,19 @@
                         </div>
                       </div>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
+                    <label
+                      class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition select-none"
+                      :class="hasPermission('dashboard:view')
+                        ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                    >
                       <input
                         type="checkbox"
-                        class="sr-only peer"
+                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
                         :checked="hasPermission('dashboard:view')"
                         @change="togglePermission('dashboard:view')"
                       />
-                      <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                      <span class="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300">{{ tm('View') }}</span>
+                      <span class="text-xs">{{ tm('View') }}</span>
                     </label>
                   </div>
 
@@ -172,21 +176,120 @@
                         </div>
                       </div>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
+                    <label
+                      class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition select-none"
+                      :class="hasPermission('register:view')
+                        ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                    >
                       <input
                         type="checkbox"
-                        class="sr-only peer"
+                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
                         :checked="hasPermission('register:view')"
                         @change="togglePermission('register:view')"
                       />
-                      <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                      <span class="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300">{{ tm('View') }}</span>
+                      <span class="text-xs">{{ tm('View') }}</span>
+                    </label>
+                  </div>
+
+                  <!-- Payment Card (View Only) -->
+                  <div class="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-dark">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                          {{ tm('Payment') || 'Payment' }}
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                          {{ tm('View_only_access') }}
+                        </div>
+                      </div>
+                    </div>
+                    <label
+                      class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition select-none"
+                      :class="hasPermission('payment:view')
+                        ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                    >
+                      <input
+                        type="checkbox"
+                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                        :checked="hasPermission('payment:view')"
+                        @change="togglePermission('payment:view')"
+                      />
+                      <span class="text-xs">{{ tm('View') }}</span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <!-- Subsection 2: Hospital Menus (Patient, Service, Product, Service Category, Product Category) -->
+              <!-- Subsection 2: Conditions (Diagnostic Legend) -->
+              <div class="mb-6">
+                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  {{ tm('Conditions') || 'Conditions' }}
+                </div>
+                <div class="space-y-3">
+                  <div
+                    class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition"
+                  >
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ conditionMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(conditionMenu.actions) }}/{{ conditionMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(conditionMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(conditionMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
+                        v-for="action in conditionMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subsection 3: Hospital Menus (Patient, Service, Product, Service Category, Product Category, Suppliers) -->
               <div class="mb-6">
                 <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                   {{ tm('Hospital') }}
@@ -225,32 +328,92 @@
                       </div>
                     </div>
 
-                    <!-- 5 Action Switches -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      <div
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
                         v-for="action in menu.actions"
                         :key="action.permission"
-                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
                       >
-                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
                           {{ action.label }}
                         </span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            class="sr-only peer"
-                            :checked="hasPermission(action.permission)"
-                            @change="togglePermission(action.permission)"
-                          />
-                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
-                      </div>
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Subsection 3: Administration (Roles & Users) -->
+              <!-- Subsection 4: Invoice & Billing -->
+              <div class="mb-6">
+                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  {{ tm('Invoice') || 'Invoice' }}
+                </div>
+                <div class="space-y-3">
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ invoiceMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(invoiceMenu.actions) }}/{{ invoiceMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(invoiceMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(invoiceMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
+                        v-for="action in invoiceMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subsection 5: Administration (Roles, Doctor & Users) -->
               <div>
                 <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                   {{ tm('Administration') }}
@@ -286,26 +449,79 @@
                       </div>
                     </div>
 
-                    <!-- 5 Action Switches -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      <div
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
                         v-for="action in roleMenu.actions"
                         :key="action.permission"
-                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
                       >
-                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
                           {{ action.label }}
                         </span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            class="sr-only peer"
-                            :checked="hasPermission(action.permission)"
-                            @change="togglePermission(action.permission)"
-                          />
-                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Doctor Card -->
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ doctorMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(doctorMenu.actions) }}/{{ doctorMenu.actions.length }}
+                        </span>
                       </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(doctorMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(doctorMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
+                        v-for="action in doctorMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
                     </div>
                   </div>
 
@@ -339,37 +555,90 @@
                       </div>
                     </div>
 
-                    <!-- 5 Action Switches -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      <div
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
                         v-for="action in userMenu.actions"
                         :key="action.permission"
-                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
                       >
-                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
                           {{ action.label }}
                         </span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            class="sr-only peer"
-                            :checked="hasPermission(action.permission)"
-                            @change="togglePermission(action.permission)"
-                          />
-                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
-                      </div>
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Subsection 4: Settings (Medicines) -->
+              <!-- Subsection 6: Settings (General, Medicines, Prescriptions & Payment Methods) -->
               <div class="mt-6">
                 <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                   {{ tm('Settings') || 'Settings' }}
                 </div>
                 <div class="space-y-3">
+                  <!-- General Settings Card -->
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ generalMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(generalMenu.actions) }}/{{ generalMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(generalMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(generalMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
+                        v-for="action in generalMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   <!-- Medicines Card -->
                   <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
@@ -400,26 +669,26 @@
                       </div>
                     </div>
 
-                    <!-- 4 Action Switches -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
                         v-for="action in medicineMenu.actions"
                         :key="action.permission"
-                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
                       >
-                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
                           {{ action.label }}
                         </span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            class="sr-only peer"
-                            :checked="hasPermission(action.permission)"
-                            @change="togglePermission(action.permission)"
-                          />
-                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
-                      </div>
+                      </label>
                     </div>
                   </div>
 
@@ -453,26 +722,79 @@
                       </div>
                     </div>
 
-                    <!-- 4 Action Switches -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
                         v-for="action in prescriptionMenu.actions"
                         :key="action.permission"
-                        class="flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
                       >
-                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
                           {{ action.label }}
                         </span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            class="sr-only peer"
-                            :checked="hasPermission(action.permission)"
-                            @change="togglePermission(action.permission)"
-                          />
-                          <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Payment Methods Card -->
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ paymentMethodMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(paymentMethodMenu.actions) }}/{{ paymentMethodMenu.actions.length }}
+                        </span>
                       </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(paymentMethodMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(paymentMethodMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
+                        v-for="action in paymentMethodMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -542,8 +864,8 @@ export default defineComponent({
             { permission: 'patient:view', label: this.tm('View') },
             { permission: 'patient:create', label: this.tm('Create') },
             { permission: 'patient:edit', label: this.tm('Edit') },
-            { permission: 'patient:save', label: this.tm('Save') },
             { permission: 'patient:delete', label: this.tm('Delete') },
+            { permission: 'patient:save', label: this.tm('Save') },
           ],
         },
         {
@@ -553,8 +875,8 @@ export default defineComponent({
             { permission: 'service:view', label: this.tm('View') },
             { permission: 'service:create', label: this.tm('Create') },
             { permission: 'service:edit', label: this.tm('Edit') },
-            { permission: 'service:save', label: this.tm('Save') },
             { permission: 'service:delete', label: this.tm('Delete') },
+            { permission: 'service:save', label: this.tm('Save') },
           ],
         },
         {
@@ -564,8 +886,8 @@ export default defineComponent({
             { permission: 'product:view', label: this.tm('View') },
             { permission: 'product:create', label: this.tm('Create') },
             { permission: 'product:edit', label: this.tm('Edit') },
-            { permission: 'product:save', label: this.tm('Save') },
             { permission: 'product:delete', label: this.tm('Delete') },
+            { permission: 'product:save', label: this.tm('Save') },
           ],
         },
         {
@@ -575,8 +897,8 @@ export default defineComponent({
             { permission: 'service-category:view', label: this.tm('View') },
             { permission: 'service-category:create', label: this.tm('Create') },
             { permission: 'service-category:edit', label: this.tm('Edit') },
-            { permission: 'service-category:save', label: this.tm('Save') },
             { permission: 'service-category:delete', label: this.tm('Delete') },
+            { permission: 'service-category:save', label: this.tm('Save') },
           ],
         },
         {
@@ -586,11 +908,51 @@ export default defineComponent({
             { permission: 'product-category:view', label: this.tm('View') },
             { permission: 'product-category:create', label: this.tm('Create') },
             { permission: 'product-category:edit', label: this.tm('Edit') },
-            { permission: 'product-category:save', label: this.tm('Save') },
             { permission: 'product-category:delete', label: this.tm('Delete') },
+            { permission: 'product-category:save', label: this.tm('Save') },
+          ],
+        },
+        {
+          id: 'supplier',
+          title: this.tm('Suppliers') || 'Suppliers',
+          actions: [
+            { permission: 'supplier:view', label: this.tm('View') },
+            { permission: 'supplier:create', label: this.tm('Create') },
+            { permission: 'supplier:edit', label: this.tm('Edit') },
+            { permission: 'supplier:delete', label: this.tm('Delete') },
+            { permission: 'supplier:save', label: this.tm('Save') },
           ],
         },
       ]
+    },
+    conditionMenu() {
+      return {
+        id: 'dental-condition',
+        title: this.tm('Diagnostic_Legend') || 'Diagnostic Legend',
+        actions: [
+          { permission: 'dental-condition:view', label: this.tm('View') },
+          { permission: 'dental-condition:create', label: this.tm('Create') },
+          { permission: 'dental-condition:edit', label: this.tm('Edit') },
+          { permission: 'dental-condition:delete', label: this.tm('Delete') },
+          { permission: 'dental-condition:save', label: this.tm('Save') },
+        ],
+      }
+    },
+    invoiceMenu() {
+      return {
+        id: 'invoice',
+        title: this.tm('Invoice') || 'Invoice',
+        actions: [
+          { permission: 'invoice:view', label: this.tm('View') },
+          { permission: 'invoice:create', label: this.tm('Create') },
+          { permission: 'invoice:edit', label: this.tm('Edit') },
+          { permission: 'invoice:delete', label: this.tm('Delete') },
+          { permission: 'invoice:save', label: this.tm('Save') },
+          { permission: 'invoice:view-detail', label: this.tm('View_Detail') || 'View Detail' },
+          { permission: 'invoice:print', label: this.tm('Print') || 'Print' },
+          { permission: 'invoice:pay', label: this.tm('Pay') || 'Pay' },
+        ],
+      }
     },
     roleMenu() {
       return {
@@ -600,8 +962,21 @@ export default defineComponent({
           { permission: 'role:view', label: this.tm('View') },
           { permission: 'role:create', label: this.tm('Create') },
           { permission: 'role:edit', label: this.tm('Edit') },
-          { permission: 'role:save', label: this.tm('Save') },
           { permission: 'role:delete', label: this.tm('Delete') },
+          { permission: 'role:save', label: this.tm('Save') },
+        ],
+      }
+    },
+    doctorMenu() {
+      return {
+        id: 'doctor',
+        title: this.tm('Doctor') || 'Doctor',
+        actions: [
+          { permission: 'doctor:view', label: this.tm('View') },
+          { permission: 'doctor:create', label: this.tm('Create') },
+          { permission: 'doctor:edit', label: this.tm('Edit') },
+          { permission: 'doctor:delete', label: this.tm('Delete') },
+          { permission: 'doctor:save', label: this.tm('Save') },
         ],
       }
     },
@@ -613,8 +988,8 @@ export default defineComponent({
           { permission: 'user:view', label: this.tm('View') },
           { permission: 'user:create', label: this.tm('Create') },
           { permission: 'user:edit', label: this.tm('Edit') },
-          { permission: 'user:save', label: this.tm('Save') },
           { permission: 'user:delete', label: this.tm('Delete') },
+          { permission: 'user:save', label: this.tm('Save') },
         ],
       }
     },
@@ -627,6 +1002,7 @@ export default defineComponent({
           { permission: 'medicine:create', label: this.tm('Create') },
           { permission: 'medicine:edit', label: this.tm('Edit') },
           { permission: 'medicine:delete', label: this.tm('Delete') },
+          { permission: 'medicine:save', label: this.tm('Save') },
         ],
       }
     },
@@ -639,16 +1015,51 @@ export default defineComponent({
           { permission: 'prescription:create', label: this.tm('Create') },
           { permission: 'prescription:edit', label: this.tm('Edit') },
           { permission: 'prescription:delete', label: this.tm('Delete') },
+          { permission: 'prescription:save', label: this.tm('Save') },
+        ],
+      }
+    },
+    paymentMethodMenu() {
+      return {
+        id: 'payment-method',
+        title: this.tm('Payment_Methods') || 'Payment Methods',
+        actions: [
+          { permission: 'payment-method:view', label: this.tm('View') },
+          { permission: 'payment-method:create', label: this.tm('Create') },
+          { permission: 'payment-method:edit', label: this.tm('Edit') },
+          { permission: 'payment-method:delete', label: this.tm('Delete') },
+          { permission: 'payment-method:save', label: this.tm('Save') },
+        ],
+      }
+    },
+    generalMenu() {
+      return {
+        id: 'general',
+        title: this.tm('General_Settings') || 'General Settings',
+        actions: [
+          { permission: 'settings:general:view', label: this.tm('View') },
+          { permission: 'settings:general:edit', label: this.tm('Edit') },
         ],
       }
     },
     allPermissionNames() {
-      const list = ['dashboard:view', 'register:view']
+      const list = ['dashboard:view', 'register:view', 'payment:view']
+      this.conditionMenu.actions.forEach((a) => list.push(a.permission))
       this.hospitalMenus.forEach((m) => {
         m.actions.forEach((a) => list.push(a.permission))
       })
+      this.invoiceMenu.actions.forEach((a) => {
+        list.push(a.permission)
+        if (a.permission === 'invoice:view-detail') list.push('invoice:view_detail')
+      })
       this.roleMenu.actions.forEach((a) => list.push(a.permission))
+      this.doctorMenu.actions.forEach((a) => list.push(a.permission))
       this.userMenu.actions.forEach((a) => list.push(a.permission))
+      this.generalMenu.actions.forEach((a) => {
+        list.push(a.permission)
+        if (a.permission === 'settings:general:view') list.push('general:view')
+        if (a.permission === 'settings:general:edit') list.push('general:edit')
+      })
       this.medicineMenu.actions.forEach((a) => {
         list.push(a.permission)
         if (a.permission === 'medicine:view') list.push('medicines:medicines:view')
@@ -663,12 +1074,15 @@ export default defineComponent({
         if (a.permission === 'prescription:edit') list.push('prescriptions:prescriptions:edit')
         if (a.permission === 'prescription:delete') list.push('prescriptions:prescriptions:delete')
       })
+      this.paymentMethodMenu.actions.forEach((a) => list.push(a.permission))
       return list
     },
   },
   methods: {
     hasPermission(name) {
       const aliases = {
+        'settings:general:view': 'general:view',
+        'settings:general:edit': 'general:edit',
         'medicine:view': 'medicines:medicines:view',
         'medicine:create': 'medicines:medicines:create',
         'medicine:edit': 'medicines:medicines:edit',
@@ -677,11 +1091,14 @@ export default defineComponent({
         'prescription:create': 'prescriptions:prescriptions:create',
         'prescription:edit': 'prescriptions:prescriptions:edit',
         'prescription:delete': 'prescriptions:prescriptions:delete',
+        'invoice:view-detail': 'invoice:view_detail',
       }
       return this.form.permissions.includes(name) || (aliases[name] && this.form.permissions.includes(aliases[name]))
     },
     togglePermission(name) {
       const aliases = {
+        'settings:general:view': 'general:view',
+        'settings:general:edit': 'general:edit',
         'medicine:view': 'medicines:medicines:view',
         'medicine:create': 'medicines:medicines:create',
         'medicine:edit': 'medicines:medicines:edit',
@@ -690,6 +1107,7 @@ export default defineComponent({
         'prescription:create': 'prescriptions:prescriptions:create',
         'prescription:edit': 'prescriptions:prescriptions:edit',
         'prescription:delete': 'prescriptions:prescriptions:delete',
+        'invoice:view-detail': 'invoice:view_detail',
       }
       const alias = aliases[name]
       const index = this.form.permissions.indexOf(name)
@@ -708,6 +1126,8 @@ export default defineComponent({
     },
     selectMenuAll(actions) {
       const aliases = {
+        'settings:general:view': 'general:view',
+        'settings:general:edit': 'general:edit',
         'medicine:view': 'medicines:medicines:view',
         'medicine:create': 'medicines:medicines:create',
         'medicine:edit': 'medicines:medicines:edit',
@@ -716,6 +1136,7 @@ export default defineComponent({
         'prescription:create': 'prescriptions:prescriptions:create',
         'prescription:edit': 'prescriptions:prescriptions:edit',
         'prescription:delete': 'prescriptions:prescriptions:delete',
+        'invoice:view-detail': 'invoice:view_detail',
       }
       actions.forEach((a) => {
         if (!this.form.permissions.includes(a.permission)) {
@@ -729,6 +1150,8 @@ export default defineComponent({
     },
     clearMenuAll(actions) {
       const aliases = {
+        'settings:general:view': 'general:view',
+        'settings:general:edit': 'general:edit',
         'medicine:view': 'medicines:medicines:view',
         'medicine:create': 'medicines:medicines:create',
         'medicine:edit': 'medicines:medicines:edit',
@@ -737,6 +1160,7 @@ export default defineComponent({
         'prescription:create': 'prescriptions:prescriptions:create',
         'prescription:edit': 'prescriptions:prescriptions:edit',
         'prescription:delete': 'prescriptions:prescriptions:delete',
+        'invoice:view-detail': 'invoice:view_detail',
       }
       const permsToClear = []
       actions.forEach((a) => {

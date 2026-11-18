@@ -19,6 +19,7 @@ use App\Http\Controllers\Tenant\DoctorController;
 use App\Http\Controllers\Tenant\UserController;
 use App\Http\Controllers\Tenant\InvoiceController;
 use App\Http\Controllers\Tenant\InvoicePrefixController;
+use App\Http\Controllers\Tenant\GeneralSettingController;
 use App\Http\Controllers\Tenant\MedicineController;
 use App\Http\Controllers\Tenant\PrescriptionController;
 use App\Http\Controllers\Tenant\PaymentController;
@@ -110,6 +111,11 @@ Route::middleware([
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('tenant.payments.destroy');
         Route::get('/payments/{payment}/print', [PaymentController::class, 'printReceipt'])->name('tenant.payments.print');
         Route::get('/api/payments/patients-search', [PaymentController::class, 'searchPatients'])->name('tenant.payments.patients-search');
+
+        // General Settings
+        Route::get('settings/general', [GeneralSettingController::class, 'index'])->name('settings.general.index');
+        Route::post('settings/general', [GeneralSettingController::class, 'updateClinicInfo'])->name('settings.general.update-clinic');
+        Route::post('settings/general/doctor-except', [GeneralSettingController::class, 'updateDoctorExcept'])->name('settings.general.update-doctor-except');
 
         // Invoice Prefix Settings
         Route::resource('settings/invoice-prefixes', InvoicePrefixController::class)->names('settings.invoice-prefixes');

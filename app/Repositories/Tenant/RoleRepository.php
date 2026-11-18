@@ -78,6 +78,12 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
             ]);
 
             if (!empty($data['permissions'])) {
+                foreach ($data['permissions'] as $perm) {
+                    \Spatie\Permission\Models\Permission::firstOrCreate([
+                        'name' => $perm,
+                        'guard_name' => 'tenant',
+                    ]);
+                }
                 $role->syncPermissions($data['permissions']);
             }
 
@@ -100,6 +106,12 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
             ]);
 
             $permissions = $data['permissions'] ?? [];
+            foreach ($permissions as $perm) {
+                \Spatie\Permission\Models\Permission::firstOrCreate([
+                    'name' => $perm,
+                    'guard_name' => 'tenant',
+                ]);
+            }
             $role->syncPermissions($permissions);
 
             app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -144,6 +156,32 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                     ['key' => 'register:view', 'action' => 'view', 'label' => 'View'],
                 ],
             ],
+            'payment' => [
+                'id' => 'payment',
+                'title' => 'Payment',
+                'type' => 'single',
+                'permissions' => [
+                    ['key' => 'payment:view', 'action' => 'view', 'label' => 'View'],
+                ],
+            ],
+            'conditions' => [
+                'id' => 'conditions',
+                'title' => 'Conditions',
+                'type' => 'group',
+                'menus' => [
+                    [
+                        'id' => 'dental-condition',
+                        'title' => 'Diagnostic Legend',
+                        'permissions' => [
+                            ['key' => 'dental-condition:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'dental-condition:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'dental-condition:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'dental-condition:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'dental-condition:save', 'action' => 'save', 'label' => 'Save'],
+                        ],
+                    ],
+                ],
+            ],
             'hospital' => [
                 'id' => 'hospital',
                 'title' => 'Hospital',
@@ -156,8 +194,8 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'patient:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'patient:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'patient:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'patient:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'patient:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'patient:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
@@ -167,8 +205,8 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'service:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'service:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'service:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'service:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'service:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'service:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
@@ -178,8 +216,8 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'product:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'product:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'product:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'product:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'product:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'product:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
@@ -189,8 +227,8 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'service-category:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'service-category:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'service-category:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'service-category:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'service-category:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'service-category:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
@@ -200,8 +238,40 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'product-category:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'product-category:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'product-category:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'product-category:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'product-category:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'product-category:save', 'action' => 'save', 'label' => 'Save'],
+                        ],
+                    ],
+                    [
+                        'id' => 'supplier',
+                        'title' => 'Suppliers',
+                        'permissions' => [
+                            ['key' => 'supplier:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'supplier:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'supplier:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'supplier:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'supplier:save', 'action' => 'save', 'label' => 'Save'],
+                        ],
+                    ],
+                ],
+            ],
+            'invoice' => [
+                'id' => 'invoice',
+                'title' => 'Invoice',
+                'type' => 'group',
+                'menus' => [
+                    [
+                        'id' => 'invoice',
+                        'title' => 'Invoice',
+                        'permissions' => [
+                            ['key' => 'invoice:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'invoice:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'invoice:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'invoice:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'invoice:save', 'action' => 'save', 'label' => 'Save'],
+                            ['key' => 'invoice:view-detail', 'action' => 'view-detail', 'label' => 'View Detail'],
+                            ['key' => 'invoice:print', 'action' => 'print', 'label' => 'Print'],
+                            ['key' => 'invoice:pay', 'action' => 'pay', 'label' => 'Pay'],
                         ],
                     ],
                 ],
@@ -218,19 +288,19 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'role:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'role:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'role:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'role:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'role:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'role:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
                         'id' => 'doctor',
-                        'title' => 'Doctors',
+                        'title' => 'Doctor',
                         'permissions' => [
                             ['key' => 'doctor:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'doctor:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'doctor:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'doctor:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'doctor:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'doctor:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
@@ -240,8 +310,8 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'user:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'user:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'user:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'user:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'user:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'user:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                 ],
@@ -252,6 +322,14 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                 'type' => 'group',
                 'menus' => [
                     [
+                        'id' => 'general',
+                        'title' => 'General Settings',
+                        'permissions' => [
+                            ['key' => 'settings:general:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'settings:general:edit', 'action' => 'edit', 'label' => 'Edit'],
+                        ],
+                    ],
+                    [
                         'id' => 'medicine',
                         'title' => 'Medicines',
                         'permissions' => [
@@ -259,17 +337,29 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                             ['key' => 'medicine:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'medicine:edit', 'action' => 'edit', 'label' => 'Edit'],
                             ['key' => 'medicine:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'medicine:save', 'action' => 'save', 'label' => 'Save'],
+                        ],
+                    ],
+                    [
+                        'id' => 'prescription',
+                        'title' => 'Prescriptions',
+                        'permissions' => [
+                            ['key' => 'prescription:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'prescription:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'prescription:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'prescription:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'prescription:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                     [
                         'id' => 'payment-method',
-                        'title' => 'Payment Method',
+                        'title' => 'Payment Methods',
                         'permissions' => [
                             ['key' => 'payment-method:view', 'action' => 'view', 'label' => 'View'],
                             ['key' => 'payment-method:create', 'action' => 'create', 'label' => 'Create'],
                             ['key' => 'payment-method:edit', 'action' => 'edit', 'label' => 'Edit'],
-                            ['key' => 'payment-method:save', 'action' => 'save', 'label' => 'Save'],
                             ['key' => 'payment-method:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'payment-method:save', 'action' => 'save', 'label' => 'Save'],
                         ],
                     ],
                 ],

@@ -66,13 +66,15 @@ trait ClinicInfoTrait
         }
 
         // Clinic Names & Slogan
-        $nameKh = $settings['clinic_name_kh'] 
+        $nameKh = $settings['titlekh']
+            ?? $settings['clinic_name_kh'] 
             ?? $settings['shop_name']
             ?? $company?->name_native 
             ?? (function_exists('tenant') && tenant() ? (tenant('name_kh') ?? tenant('name_native')) : null)
             ?? 'គ្លីនិកធ្មេញ ឌែនធីសយើង';
 
-        $nameEn = $settings['clinic_name_en'] 
+        $nameEn = $settings['title']
+            ?? $settings['clinic_name_en'] 
             ?? $settings['name_en']
             ?? $company?->name_international 
             ?? $hospital?->name 

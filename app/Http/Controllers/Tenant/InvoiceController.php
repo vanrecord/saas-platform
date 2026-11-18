@@ -257,7 +257,7 @@ class InvoiceController extends Controller
 
     public function show($id): Response
     {
-        abort_if(!auth()->user()?->can('invoice:view'), 403, 'Unauthorized to view invoices.');
+        abort_if(!auth()->user()?->can('invoice:view') && !auth()->user()?->can('invoice:view-detail') && !auth()->user()?->can('invoice:view_detail'), 403, 'Unauthorized to view invoices.');
 
         $invoice = $this->invoiceRepository->findWithDetails($id);
 
@@ -278,7 +278,7 @@ class InvoiceController extends Controller
 
     public function paymentHistory($id): JsonResponse
     {
-        abort_if(!auth()->user()?->can('invoice:view'), 403, 'Unauthorized to view invoice payment history.');
+        abort_if(!auth()->user()?->can('invoice:view') && !auth()->user()?->can('invoice:pay'), 403, 'Unauthorized to view invoice payment history.');
 
         $invoice = MedicalHistory::with([
             'patient',
@@ -490,7 +490,7 @@ class InvoiceController extends Controller
 
     public function storePayment(Request $request, $id): JsonResponse
     {
-        abort_if(!auth()->user()?->can('invoice:save') && !auth()->user()?->can('invoice:edit') && !auth()->user()?->can('payment:create'), 403, 'Unauthorized to add payments.');
+        abort_if(!auth()->user()?->can('invoice:pay') && !auth()->user()?->can('invoice:save') && !auth()->user()?->can('invoice:edit') && !auth()->user()?->can('payment:create'), 403, 'Unauthorized to add payments.');
 
         $request->validate([
             'payment_method_id' => 'nullable|exists:payment_methods,id',
@@ -642,7 +642,7 @@ class InvoiceController extends Controller
      */
     public function print($id): Response
     {
-        abort_if(!auth()->user()?->can('invoice:view') && !auth()->user()?->can('invoice:edit'), 403, 'Unauthorized.');
+        abort_if(!auth()->user()?->can('invoice:print') && !auth()->user()?->can('invoice:view') && !auth()->user()?->can('invoice:edit'), 403, 'Unauthorized.');
 
         $invoice = MedicalHistory::with([
             'patient.addressRecord.province',

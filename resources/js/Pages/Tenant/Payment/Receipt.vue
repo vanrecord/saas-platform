@@ -35,7 +35,7 @@
         <!-- Header -->
         <div class="text-center pb-6 border-b border-slate-200">
           <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">
-            {{ hospital?.name || 'OdontoCare Dental Clinic' }}
+            {{ hospital?.name || 'Dental Clinic' }}
           </h1>
           <p class="text-xs text-slate-500 mt-1">
             {{ hospital?.address || 'Phnom Penh, Cambodia' }} &middot; Phone: {{ hospital?.phone || '(+855) 23 888 999' }}

@@ -12,8 +12,30 @@ use Inertia\Response;
 
 class DentalConditionController extends Controller
 {
+    protected function authorizePermission(string $permission): void
+    {
+        $user = auth()->user();
+        if (!$user) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return;
+        }
+
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return;
+        }
+
+        if (!$user->can($permission)) {
+            abort(403, "Unauthorized: missing {$permission} permission.");
+        }
+    }
+
     public function index(Request $request): Response
     {
+        $this->authorizePermission('dental-condition:view');
+
         $conditions = DentalCondition::query()
             ->withCount('findings')
             ->orderBy('name')
@@ -26,11 +48,15 @@ class DentalConditionController extends Controller
 
     public function create(): Response
     {
+        $this->authorizePermission('dental-condition:create');
+
         return Inertia::render('Tenant/DentalCondition/Create');
     }
 
     public function store(DentalConditionRequest $request): RedirectResponse
     {
+        $this->authorizePermission('dental-condition:save');
+
         $data = $request->validated();
         if ($request->user()) {
             $data['created_by'] = $request->user()->id;
@@ -44,6 +70,8 @@ class DentalConditionController extends Controller
 
     public function edit(DentalCondition $dentalCondition): Response
     {
+        $this->authorizePermission('dental-condition:edit');
+
         return Inertia::render('Tenant/DentalCondition/Edit', [
             'dentalCondition' => $dentalCondition,
         ]);
@@ -51,6 +79,8 @@ class DentalConditionController extends Controller
 
     public function update(DentalConditionRequest $request, DentalCondition $dentalCondition): RedirectResponse
     {
+        $this->authorizePermission('dental-condition:save');
+
         $dentalCondition->update($request->validated());
 
         return redirect()->route('dental-conditions.index')
@@ -59,6 +89,8 @@ class DentalConditionController extends Controller
 
     public function destroy(DentalCondition $dentalCondition): RedirectResponse
     {
+        $this->authorizePermission('dental-condition:delete');
+
         $dentalCondition->delete();
 
         return redirect()->route('dental-conditions.index')

@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-[#F7F9FC] text-[#152B45] flex font-sans antialiased">
-    <Head :title="title ? `${title} - Dental Clinic` : 'Dental Clinic • OdontoCare'" />
+    <Head :title="title ? `${title} - Dental Clinic` : 'Dental Clinic'" />
 
     <!-- Mobile Sidebar Backdrop -->
     <div
@@ -22,20 +22,39 @@
       <!-- Clinic Brand Header at Top -->
       <div class="h-20 flex items-center px-4 border-b border-[#DCE3EC]/70 bg-[#F0F2F5] flex-shrink-0">
         <Link :href="route('tenant.dashboard')" class="flex items-center gap-3 w-full group">
-          <!-- Stylized Tooth Icon in Circle -->
-          <div class="w-10 h-10 rounded-full bg-white border border-[#0D63D6]/20 shadow-sm flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <svg class="w-5 h-5 text-[#0D63D6]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.5 2 6 4.5 6 7c0 1.9.8 3.5 1.5 5.2.7 1.8 1.5 3.8 1.5 5.8 0 1.7 1.3 3 3 3s3-1.3 3-3c0-2 .8-4 1.5-5.8C17.2 10.5 18 8.9 18 7c0-2.5-2.5-5-6-5zm-1 16c-.6 0-1-.4-1-1 0-1.8-.8-3.6-1.5-5.3C7.8 10 7 8.5 7 7c0-1.9 2-3.8 5-3.8s5 1.9 5 3.8c0 1.5-.8 3-1.5 4.7-.7 1.7-1.5 3.5-1.5 5.3 0 .6-.4 1-1 1h-2z"/>
+          <!-- Stylized Logo / Bulb Icon in Circle -->
+          <div class="w-16 h-16 rounded-full bg-white border border-[#0D63D6]/20 shadow-xs flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+            <img
+              v-if="clinicLogo || $page.props.clinic_info?.logo_url || $page.props.clinicInfo?.logo_url"
+              :src="clinicLogo || $page.props.clinic_info?.logo_url || $page.props.clinicInfo?.logo_url"
+              alt="Logo"
+              class="w-full h-full object-contain p-1 rounded-full"
+            />
+            <svg
+              v-else
+              class="w-5 h-5 text-[#0D63D6]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
 
           <!-- Brand Text & Khmer Subtitle -->
           <div v-show="!isSidebarCollapsed" class="flex flex-col min-w-0 leading-tight overflow-hidden">
-            <span class="text-sm font-extrabold text-[#152B45] tracking-tight truncate">
-              {{ $page.props.tenant?.company || 'Dental Clinic • Odont' }}
+            <span
+              class="text-sm font-extrabold text-[#152B45] tracking-tight truncate"
+              :style="clinicTitleEnColor ? { color: clinicTitleEnColor } : {}"
+            >
+              {{ clinicTitleKh || $page.props.clinic_info?.titlekh || $page.props.clinicInfo?.titlekh || 'គ្លីនិកធ្មេញ' }}
+              
             </span>
-            <span class="text-[11px] font-normal text-slate-500 truncate mt-0.5 font-khmer">
-              គ្លីនិកធ្មេញ អូដុនតូខែរ
+            <span
+              class="text-[11px] font-normal text-slate-500 truncate mt-0.5 font-khmer"
+              :style="clinicTitleKhColor ? { color: clinicTitleKhColor } : {}"
+            >
+              {{ clinicTitleEn || $page.props.clinic_info?.title || $page.props.clinicInfo?.title || 'Dental Clinic' }}
             </span>
           </div>
         </Link>
@@ -106,6 +125,7 @@
           <div class="space-y-1">
             <!-- Invoice -->
             <Link
+              v-if="can(['all', 'invoice:view', 'invoices', 'invoices.index'])"
               :href="route('invoices.index')"
               :class="[
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
@@ -162,7 +182,7 @@
         <div>
           <div class="space-y-1">
             <!-- Conditions with Submenu -->
-            <div>
+            <div v-if="can(['all', 'dental-condition:view', 'dental-conditions', 'dental-conditions.index'])">
               <button
                 type="button"
                 @click="clinicalOpen.conditions = !clinicalOpen.conditions"
@@ -188,6 +208,7 @@
               <!-- Submenu -->
               <div v-show="!isSidebarCollapsed && clinicalOpen.conditions" class="pl-9 pr-2 py-1 space-y-1">
                 <Link
+                  v-if="can(['all', 'dental-condition:view', 'dental-conditions', 'dental-conditions.index'])"
                   :href="route('dental-conditions.index')"
                   :class="[
                     'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
@@ -375,6 +396,16 @@
 
               <!-- Submenu -->
               <div v-show="!isSidebarCollapsed && clinicalOpen.settings" class="pl-9 pr-2 py-1 space-y-1">
+                <Link
+                  v-if="can(['all', 'settings:general:view', 'settings:general:edit', 'general:view'])"
+                  :href="route('settings.general.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    route().current('settings.general.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  {{ tm('General') || 'General' }}
+                </Link>
                 <Link
                   :href="route('settings.invoice-prefixes.index')"
                   :class="[
@@ -583,7 +614,7 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { Head, Link } from '@inertiajs/inertia-vue3'
+import { Head, Link, usePage } from '@inertiajs/inertia-vue3'
 import { Inertia } from '@inertiajs/inertia'
 import { useI18n } from 'vue-i18n'
 import { lang } from '@/Lang'
@@ -592,6 +623,45 @@ import QuickCreatePatientModal from '@/Components/Tenant/QuickCreatePatientModal
 const { tm } = useI18n({
   inheritLocale: true,
   messages: lang,
+})
+
+const page = usePage()
+
+const clinicLogo = computed(() => {
+  const p = page.props?.value || page.props || {}
+  return p.clinic_info?.logo_url 
+    || p.clinicInfo?.logo_url 
+    || p.clinic_info?.logo
+    || p.clinicInfo?.logo
+    || null
+})
+
+const clinicTitleEn = computed(() => {
+  const p = page.props?.value || page.props || {}
+  return p.clinic_info?.title 
+    || p.clinicInfo?.title 
+    || p.tenant?.company 
+    || 'Dental Clinic'
+})
+
+const clinicTitleKh = computed(() => {
+  const p = page.props?.value || page.props || {}
+  return p.clinic_info?.titlekh 
+    || p.clinicInfo?.titlekh 
+    || p.tenant?.name_kh 
+    || 'គ្លីនិកធ្មេញ'
+})
+
+const clinicTitleEnColor = computed(() => {
+  const p = page.props?.value || page.props || {}
+  const c = p.clinic_info?.color_title_en || p.clinicInfo?.color_title_en
+  return (c && c !== '#000000') ? c : undefined
+})
+
+const clinicTitleKhColor = computed(() => {
+  const p = page.props?.value || page.props || {}
+  const c = p.clinic_info?.color_title_kh || p.clinicInfo?.color_title_kh
+  return (c && c !== '#000000') ? c : undefined
 })
 
 const props = defineProps({

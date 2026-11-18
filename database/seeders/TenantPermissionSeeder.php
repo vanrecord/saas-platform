@@ -59,6 +59,61 @@ class TenantPermissionSeeder extends Seeder
             'role:save',
             'role:delete',
 
+            // Doctor
+            'doctor:view',
+            'doctor:create',
+            'doctor:edit',
+            'doctor:save',
+            'doctor:delete',
+
+            // Users
+            'user:view',
+            'user:create',
+            'user:edit',
+            'user:save',
+            'user:delete',
+
+            // Suppliers
+            'supplier:view',
+            'supplier:create',
+            'supplier:edit',
+            'supplier:save',
+            'supplier:delete',
+
+            // Diagnostic Legend (Dental Conditions)
+            'dental-condition:view',
+            'dental-condition:create',
+            'dental-condition:edit',
+            'dental-condition:save',
+            'dental-condition:delete',
+
+            // Payment (View Only)
+            'payment:view',
+
+            // Invoice
+            'invoice:view',
+            'invoice:create',
+            'invoice:edit',
+            'invoice:save',
+            'invoice:delete',
+            'invoice:pay',
+            'invoice:print',
+            'invoice:view-detail',
+            'invoice:view_detail',
+
+            // General Settings
+            'settings:general:view',
+            'settings:general:edit',
+            'general:view',
+            'general:edit',
+
+            // Payment Methods
+            'payment-method:view',
+            'payment-method:create',
+            'payment-method:edit',
+            'payment-method:save',
+            'payment-method:delete',
+
             // Medicines
             'medicine:view',
             'medicine:create',

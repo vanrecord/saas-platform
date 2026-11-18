@@ -131,6 +131,7 @@
               <div class="flex items-center space-x-1.5 whitespace-nowrap">
                 <!-- Pay -->
                 <button
+                  v-if="can(['all', 'invoice:pay'])"
                   type="button"
                   @click="openPaymentModal(invoice)"
                   class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200 transition shadow-2xs"
@@ -144,6 +145,7 @@
 
                 <!-- View -->
                 <Link
+                  v-if="can(['all', 'invoice:view-detail', 'invoice:view_detail', 'invoice:view'])"
                   :href="route('invoices.show', invoice.id)"
                   class="p-1 text-slate-500 hover:text-slate-800 rounded hover:bg-slate-100 transition"
                   title="View Invoice"
@@ -168,6 +170,7 @@
 
                 <!-- Print -->
                 <a
+                  v-if="can(['all', 'invoice:print'])"
                   :href="route('invoices.print', invoice.id)"
                   target="_blank"
                   class="p-1 text-slate-600 hover:text-slate-800 rounded hover:bg-slate-100 transition"
