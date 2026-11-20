@@ -74,6 +74,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\PrescriptionRepositoryInterface::class,
             \App\Repositories\PrescriptionRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\EstimateRepositoryInterface::class,
+            \App\Repositories\EstimateRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\TargetRepositoryInterface::class,
+            \App\Repositories\TargetRepository::class
+        );
     }
 
     /**

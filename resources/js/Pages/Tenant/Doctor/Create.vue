@@ -1,9 +1,9 @@
 <template>
   <TenantLayout>
     <Head :title="tm('Create_Doctor') || 'Create Doctor'" />
-    <div class="px-4 py-4 max-w-7xl mx-auto">
+    <div class="px-4 py-4">
       <!-- Breadcrumb Navigation -->
-      <nav class="flex pt-2 mb-4" aria-label="Breadcrumb">
+      <nav class="flex pt-4 mb-6" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
           <li class="inline-flex items-center">
             <Link :href="route('tenant.dashboard')" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
@@ -29,145 +29,267 @@
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
               </svg>
               <span class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                {{ tm('Create') || 'Create' }}
+                {{ tm('Create') }}
               </span>
             </div>
           </li>
         </ol>
       </nav>
 
-      <!-- Main Form Card Matching Screenshot -->
-      <form @submit.prevent="submit" class="bg-white rounded shadow-sm border border-gray-200 overflow-hidden dark:bg-darker dark:border-primary">
-        <!-- Top Blue Header Banner: "Profile" -->
-        <div class="bg-[#5b86e5] px-6 py-3.5 text-white font-medium text-base tracking-wide flex items-center justify-between">
-          <span>{{ tm('Profile') || 'Profile' }}</span>
-        </div>
+      <div class="mb-4">
+        <span class="ml-1 text-xl font-medium text-gray-500 md:ml-2">
+          {{ tm('Create_Doctor') || 'Create Doctor' }}
+        </span>
+      </div>
 
-        <!-- Two Column Layout matching screenshot -->
-        <div class="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6">
-          <!-- LEFT COLUMN -->
-          <div class="space-y-4">
-            <!-- User Name * -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="username" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('User_Name') || 'User Name' }} <span class="text-red-500 font-bold">*</span>
+      <form @submit.prevent="submit" class="space-y-6">
+        <!-- SECTION 1: Authentication -->
+        <div class="bg-white rounded-md shadow-sm border border-gray-200 dark:bg-darker dark:border-primary p-6">
+          <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+            {{ tm('Authentication') }}
+          </h5>
+          <hr class="border-gray-200 dark:border-gray-700 mb-6" />
+
+          <div class="space-y-4 max-w-4xl">
+            <!-- User name -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label for="username" class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('User_Name') }} <span class="text-red-500 font-bold">*</span>
               </label>
-              <div class="sm:col-span-8">
+              <div class="flex-1 w-full mt-1 sm:mt-0">
                 <input
                   id="username"
                   v-model="form.username"
                   type="text"
                   required
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.username }"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-sm dark:bg-dark dark:border-gray-600 dark:text-white"
+                  :class="{ 'border-red-500 focus:border-red-500 ring-1 ring-red-500': form.errors.username }"
                 />
-                <div v-if="form.errors.username" class="text-xs text-red-500 mt-1">
+                <div v-if="form.errors.username" class="text-xs text-red-500 mt-1 font-semibold">
                   {{ form.errors.username }}
                 </div>
               </div>
             </div>
 
             <!-- Email -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="email" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('Email') || 'Email' }}
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label for="email" class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('Email') }}
               </label>
-              <div class="sm:col-span-8">
+              <div class="flex-1 w-full mt-1 sm:mt-0">
                 <input
                   id="email"
                   v-model="form.email"
                   type="email"
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.email }"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-sm dark:bg-dark dark:border-gray-600 dark:text-white"
+                  :class="{ 'border-red-500 focus:border-red-500 ring-1 ring-red-500': form.errors.email }"
                 />
-                <div v-if="form.errors.email" class="text-xs text-red-500 mt-1">
+                <div v-if="form.errors.email" class="text-xs text-red-500 mt-1 font-semibold">
                   {{ form.errors.email }}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- First Name * -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="firstname" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('First_Name') || 'First Name' }} <span class="text-red-500 font-bold">*</span>
+        <!-- SECTION 2: Doctor Profile -->
+        <div class="bg-white rounded-md shadow-sm border border-gray-200 dark:bg-darker dark:border-primary overflow-hidden">
+          <!-- Blue Header Banner matching User Profile -->
+          <div class="bg-[#5b86e5] text-white px-6 py-3 font-semibold text-sm">
+            {{ tm('Profile') || 'Profile' }}
+          </div>
+
+          <div class="p-6 space-y-4 max-w-4xl">
+            <!-- First Name -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label for="firstname" class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('First_Name') }} <span class="text-red-500 font-bold">*</span>
               </label>
-              <div class="sm:col-span-8">
+              <div class="flex-1 w-full mt-1 sm:mt-0">
                 <input
                   id="firstname"
                   v-model="form.firstname"
                   type="text"
                   required
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.firstname }"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-sm dark:bg-dark dark:border-gray-600 dark:text-white"
+                  :class="{ 'border-red-500 focus:border-red-500 ring-1 ring-red-500': form.errors.firstname }"
                 />
-                <div v-if="form.errors.firstname" class="text-xs text-red-500 mt-1">
+                <div v-if="form.errors.firstname" class="text-xs text-red-500 mt-1 font-semibold">
                   {{ form.errors.firstname }}
                 </div>
               </div>
             </div>
 
-            <!-- Last Name * -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="lastname" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('Last_Name') || 'Last Name' }} <span class="text-red-500 font-bold">*</span>
+            <!-- Last Name -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label for="lastname" class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('Last_Name') }} <span class="text-red-500 font-bold">*</span>
               </label>
-              <div class="sm:col-span-8">
+              <div class="flex-1 w-full mt-1 sm:mt-0">
                 <input
                   id="lastname"
                   v-model="form.lastname"
                   type="text"
                   required
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.lastname }"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-sm dark:bg-dark dark:border-gray-600 dark:text-white"
+                  :class="{ 'border-red-500 focus:border-red-500 ring-1 ring-red-500': form.errors.lastname }"
                 />
-                <div v-if="form.errors.lastname" class="text-xs text-red-500 mt-1">
+                <div v-if="form.errors.lastname" class="text-xs text-red-500 mt-1 font-semibold">
                   {{ form.errors.lastname }}
                 </div>
               </div>
             </div>
 
-            <!-- Date of Birth -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="date_of_birth" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('Date_of_Birth') || 'Date of Birth' }}
+            <!-- Gender -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('Gender') }} :
               </label>
-              <div class="sm:col-span-8">
-                <input
-                  id="date_of_birth"
+              <div class="flex-1 w-full mt-1 sm:mt-0 flex items-center gap-6">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    v-model="form.gender"
+                    value="M"
+                    class="text-primary border-gray-300 focus:ring-primary h-4 w-4"
+                  />
+                  <span class="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{{ tm('Male') }}</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    v-model="form.gender"
+                    value="F"
+                    class="text-primary border-gray-300 focus:ring-primary h-4 w-4"
+                  />
+                  <span class="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{{ tm('Female') }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('Date_of_Birth') }}
+              </label>
+              <div class="flex-1 w-full mt-1 sm:mt-0">
+                <date-input
                   v-model="form.date_of_birth"
-                  type="date"
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.date_of_birth }"
+                  :error="form.errors.date_of_birth"
+                  placeholder="YYYY-MM-DD"
+                  class="w-full"
                 />
-                <div v-if="form.errors.date_of_birth" class="text-xs text-red-500 mt-1">
-                  {{ form.errors.date_of_birth }}
+              </div>
+            </div>
+
+            <!-- Primary Mobile -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label for="primary_mobile" class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('Primary_Mobile') || tm('Phone_1') || 'Primary Mobile' }}
+              </label>
+              <div class="flex-1 w-full mt-1 sm:mt-0">
+                <input
+                  id="primary_mobile"
+                  v-model="form.primary_mobile"
+                  type="text"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-sm dark:bg-dark dark:border-gray-600 dark:text-white"
+                  :class="{ 'border-red-500 focus:border-red-500 ring-1 ring-red-500': form.errors.primary_mobile }"
+                />
+                <div v-if="form.errors.primary_mobile" class="text-xs text-red-500 mt-1 font-semibold">
+                  {{ form.errors.primary_mobile }}
                 </div>
               </div>
             </div>
 
-            <!-- Avatar Dropzone + Browse Bar exactly like screenshot -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-start gap-2 pt-2">
-              <label class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4 pt-2">
-                {{ tm('Avatar') || 'Avatar' }}
+            <!-- Secondary Mobile -->
+            <div class="flex flex-col sm:flex-row sm:items-center">
+              <label for="secondary_mobile" class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0">
+                {{ tm('Secondary_Mobile') || tm('Phone_2') || 'Secondary Mobile' }}
               </label>
-              <div class="sm:col-span-8 space-y-2">
-                <!-- Dashed drop area -->
+              <div class="flex-1 w-full mt-1 sm:mt-0">
+                <input
+                  id="secondary_mobile"
+                  v-model="form.secondary_mobile"
+                  type="text"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-sm dark:bg-dark dark:border-gray-600 dark:text-white"
+                  :class="{ 'border-red-500 focus:border-red-500 ring-1 ring-red-500': form.errors.secondary_mobile }"
+                />
+                <div v-if="form.errors.secondary_mobile" class="text-xs text-red-500 mt-1 font-semibold">
+                  {{ form.errors.secondary_mobile }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Specialties -->
+            <div class="flex flex-col sm:flex-row sm:items-start pt-1">
+              <label class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0 pt-2">
+                {{ tm('Specialties') || 'Specialties' }}
+              </label>
+              <div class="flex-1 w-full mt-1 sm:mt-0">
+                <div class="border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-dark min-h-[42px] flex flex-wrap gap-1.5 items-center">
+                  <span
+                    v-for="sId in form.specialties"
+                    :key="sId"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                  >
+                    {{ getSpecialtyName(sId) }}
+                    <button type="button" @click="toggleSpecialty(sId)" class="hover:text-red-500 font-bold ml-1 cursor-pointer">×</button>
+                  </span>
+                  <select
+                    @change="onSpecialtySelect"
+                    class="border-0 text-xs text-gray-500 focus:ring-0 py-1 px-1 bg-transparent cursor-pointer flex-1 min-w-[140px]"
+                  >
+                    <option value="">+ {{ tm('Add_specialty') || 'Add specialty...' }}</option>
+                    <option
+                      v-for="sp in specialtyList"
+                      :key="sp.id"
+                      :value="sp.id"
+                      :disabled="form.specialties.includes(sp.id)"
+                    >
+                      {{ sp.name }}
+                    </option>
+                  </select>
+                </div>
+                <div v-if="form.errors.specialties" class="text-xs text-red-500 mt-1 font-semibold">
+                  {{ form.errors.specialties }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="flex flex-col sm:flex-row sm:items-start pt-1">
+              <label class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0 pt-2">
+                {{ tm('Description') || 'Description' }}
+              </label>
+              <div class="flex-1 w-full mt-1 sm:mt-0">
+                <RichTextEditor v-model="form.description" />
+                <div v-if="form.errors.description" class="text-xs text-red-500 mt-1 font-semibold">
+                  {{ form.errors.description }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Avatar Dropzone matching User Create -->
+            <div class="flex flex-col sm:flex-row sm:items-start pt-1">
+              <label class="w-full sm:w-44 md:w-52 text-left sm:text-right pr-6 font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-300 shrink-0 pt-2">
+                {{ tm('Avatar') }}
+              </label>
+              <div class="flex-1 w-full mt-1 sm:mt-0">
                 <div
                   @click="triggerFileInput"
                   @dragover.prevent="isDragging = true"
                   @dragleave.prevent="isDragging = false"
                   @drop.prevent="handleFileDrop"
-                  class="border-2 border-dashed rounded p-6 flex flex-col items-center justify-center relative cursor-pointer transition min-h-[160px] bg-white dark:bg-dark"
+                  class="border-2 border-dashed rounded-md p-8 flex flex-col items-center justify-center relative cursor-pointer transition min-h-[140px]"
                   :class="[
-                    isDragging ? 'border-[#5b86e5] bg-[#5b86e5]/5' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50/50'
+                    isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-dark hover:bg-gray-50/50'
                   ]"
                 >
-                  <!-- Top right remove X button -->
                   <button
                     v-if="avatarPreview"
                     type="button"
                     @click.stop="removeAvatar"
-                    class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition p-1"
+                    class="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition p-1 cursor-pointer"
                     title="Remove avatar"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,155 +297,41 @@
                     </svg>
                   </button>
 
-                  <!-- Preview if selected -->
                   <div v-if="avatarPreview" class="flex flex-col items-center gap-2">
-                    <img :src="avatarPreview" alt="Avatar" class="w-24 h-24 rounded-full object-cover border border-gray-200 shadow-sm" />
-                    <span class="text-xs text-gray-500">Click or drop new image to change</span>
+                    <img :src="avatarPreview" alt="Avatar preview" class="w-20 h-20 rounded-full object-cover border border-gray-200 shadow-sm" />
+                    <span class="text-xs text-gray-500">Click or drag new image to replace</span>
                   </div>
 
-                  <!-- Empty state prompt matching screenshot -->
-                  <div v-else class="text-center py-4">
-                    <p class="text-base text-gray-400 dark:text-gray-500">
+                  <div v-else class="text-center">
+                    <p class="text-sm text-gray-400 dark:text-gray-500">
                       Drag & drop files here ...
                     </p>
                   </div>
-                </div>
 
-                <!-- Bottom input bar with Select file ... and Browse ... button -->
-                <div class="flex rounded shadow-xs overflow-hidden border border-gray-300 dark:border-gray-600">
                   <input
-                    type="text"
-                    readonly
-                    :value="selectedFileName || 'Select file ...'"
-                    class="flex-1 bg-white dark:bg-dark text-xs sm:text-sm px-3 py-2 text-gray-500 border-0 focus:ring-0 cursor-pointer"
-                    @click="triggerFileInput"
+                    ref="fileInput"
+                    type="file"
+                    accept="image/jpeg,image/png,image/jpg,image/webp,image/svg+xml"
+                    @change="handleAvatarChange"
+                    class="hidden"
                   />
-                  <button
-                    type="button"
-                    @click="triggerFileInput"
-                    class="bg-[#5b86e5] hover:bg-[#4a72cf] text-white px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition shrink-0"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Browse ...
-                  </button>
                 </div>
-
-                <input
-                  ref="fileInput"
-                  type="file"
-                  accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
-                  @change="handleAvatarChange"
-                  class="hidden"
-                />
-                <div v-if="form.errors.avatar" class="text-xs text-red-500 mt-1">
+                <div v-if="form.errors.avatar" class="text-xs text-red-500 mt-1 font-semibold">
                   {{ form.errors.avatar }}
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- RIGHT COLUMN -->
-          <div class="space-y-4">
-            <!-- Gender : Male / Female radio buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('Gender') || 'Gender' }} :
-              </label>
-              <div class="sm:col-span-8 flex items-center gap-6">
-                <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
-                  <input
-                    type="radio"
-                    v-model="form.gender"
-                    value="M"
-                    class="text-[#5b86e5] focus:ring-[#5b86e5]"
-                  />
-                  <span>{{ tm('Male') || 'Male' }}</span>
-                </label>
-                <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
-                  <input
-                    type="radio"
-                    v-model="form.gender"
-                    value="F"
-                    class="text-[#5b86e5] focus:ring-[#5b86e5]"
-                  />
-                  <span>{{ tm('Female') || 'Female' }}</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Primary Mobile -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="primary_mobile" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('Primary_Mobile') || 'Primary Mobile' }}
-              </label>
-              <div class="sm:col-span-8">
-                <input
-                  id="primary_mobile"
-                  v-model="form.primary_mobile"
-                  type="text"
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.primary_mobile }"
-                />
-                <div v-if="form.errors.primary_mobile" class="text-xs text-red-500 mt-1">
-                  {{ form.errors.primary_mobile }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Secondary Mobile -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
-              <label for="secondary_mobile" class="sm:col-span-4 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 sm:text-right pr-4">
-                {{ tm('Secondary_Mobile') || 'Secondary Mobile' }}
-              </label>
-              <div class="sm:col-span-8">
-                <input
-                  id="secondary_mobile"
-                  v-model="form.secondary_mobile"
-                  type="text"
-                  class="w-full text-sm rounded border-gray-300 shadow-xs focus:border-[#5b86e5] focus:ring focus:ring-[#5b86e5]/20 dark:bg-dark dark:border-gray-600 dark:text-white"
-                  :class="{ 'border-red-500 ring-1 ring-red-500': form.errors.secondary_mobile }"
-                />
-                <div v-if="form.errors.secondary_mobile" class="text-xs text-red-500 mt-1">
-                  {{ form.errors.secondary_mobile }}
-                </div>
-              </div>
-            </div>
-            <select-input
-              v-model="form.specialties"
-              :error="form.errors.specialties"
-              class="pb-2 pr-6 w-full lg:w-1/2"
-              :label="tm('Specialties')"
-              :options="specialOptions"
-            />
-
-            <!-- Description with Rich Text Editor -->
-            <div class="pt-2">
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                {{ tm('Description') || 'Description' }}
-              </label>
-              <RichTextEditor v-model="form.description" />
-              <!-- <EditorContainerQuill 
-                v-model="form_event.message" 
-                required="required" 
-                :error="form_event.errors.message" 
-                :label="tm('telegramBroadcastMessage.Message')"
-                toolbarType="essential"
-                class="w-full lg:w-1/2 pr-6"
-              /> -->
-            </div>
+          <!-- Footer Actions matching User Create -->
+          <div class="flex items-center justify-end px-8 py-4 bg-gray-50 border-t border-gray-100 dark:bg-darker dark:border-primary space-x-2">
+            <save-button :loading="form.processing">
+              {{ tm('Save') }}
+            </save-button>
+            <back-button :url="route('doctors.index')">
+              {{ tm('Cancel') }}
+            </back-button>
           </div>
-        </div>
-
-        <!-- Footer Actions -->
-        <div class="flex items-center justify-end px-8 py-4 bg-gray-50 border-t border-gray-100 dark:bg-darker dark:border-primary space-x-2">
-          <save-button :loading="form.processing">
-            {{ tm('Save') }}
-          </save-button>
-          <back-button :url="route('doctors.index')">
-            {{ tm('Cancel') }}
-          </back-button>
         </div>
       </form>
     </div>
@@ -334,10 +342,10 @@
 import { defineComponent } from 'vue'
 import { Head, Link } from '@inertiajs/inertia-vue3'
 import TenantLayout from '@/Layouts/TenantLayout.vue'
+import DateInput from '@/Components/Forms/DateInput.vue'
 import RichTextEditor from '@/Components/Form/RichTextEditor.vue'
 import SaveButton from '@/Components/Button/Save.vue'
 import BackButton from '@/Components/Button/Back.vue'
-import SelectInput from '@/Components/Forms/SelectInput.vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { lang } from '@/Lang'
@@ -347,12 +355,16 @@ export default defineComponent({
     TenantLayout,
     Head,
     Link,
+    DateInput,
     RichTextEditor,
     SaveButton,
     BackButton,
-    SelectInput
   },
   props: {
+    specialties: {
+      type: Array,
+      default: () => [],
+    },
     specialOptions: {
       type: Array,
       default: () => [],
@@ -368,6 +380,8 @@ export default defineComponent({
   },
   data() {
     return {
+      isDragging: false,
+      avatarPreview: null,
       form: this.$inertia.form({
         username: '',
         email: '',
@@ -382,14 +396,16 @@ export default defineComponent({
         avatar: null,
         remove_avatar: false,
       }),
-      avatarPreview: null,
-      selectedFileName: '',
-      isDragging: false,
     }
+  },
+  computed: {
+    specialtyList() {
+      return this.specialties && this.specialties.length ? this.specialties : this.specialOptions
+    },
   },
   methods: {
     getSpecialtyName(id) {
-      const sp = this.specialties.find((s) => s.id === id)
+      const sp = this.specialtyList.find((s) => s.id === id)
       return sp ? sp.name : `#${id}`
     },
     toggleSpecialty(id) {
@@ -426,13 +442,11 @@ export default defineComponent({
     setAvatarFile(file) {
       this.form.avatar = file
       this.form.remove_avatar = false
-      this.selectedFileName = file.name
       this.avatarPreview = URL.createObjectURL(file)
     },
     removeAvatar() {
       this.form.avatar = null
       this.form.remove_avatar = true
-      this.selectedFileName = ''
       this.avatarPreview = null
       if (this.$refs.fileInput) {
         this.$refs.fileInput.value = ''

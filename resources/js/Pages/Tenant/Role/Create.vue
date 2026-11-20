@@ -353,6 +353,130 @@
                 </div>
               </div>
 
+              <!-- Subsection 3.5: Quote -->
+              <div class="mb-6">
+                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  {{ tm('Quote') || 'Quote' }}
+                </div>
+                <div class="space-y-3">
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ quoteMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(quoteMenu.actions) }}/{{ quoteMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(quoteMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(quoteMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 4-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                      <label
+                        v-for="action in quoteMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subsection 3.6: Target (Clinic Target & Doctor Target) -->
+              <div class="mb-6">
+                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  {{ tm('Target') || 'Target' }}
+                </div>
+                <div class="space-y-3">
+                  <div
+                    v-for="menu in targetMenus"
+                    :key="menu.id"
+                    class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition"
+                  >
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ menu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(menu.actions) }}/{{ menu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(menu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(menu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 5-col Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                      <label
+                        v-for="action in menu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Subsection 4: Invoice & Billing -->
               <div class="mb-6">
                 <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
@@ -938,6 +1062,48 @@ export default defineComponent({
         ],
       }
     },
+    quoteMenu() {
+      return {
+        id: 'quote',
+        title: this.tm('Quote') || 'Quote',
+        actions: [
+          { permission: 'quotes:quotes:view', label: this.tm('View') },
+          { permission: 'quotes:quotes:create', label: this.tm('Create') },
+          { permission: 'quotes:quotes:edit', label: this.tm('Edit') },
+          { permission: 'quotes:quotes:delete', label: this.tm('Delete') },
+          { permission: 'quotes:quotes:view_detail', label: this.tm('View_Detail') || 'View Detail' },
+          { permission: 'quotes:quotes:approve', label: this.tm('Approve') || 'Approve' },
+          { permission: 'quotes:quotes:reject', label: this.tm('Reject') || 'Reject' },
+          { permission: 'quotes:quotes:print', label: this.tm('Print') || 'Print' },
+        ],
+      }
+    },
+    targetMenus() {
+      return [
+        {
+          id: 'target-clinic',
+          title: this.tm('Clinic_Target') || 'Clinic Target',
+          actions: [
+            { permission: 'target-clinic:view', label: this.tm('View') },
+            { permission: 'target-clinic:create', label: this.tm('Create') },
+            { permission: 'target-clinic:edit', label: this.tm('Edit') },
+            { permission: 'target-clinic:save', label: this.tm('Save') },
+            { permission: 'target-clinic:delete', label: this.tm('Delete') },
+          ],
+        },
+        {
+          id: 'target-doctor',
+          title: this.tm('Doctor_Target') || 'Doctor Target',
+          actions: [
+            { permission: 'target-doctor:view', label: this.tm('View') },
+            { permission: 'target-doctor:create', label: this.tm('Create') },
+            { permission: 'target-doctor:edit', label: this.tm('Edit') },
+            { permission: 'target-doctor:save', label: this.tm('Save') },
+            { permission: 'target-doctor:delete', label: this.tm('Delete') },
+          ],
+        },
+      ]
+    },
     invoiceMenu() {
       return {
         id: 'invoice',
@@ -1048,6 +1214,25 @@ export default defineComponent({
       this.hospitalMenus.forEach((m) => {
         m.actions.forEach((a) => list.push(a.permission))
       })
+      this.quoteMenu.actions.forEach((a) => {
+        list.push(a.permission)
+        if (a.permission === 'quotes:quotes:view') list.push('quote:view')
+        if (a.permission === 'quotes:quotes:create') list.push('quote:create')
+        if (a.permission === 'quotes:quotes:edit') list.push('quote:edit')
+        if (a.permission === 'quotes:quotes:delete') list.push('quote:delete')
+        if (a.permission === 'quotes:quotes:view_detail') list.push('quote:view-detail', 'quote:view_detail')
+        if (a.permission === 'quotes:quotes:approve') list.push('quote:approve')
+        if (a.permission === 'quotes:quotes:reject') list.push('quote:reject')
+        if (a.permission === 'quotes:quotes:print') list.push('quote:print')
+      })
+      this.targetMenus.forEach((m) => {
+        m.actions.forEach((a) => {
+          list.push(a.permission)
+          if (a.permission.startsWith('target-')) {
+            list.push(a.permission.replace('target-', 'targets:'))
+          }
+        })
+      })
       this.invoiceMenu.actions.forEach((a) => {
         list.push(a.permission)
         if (a.permission === 'invoice:view-detail') list.push('invoice:view_detail')
@@ -1077,38 +1262,66 @@ export default defineComponent({
       this.paymentMethodMenu.actions.forEach((a) => list.push(a.permission))
       return list
     },
+    permissionAliases() {
+      return {
+        'settings:general:view': 'general:view',
+        'settings:general:edit': 'general:edit',
+        'medicine:view': 'medicines:medicines:view',
+        'medicine:create': 'medicines:medicines:create',
+        'medicine:edit': 'medicines:medicines:edit',
+        'medicine:delete': 'medicines:medicines:delete',
+        'prescription:view': 'prescriptions:prescriptions:view',
+        'prescription:create': 'prescriptions:prescriptions:create',
+        'prescription:edit': 'prescriptions:prescriptions:edit',
+        'prescription:delete': 'prescriptions:prescriptions:delete',
+        'invoice:view-detail': 'invoice:view_detail',
+        'quotes:quotes:view': 'quote:view',
+        'quote:view': 'quotes:quotes:view',
+        'quotes:quotes:create': 'quote:create',
+        'quote:create': 'quotes:quotes:create',
+        'quotes:quotes:edit': 'quote:edit',
+        'quote:edit': 'quotes:quotes:edit',
+        'quotes:quotes:delete': 'quote:delete',
+        'quote:delete': 'quotes:quotes:delete',
+        'quotes:quotes:view_detail': 'quote:view_detail',
+        'quote:view-detail': 'quotes:quotes:view_detail',
+        'quote:view_detail': 'quotes:quotes:view_detail',
+        'quotes:quotes:approve': 'quote:approve',
+        'quote:approve': 'quotes:quotes:approve',
+        'quotes:quotes:reject': 'quote:reject',
+        'quote:reject': 'quotes:quotes:reject',
+        'quotes:quotes:print': 'quote:print',
+        'quote:print': 'quotes:quotes:print',
+        'target-clinic:view': 'targets:clinic:view',
+        'targets:clinic:view': 'target-clinic:view',
+        'target-clinic:create': 'targets:clinic:create',
+        'targets:clinic:create': 'target-clinic:create',
+        'target-clinic:edit': 'targets:clinic:edit',
+        'targets:clinic:edit': 'target-clinic:edit',
+        'target-clinic:save': 'targets:clinic:save',
+        'targets:clinic:save': 'target-clinic:save',
+        'target-clinic:delete': 'targets:clinic:delete',
+        'targets:clinic:delete': 'target-clinic:delete',
+        'target-doctor:view': 'targets:doctor:view',
+        'targets:doctor:view': 'target-doctor:view',
+        'target-doctor:create': 'targets:doctor:create',
+        'targets:doctor:create': 'target-doctor:create',
+        'target-doctor:edit': 'targets:doctor:edit',
+        'targets:doctor:edit': 'target-doctor:edit',
+        'target-doctor:save': 'targets:doctor:save',
+        'targets:doctor:save': 'target-doctor:save',
+        'target-doctor:delete': 'targets:doctor:delete',
+        'targets:doctor:delete': 'target-doctor:delete',
+      }
+    },
   },
   methods: {
     hasPermission(name) {
-      const aliases = {
-        'settings:general:view': 'general:view',
-        'settings:general:edit': 'general:edit',
-        'medicine:view': 'medicines:medicines:view',
-        'medicine:create': 'medicines:medicines:create',
-        'medicine:edit': 'medicines:medicines:edit',
-        'medicine:delete': 'medicines:medicines:delete',
-        'prescription:view': 'prescriptions:prescriptions:view',
-        'prescription:create': 'prescriptions:prescriptions:create',
-        'prescription:edit': 'prescriptions:prescriptions:edit',
-        'prescription:delete': 'prescriptions:prescriptions:delete',
-        'invoice:view-detail': 'invoice:view_detail',
-      }
+      const aliases = this.permissionAliases
       return this.form.permissions.includes(name) || (aliases[name] && this.form.permissions.includes(aliases[name]))
     },
     togglePermission(name) {
-      const aliases = {
-        'settings:general:view': 'general:view',
-        'settings:general:edit': 'general:edit',
-        'medicine:view': 'medicines:medicines:view',
-        'medicine:create': 'medicines:medicines:create',
-        'medicine:edit': 'medicines:medicines:edit',
-        'medicine:delete': 'medicines:medicines:delete',
-        'prescription:view': 'prescriptions:prescriptions:view',
-        'prescription:create': 'prescriptions:prescriptions:create',
-        'prescription:edit': 'prescriptions:prescriptions:edit',
-        'prescription:delete': 'prescriptions:prescriptions:delete',
-        'invoice:view-detail': 'invoice:view_detail',
-      }
+      const aliases = this.permissionAliases
       const alias = aliases[name]
       const index = this.form.permissions.indexOf(name)
       if (index > -1) {
@@ -1125,19 +1338,7 @@ export default defineComponent({
       }
     },
     selectMenuAll(actions) {
-      const aliases = {
-        'settings:general:view': 'general:view',
-        'settings:general:edit': 'general:edit',
-        'medicine:view': 'medicines:medicines:view',
-        'medicine:create': 'medicines:medicines:create',
-        'medicine:edit': 'medicines:medicines:edit',
-        'medicine:delete': 'medicines:medicines:delete',
-        'prescription:view': 'prescriptions:prescriptions:view',
-        'prescription:create': 'prescriptions:prescriptions:create',
-        'prescription:edit': 'prescriptions:prescriptions:edit',
-        'prescription:delete': 'prescriptions:prescriptions:delete',
-        'invoice:view-detail': 'invoice:view_detail',
-      }
+      const aliases = this.permissionAliases
       actions.forEach((a) => {
         if (!this.form.permissions.includes(a.permission)) {
           this.form.permissions.push(a.permission)
@@ -1149,19 +1350,7 @@ export default defineComponent({
       })
     },
     clearMenuAll(actions) {
-      const aliases = {
-        'settings:general:view': 'general:view',
-        'settings:general:edit': 'general:edit',
-        'medicine:view': 'medicines:medicines:view',
-        'medicine:create': 'medicines:medicines:create',
-        'medicine:edit': 'medicines:medicines:edit',
-        'medicine:delete': 'medicines:medicines:delete',
-        'prescription:view': 'prescriptions:prescriptions:view',
-        'prescription:create': 'prescriptions:prescriptions:create',
-        'prescription:edit': 'prescriptions:prescriptions:edit',
-        'prescription:delete': 'prescriptions:prescriptions:delete',
-        'invoice:view-detail': 'invoice:view_detail',
-      }
+      const aliases = this.permissionAliases
       const permsToClear = []
       actions.forEach((a) => {
         permsToClear.push(a.permission)

@@ -408,6 +408,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'diagnosis' => $data['diagnosis'] ?? null,
                 'description' => $data['description'] ?? ($data['examination_notes'] ?? null),
                 'medical_alert' => $data['medical_alert'] ?? null,
+                'chief_complaint' => $data['chief_complaint'] ?? null,
                 'rate' => $exchangeRate,
                 'discount_invoice' => $overallDiscount,
                 'discount_inv_as' => $overallDiscountType,
@@ -555,7 +556,8 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'visit_type' => $data['visit_type'] ?? $history->visit_type,
                 'diagnosis' => $data['diagnosis'] ?? $history->diagnosis,
                 'description' => $data['description'] ?? $history->description,
-                'medical_alert' => $data['medical_alert'] ?? $history->medical_alert,
+                'medical_alert' => array_key_exists('medical_alert', $data) ? $data['medical_alert'] : $history->medical_alert,
+                'chief_complaint' => array_key_exists('chief_complaint', $data) ? $data['chief_complaint'] : $history->chief_complaint,
                 'rate' => $exchangeRate,
                 'discount_invoice' => $overallDiscount,
                 'discount_inv_as' => $overallDiscountType,
@@ -629,6 +631,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 'patient_id' => $history->patient_id,
                 'doctor_id' => $history->doctor_id,
                 'visit_type' => $history->visit_type,
+                'chief_complaint' => $history->chief_complaint,
             ]);
 
             return $history;

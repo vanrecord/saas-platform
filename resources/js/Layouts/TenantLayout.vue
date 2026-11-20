@@ -123,6 +123,24 @@
 
         <div>
           <div class="space-y-1">
+            <!-- Quote -->
+            <Link
+              v-if="can(['all', 'quotes:quotes:view', 'quote:view', 'quotes', 'quotes.index'])"
+              :href="route('quotes.index')"
+              :class="[
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                route().current('quotes.*') || route().current('tenant.quotes.*')
+                  ? 'bg-[#EBF3FE] text-[#0D63D6] border-l-4 border-[#0D63D6] font-bold shadow-xs'
+                  : 'text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50'
+              ]"
+              :title="isSidebarCollapsed ? 'Quote' : ''"
+            >
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              <span v-show="!isSidebarCollapsed">Quote</span>
+            </Link>
+
             <!-- Invoice -->
             <Link
               v-if="can(['all', 'invoice:view', 'invoices', 'invoices.index'])"
@@ -308,6 +326,67 @@
                   ]"
                 >
                   Product
+                </Link>
+              </div>
+            </div>
+
+            <!-- Target -->
+            <div
+              v-if="can([
+                'all',
+                'target-clinic:view', 'targets.clinic.index', 'target-clinic',
+                'target-doctor:view', 'targets.doctor.index', 'target-doctor',
+                'target:clinic:view', 'target:doctor:view',
+                'targets:clinic:view', 'targets:doctor:view'
+              ])"
+            >
+              <button
+                type="button"
+                @click="clinicalOpen.target = !clinicalOpen.target"
+                class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#0D63D6] hover:bg-slate-200/50 transition-all"
+              >
+                <div class="flex items-center gap-3">
+                  <!-- Bullseye / Target Icon -->
+                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" stroke-width="2" />
+                    <circle cx="12" cy="12" r="5" stroke-width="2" />
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                  </svg>
+                  <span v-show="!isSidebarCollapsed">Target</span>
+                </div>
+                <svg
+                  v-show="!isSidebarCollapsed"
+                  :class="['w-3.5 h-3.5 text-slate-400 transition-transform duration-200', clinicalOpen.target ? 'rotate-180' : '']"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Submenu -->
+              <div v-show="!isSidebarCollapsed && clinicalOpen.target" class="pl-9 pr-2 py-1 space-y-1">
+                <Link
+                  v-if="can(['all', 'target-clinic:view', 'targets.clinic.index', 'target-clinic', 'target:clinic:view', 'targets:clinic:view'])"
+                  :href="route('targets.clinic.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    route().current('targets.clinic.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Clinic
+                </Link>
+
+                <Link
+                  v-if="can(['all', 'target-doctor:view', 'targets.doctor.index', 'target-doctor', 'target:doctor:view', 'targets:doctor:view'])"
+                  :href="route('targets.doctor.index')"
+                  :class="[
+                    'block px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    route().current('targets.doctor.*') ? 'text-[#0D63D6] font-bold bg-blue-50/70' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                >
+                  Doctor
                 </Link>
               </div>
             </div>
@@ -510,7 +589,7 @@
           <!-- Breadcrumb -->
           <nav class="flex items-center text-xs font-medium text-slate-500" aria-label="Breadcrumb">
             <Link :href="route('tenant.dashboard')" class="hover:text-[#0D63D6] transition-colors">
-              OdontoCare
+              Home
             </Link>
             <span class="mx-2 text-slate-400">/</span>
             <span class="text-[#152B45] font-bold truncate">
@@ -681,6 +760,7 @@ const isQuickCreateModalOpen = ref(false)
 const clinicalOpen = reactive({
   conditions: Boolean(route().current('dental-conditions.*')),
   hospital: Boolean(route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')),
+  target: Boolean(route().current('targets.*')),
   settings: Boolean(route().current('settings.*') || route().current('medicines.*'))
 })
 
@@ -690,6 +770,9 @@ Inertia.on('navigate', () => {
   }
   if (route().current('services.*') || route().current('suppliers.*') || route().current('service-categories.*') || route().current('product-categories.*') || route().current('products.*')) {
     clinicalOpen.hospital = true
+  }
+  if (route().current('targets.*')) {
+    clinicalOpen.target = true
   }
   if (route().current('settings.*') || route().current('medicines.*')) {
     clinicalOpen.settings = true

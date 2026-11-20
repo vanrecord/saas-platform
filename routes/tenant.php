@@ -17,11 +17,14 @@ use App\Http\Controllers\Tenant\ProductController;
 use App\Http\Controllers\Tenant\RoleController;
 use App\Http\Controllers\Tenant\DoctorController;
 use App\Http\Controllers\Tenant\UserController;
+use App\Http\Controllers\Tenant\QuoteController;
 use App\Http\Controllers\Tenant\InvoiceController;
 use App\Http\Controllers\Tenant\InvoicePrefixController;
 use App\Http\Controllers\Tenant\GeneralSettingController;
 use App\Http\Controllers\Tenant\MedicineController;
 use App\Http\Controllers\Tenant\PrescriptionController;
+use App\Http\Controllers\Tenant\ClinicTargetController;
+use App\Http\Controllers\Tenant\DoctorTargetController;
 use App\Http\Controllers\Tenant\PaymentController;
 use App\Http\Controllers\Tenant\PaymentMethodController;
 use App\Http\Controllers\Tenant\ServiceCategoryController;
@@ -99,6 +102,13 @@ Route::middleware([
         Route::resource('users', UserController::class);
         Route::post('users/{user}', [UserController::class, 'update'])->name('users.update-post');
 
+        // Quote Management
+        Route::resource('quotes', QuoteController::class);
+        Route::get('/quotes/{quote}/print', [QuoteController::class, 'print'])->name('quotes.print');
+        Route::post('/quotes/{quote}/items/{item}/approve', [QuoteController::class, 'approveItem'])->name('quotes.items.approve');
+        Route::post('/quotes/{quote}/items/{item}/reject', [QuoteController::class, 'rejectItem'])->name('quotes.items.reject');
+        Route::post('/quotes/{quote}/items', [QuoteController::class, 'addItem'])->name('quotes.items.add');
+
         // Invoice & Billing
         Route::resource('invoices', InvoiceController::class);
         Route::get('/tenant/invoices', [InvoiceController::class, 'index'])->name('tenant.invoices.index');
@@ -131,6 +141,12 @@ Route::middleware([
         Route::get('/prescriptions/{prescription}/print', [PrescriptionController::class, 'print'])->name('prescriptions.print');
         Route::get('/prescriptions/patient-histories/{patient}', [PrescriptionController::class, 'patientHistories'])->name('prescriptions.patient-histories');
         Route::resource('prescriptions', PrescriptionController::class);
+
+        // Target Management — Clinic and Doctor
+        Route::prefix('targets')->name('targets.')->group(function () {
+            Route::resource('clinic', ClinicTargetController::class)->names('clinic');
+            Route::resource('doctor', DoctorTargetController::class)->names('doctor');
+        });
 
         // API Endpoints for Frontend Interactive Chart & AJAX
         Route::prefix('api')->name('api.')->group(function () {

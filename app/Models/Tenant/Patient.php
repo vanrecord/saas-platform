@@ -176,6 +176,11 @@ class Patient extends Model implements HasMedia
         return $this->hasMany(MedicalHistory::class, 'patient_id');
     }
 
+    public function estimates(): HasMany
+    {
+        return $this->hasMany(Estimate::class, 'patient_id');
+    }
+
     public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class, 'patient_id');

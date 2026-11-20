@@ -196,6 +196,11 @@ class MedicalHistory extends Model
         return $this->hasMany(Reception::class, 'invoice_id');
     }
 
+    public function estimate(): BelongsTo
+    {
+        return $this->belongsTo(Estimate::class, 'estimate_id');
+    }
+
     public function getInvoiceNumberFormattedAttribute(): string
     {
         if (!empty($this->attributes['invoice_number'])) {

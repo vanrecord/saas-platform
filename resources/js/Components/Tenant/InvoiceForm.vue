@@ -51,7 +51,7 @@
         1. {{ tm('Invoice_Information') || 'Invoice Information' }}
       </h3>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Patient Name with 2-character Auto-suggest Search -->
         <div class="relative">
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
@@ -101,7 +101,7 @@
                 v-model="patientSearchQuery"
                 type="text"
                 @input="onPatientSearchInput"
-                :placeholder="tm('Search_patient_placeholder') || 'Search patient (2+ chars)...'"
+                :placeholder="tm('Search patient placeholder') || 'Search patient (2+ chars)...'"
                 class="w-full text-xs rounded-lg border-slate-300 shadow-2xs focus:border-primary focus:ring-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white pl-8 pr-7 py-2"
               />
               <div v-if="isSearchingPatient" class="absolute inset-y-0 right-0 pr-2 flex items-center">
@@ -216,52 +216,36 @@
             :label="tm('Daily_Date') || 'Daily Date'"
             :error="form.errors.date"
             placeholder="YYYY-MM-DD"
-            class="w-full"
-          />
-        </div>
-
-        <!-- Visit Type -->
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
-            {{ tm('Visit_Type') || 'Visit Type' }}
-          </label>
-          <select
-            v-model="form.visit_type"
-            class="w-full text-xs rounded-lg border-slate-300 shadow-2xs focus:border-primary focus:ring-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-          >
-            <option value="initial">Initial Visit</option>
-            <option value="follow_up">Follow Up</option>
-            <option value="consultation">Consultation</option>
-            <option value="emergency">Emergency</option>
-            <option value="routine">Routine Checkup</option>
-          </select>
-        </div>
-
-        <!-- Quote # (Estimate ID) -->
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
-            {{ tm('Quote_No') || 'Quote #' }}
-          </label>
-          <input
-            type="number"
-            v-model="form.estimate_id"
-            placeholder="e.g. 101"
-            class="w-full text-xs rounded-lg border-slate-300 shadow-2xs focus:border-primary focus:ring-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+            class="w-full block text-xs text-slate-600 dark:text-slate-300 uppercase mb-1"
           />
         </div>
 
         <!-- Diagnosis -->
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
-            {{ tm('Diagnosis') || 'Diagnosis' }}
-          </label>
-          <input
-            type="text"
-            v-model="form.diagnosis"
-            placeholder="e.g. Dental caries, pulpitis"
-            class="w-full text-xs rounded-lg border-slate-300 shadow-2xs focus:border-primary focus:ring-primary dark:bg-slate-800 dark:border-slate-600 dark:text-white"
-          />
-        </div>
+        <TextareaInput
+          v-model="form.diagnosis"
+          :label="tm('Diagnosis') || 'Diagnosis'"
+          :error="form.errors.diagnosis"
+          :rows="2"
+          class="lg:col-start-1 text-xs"
+        />
+
+        <!-- Medical Alert -->
+        <TextareaInput
+          v-model="form.medical_alert"
+          :label="tm('Medical_Alert') || 'Medical Alert'"
+          :error="form.errors.medical_alert"
+          :rows="2"
+          class="text-xs"
+        />
+
+        <!-- Chief Complaint -->
+        <TextareaInput
+          v-model="form.chief_complaint"
+          :label="tm('Chief_Complaint') || 'Chief Complaint'"
+          :error="form.errors.chief_complaint"
+          :rows="2"
+          class="text-xs"
+        />
       </div>
     </div>
 
@@ -1238,6 +1222,7 @@ import SaveButton from "@/Components/Button/Save.vue";
 import BackButton from "@/Components/Button/Back.vue";
 import DateInput from "@/Components/Forms/DateInput.vue";
 import PrescriptionModal from "@/Components/Tenant/PrescriptionModal.vue";
+import TextareaInput from "@/Components/Form/TextareaInput.vue";
 import axios from "axios";
 
 export default {
@@ -1246,6 +1231,7 @@ export default {
     BackButton,
     DateInput,
     PrescriptionModal,
+    TextareaInput,
   },
   props: {
     invoice: {
@@ -1394,6 +1380,8 @@ export default {
         discount_inv_as: this.invoice && this.invoice.discount_inv_as ? this.invoice.discount_inv_as : "%",
         visit_type: this.invoice ? this.invoice.visit_type : "initial",
         diagnosis: this.invoice ? this.invoice.diagnosis : "",
+        medical_alert: this.invoice ? (this.invoice.medical_alert || "") : "",
+        chief_complaint: this.invoice ? (this.invoice.chief_complaint || "") : "",
         estimate_id: this.invoice ? this.invoice.estimate_id : "",
         examination_notes: this.invoice ? (this.invoice.dental_chart?.examination_notes || this.invoice.description || "") : "",
         paid_usd: this.invoice ? (this.invoice.paid_usd || 0) : 0,

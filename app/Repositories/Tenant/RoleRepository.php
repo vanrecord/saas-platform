@@ -255,6 +255,56 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                     ],
                 ],
             ],
+            'quote' => [
+                'id' => 'quote',
+                'title' => 'Quote',
+                'type' => 'group',
+                'menus' => [
+                    [
+                        'id' => 'quote',
+                        'title' => 'Quote',
+                        'permissions' => [
+                            ['key' => 'quotes:quotes:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'quotes:quotes:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'quotes:quotes:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'quotes:quotes:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'quotes:quotes:view_detail', 'action' => 'view-detail', 'label' => 'View Detail'],
+                            ['key' => 'quotes:quotes:approve', 'action' => 'approve', 'label' => 'Approve'],
+                            ['key' => 'quotes:quotes:reject', 'action' => 'reject', 'label' => 'Reject'],
+                            ['key' => 'quotes:quotes:print', 'action' => 'print', 'label' => 'Print'],
+                        ],
+                    ],
+                ],
+            ],
+            'target' => [
+                'id' => 'target',
+                'title' => 'Target',
+                'type' => 'group',
+                'menus' => [
+                    [
+                        'id' => 'target-clinic',
+                        'title' => 'Clinic Target',
+                        'permissions' => [
+                            ['key' => 'target-clinic:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'target-clinic:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'target-clinic:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'target-clinic:save', 'action' => 'save', 'label' => 'Save'],
+                            ['key' => 'target-clinic:delete', 'action' => 'delete', 'label' => 'Delete'],
+                        ],
+                    ],
+                    [
+                        'id' => 'target-doctor',
+                        'title' => 'Doctor Target',
+                        'permissions' => [
+                            ['key' => 'target-doctor:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'target-doctor:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'target-doctor:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'target-doctor:save', 'action' => 'save', 'label' => 'Save'],
+                            ['key' => 'target-doctor:delete', 'action' => 'delete', 'label' => 'Delete'],
+                        ],
+                    ],
+                ],
+            ],
             'invoice' => [
                 'id' => 'invoice',
                 'title' => 'Invoice',
