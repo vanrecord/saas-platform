@@ -24,5 +24,11 @@ interface EstimateRepositoryInterface
 
     public function rejectItem(int $quoteId, int $itemId, ?string $reason = null);
 
+    public function approveSelectedItemsAndCreateInvoice(int $quoteId, array $itemIds);
+
+    public function rejectSelectedItems(int $quoteId, array $itemIds, ?string $reason = null);
+
+    public function calculateQuoteStatus(int $quoteId): int;
+
     public function addItem(int $quoteId, array $itemData);
 }

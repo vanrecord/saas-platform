@@ -106,6 +106,8 @@ Route::middleware([
         // Quote Management
         Route::resource('quotes', QuoteController::class);
         Route::get('/quotes/{quote}/print', [QuoteController::class, 'print'])->name('quotes.print');
+        Route::post('/quotes/{quote}/items/approve-selected', [QuoteController::class, 'approveSelectedItems'])->name('quotes.items.approve-selected');
+        Route::post('/quotes/{quote}/items/reject-selected', [QuoteController::class, 'rejectSelectedItems'])->name('quotes.items.reject-selected');
         Route::post('/quotes/{quote}/items/{item}/approve', [QuoteController::class, 'approveItem'])->name('quotes.items.approve');
         Route::post('/quotes/{quote}/items/{item}/reject', [QuoteController::class, 'rejectItem'])->name('quotes.items.reject');
         Route::post('/quotes/{quote}/items', [QuoteController::class, 'addItem'])->name('quotes.items.add');

@@ -758,7 +758,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             foreach ($findingsToCreate as $fData) {
                 ToothFinding::create([
                     'treatment_teeth_id' => $treatmentTooth->id,
-                    'dental_condition_id' => $fData['dental_condition_id'] ?? null,
+                    'dental_condition_id' => $this->resolveValidConditionId($fData['dental_condition_id'] ?? null),
                     'surface' => $fData['surface'] ?? 'whole',
                     'custom_color' => $fData['custom_color'] ?? null,
                     'note' => $fData['note'] ?? null,
@@ -767,6 +767,28 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
                 ]);
             }
         }
+    }
+
+    protected function resolveValidConditionId($conditionId): ?int
+    {
+        if (empty($conditionId) || !is_numeric($conditionId)) {
+            return null;
+        }
+
+        static $validConditionIds = null;
+        if ($validConditionIds === null) {
+            if (DentalCondition::count() === 0 && class_exists(\Database\Seeders\DentalConditionSeeder::class)) {
+                try {
+                    (new \Database\Seeders\DentalConditionSeeder())->run();
+                } catch (\Throwable $e) {
+                    // Suppress error
+                }
+            }
+            $validConditionIds = DentalCondition::pluck('id')->map(fn($id) => (int) $id)->all();
+        }
+
+        $cId = (int) $conditionId;
+        return in_array($cId, $validConditionIds, true) ? $cId : null;
     }
 
     protected function attachUnassignedOdontogramFindings(
@@ -816,7 +838,7 @@ class InvoiceRepository extends BaseRepository implements InvoiceRepositoryInter
             foreach ($findingsList as $fData) {
                 ToothFinding::create([
                     'treatment_teeth_id' => $treatmentTooth->id,
-                    'dental_condition_id' => $fData['dental_condition_id'] ?? $fData['condition_id'] ?? null,
+                    'dental_condition_id' => $this->resolveValidConditionId($fData['dental_condition_id'] ?? $fData['condition_id'] ?? null),
                     'surface' => $fData['surface'] ?? 'whole',
                     'custom_color' => $fData['custom_color'] ?? $fData['color'] ?? null,
                     'note' => $fData['note'] ?? null,

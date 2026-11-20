@@ -240,9 +240,15 @@ class Estimate extends Model
 
     /**
      * Recalculates and updates the overall quote status from its items.
+     * Preserves COMPLETED and VERIFIED statuses during normal item processing.
      */
     public function recalculateStatus(): int
     {
+        // Do not overwrite COMPLETED or VERIFIED statuses during normal item processing
+        if (in_array((int) $this->status, [self::COMPLETED, self::VERIFIED])) {
+            return (int) $this->status;
+        }
+
         $items = $this->relationLoaded('estimateDetails') ? $this->estimateDetails : $this->estimateDetails()->get();
         $totalItems = $items->count();
 
@@ -250,17 +256,17 @@ class Estimate extends Model
             $newStatus = self::DRAFT;
         } else {
             $approvedCount = $items->where('status', self::APPROVED)->count();
-            $rejectedCount = $items->where('status', self::REJECTED)->count();
+            $rejectedCount = $items->whereIn('status', [self::REJECTE, self::REJECTED])->count();
             $draftCount = $items->where('status', self::DRAFT)->count();
 
             if ($approvedCount === $totalItems) {
                 $newStatus = self::APPROVED;
             } elseif ($rejectedCount === $totalItems) {
-                $newStatus = self::REJECTED;
-            } elseif ($approvedCount > 0 && ($draftCount > 0 || $rejectedCount > 0)) {
-                $newStatus = self::PARTIALLY_APPROVED;
-            } elseif ($rejectedCount > 0 && $draftCount > 0) {
+                $newStatus = self::REJECTE;
+            } elseif ($rejectedCount > 0 && ($draftCount > 0 || $approvedCount > 0)) {
                 $newStatus = self::PARTIALLY_REJECTED;
+            } elseif ($approvedCount > 0 && $draftCount > 0) {
+                $newStatus = self::PARTIALLY_APPROVED;
             } else {
                 $newStatus = self::DRAFT;
             }

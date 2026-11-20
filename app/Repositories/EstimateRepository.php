@@ -2,16 +2,19 @@
 
 namespace App\Repositories;
 
+use App\Models\Tenant\DentalCondition;
 use App\Models\Tenant\Doctor;
 use App\Models\Tenant\Estimate;
 use App\Models\Tenant\EstimateDetail;
 use App\Models\Tenant\EstimateTooth;
+use App\Models\Tenant\EstimateToothFinding;
 use App\Models\Tenant\MedicalDetail;
 use App\Models\Tenant\MedicalHistory;
 use App\Models\Tenant\Patient;
 use App\Models\Tenant\Product;
 use App\Models\Tenant\Reception;
 use App\Models\Tenant\Service;
+use App\Models\Tenant\ToothFinding;
 use App\Models\Tenant\TreatmentTeeth;
 use App\Repositories\Base\BaseRepository;
 use Carbon\Carbon;
@@ -178,7 +181,7 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
             'doctor.user.profile',
             'assistant.profile',
             'estimateDetails.detailable',
-            'estimateDetails.teeth',
+            'estimateDetails.teeth.toothFindings.condition',
             'estimateDetails.approvedByUser',
             'estimateDetails.rejectedByUser',
             'invoice.medicalDetails',
@@ -312,118 +315,29 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
 
             $keptIds[] = $detail->id;
 
-            // Sync teeth
-            $detail->teeth()->delete();
+            // Sync teeth and findings
+            $oldTeeth = EstimateTooth::where('estimate_detail_id', $detail->id)->get();
+            foreach ($oldTeeth as $ot) {
+                EstimateToothFinding::where('estimate_teeth_id', $ot->id)->forceDelete();
+                $ot->delete();
+            }
+
             $teeth = $item['teeth'] ?? [];
             if (is_string($teeth)) {
                 $teeth = explode('|', $teeth);
             }
             if (is_array($teeth)) {
-                foreach ($teeth as $t) {
-                    $toothNum = is_array($t) ? ($t['teeth_number'] ?? $t['tooth'] ?? null) : $t;
-                    if (!empty($toothNum)) {
-                        $toothNumStr = (string) $toothNum;
-                        $hasTop = is_array($t) ? (!empty($t['class_one']) || !empty($t['surfaces']['top'])) : false;
-                        $hasBottom = is_array($t) ? (!empty($t['class_two']) || !empty($t['surfaces']['bottom'])) : false;
-                        $hasLeft = is_array($t) ? (!empty($t['class_three']) || !empty($t['surfaces']['left'])) : false;
-                        $hasRight = is_array($t) ? (!empty($t['class_four']) || !empty($t['surfaces']['right'])) : false;
-                        $hasCenter = is_array($t) ? (!empty($t['class_five']) || !empty($t['surfaces']['center'])) : false;
-                        $hasWhole = is_array($t) ? (!empty($t['class_six']) || !empty($t['surfaces']['whole'])) : false;
-
-                        // Check findings matching this tooth from odontogramFindings
-                        if (!empty($odontogramFindings)) {
-                            foreach ($odontogramFindings as $oFinding) {
-                                if (isset($oFinding['tooth']) && (string) $oFinding['tooth'] === $toothNumStr) {
-                                    $fServiceId = $oFinding['service_id'] ?? null;
-                                    if ($fServiceId === null || $fServiceId == $detail->detailable_id || $fServiceId == $detail->service_id) {
-                                        $surf = $oFinding['surface'] ?? 'whole';
-                                        if ($surf === 'top') $hasTop = true;
-                                        if ($surf === 'bottom') $hasBottom = true;
-                                        if ($surf === 'left') $hasLeft = true;
-                                        if ($surf === 'right') $hasRight = true;
-                                        if ($surf === 'center') $hasCenter = true;
-                                        if ($surf === 'whole') $hasWhole = true;
-                                        $processedToothSurfaces["{$toothNumStr}_{$surf}"] = true;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (!$hasTop && !$hasBottom && !$hasLeft && !$hasRight && !$hasCenter && !$hasWhole) {
-                            $hasWhole = true;
-                        }
-
-                        $numInt = (int) $toothNumStr;
-                        $toothType = is_array($t) && !empty($t['tooth_type'])
-                            ? $t['tooth_type']
-                            : (($numInt >= 51 && $numInt <= 85) ? 'primary' : 'permanent');
-
-                        $status = is_array($t)
-                            ? ($t['tooth_status'] ?? ($t['findings'][0]['status'] ?? 'planned'))
-                            : 'planned';
-
-                        $detail->teeth()->create([
-                            'teeth_number' => $toothNumStr,
-                            'class_one' => $hasTop,
-                            'class_two' => $hasBottom,
-                            'class_three' => $hasLeft,
-                            'class_four' => $hasRight,
-                            'class_five' => $hasCenter,
-                            'class_six' => $hasWhole,
-                            'tooth_type' => $toothType,
-                            'tooth_status' => $status,
-                        ]);
-                    }
-                }
+                $this->syncEstimateTeethAndFindings(
+                    $detail,
+                    $teeth,
+                    $odontogramFindings,
+                    $processedToothSurfaces
+                );
             }
         }
 
-        // Attach unassigned odontogram findings to first item if available
-        if (!empty($odontogramFindings) && !empty($keptIds)) {
-            $firstDetail = $estimate->estimateDetails()->whereIn('id', $keptIds)->first();
-            if ($firstDetail) {
-                $unassignedTeeth = [];
-                foreach ($odontogramFindings as $oFinding) {
-                    $tNum = (string) ($oFinding['tooth'] ?? '');
-                    $surf = $oFinding['surface'] ?? 'whole';
-                    if ($tNum !== '' && empty($processedToothSurfaces["{$tNum}_{$surf}"])) {
-                        if (!isset($unassignedTeeth[$tNum])) {
-                            $unassignedTeeth[$tNum] = [
-                                'top' => false,
-                                'bottom' => false,
-                                'left' => false,
-                                'right' => false,
-                                'center' => false,
-                                'whole' => false,
-                                'status' => $oFinding['status'] ?? 'planned',
-                            ];
-                        }
-                        if ($surf === 'top') $unassignedTeeth[$tNum]['top'] = true;
-                        if ($surf === 'bottom') $unassignedTeeth[$tNum]['bottom'] = true;
-                        if ($surf === 'left') $unassignedTeeth[$tNum]['left'] = true;
-                        if ($surf === 'right') $unassignedTeeth[$tNum]['right'] = true;
-                        if ($surf === 'center') $unassignedTeeth[$tNum]['center'] = true;
-                        if ($surf === 'whole') $unassignedTeeth[$tNum]['whole'] = true;
-                        $processedToothSurfaces["{$tNum}_{$surf}"] = true;
-                    }
-                }
-
-                foreach ($unassignedTeeth as $tNum => $sFlags) {
-                    $numInt = (int) $tNum;
-                    $firstDetail->teeth()->create([
-                        'teeth_number' => $tNum,
-                        'class_one' => $sFlags['top'],
-                        'class_two' => $sFlags['bottom'],
-                        'class_three' => $sFlags['left'],
-                        'class_four' => $sFlags['right'],
-                        'class_five' => $sFlags['center'],
-                        'class_six' => $sFlags['whole'],
-                        'tooth_type' => ($numInt >= 51 && $numInt <= 85) ? 'primary' : 'permanent',
-                        'tooth_status' => $sFlags['status'] ?? 'planned',
-                    ]);
-                }
-            }
-        }
+        // Attach any remaining unassigned odontogram findings to first detail
+        $this->attachUnassignedEstimateOdontogramFindings($estimate, $odontogramFindings, $processedToothSurfaces);
 
         // Remove deleted items safely
         $removedItems = $estimate->estimateDetails()->whereNotIn('id', $keptIds)->get();
@@ -432,7 +346,11 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
                 $medDetail = MedicalDetail::find($removed->medical_detail_id);
                 if ($medDetail) {
                     $invoice = MedicalHistory::find($medDetail->medical_history_id);
-                    TreatmentTeeth::where('medical_detail_id', $medDetail->id)->delete();
+                    $remTeeth = TreatmentTeeth::where('medical_detail_id', $medDetail->id)->get();
+                    foreach ($remTeeth as $rt) {
+                        ToothFinding::where('treatment_teeth_id', $rt->id)->forceDelete();
+                        $rt->delete();
+                    }
                     $itemType = strtolower($removed->item_type ?? 'service');
                     $detailableId = (int) ($removed->detailable_id ?: $removed->service_id);
                     $this->updateStock($detailableId, $itemType, (int) $removed->quantity, 'increment');
@@ -442,8 +360,237 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
                     }
                 }
             }
-            $removed->teeth()->delete();
+            $remTeeth = EstimateTooth::where('estimate_detail_id', $removed->id)->get();
+            foreach ($remTeeth as $rt) {
+                EstimateToothFinding::where('estimate_teeth_id', $rt->id)->forceDelete();
+                $rt->delete();
+            }
             $removed->delete();
+        }
+    }
+
+    protected function syncEstimateTeethAndFindings(
+        EstimateDetail $detail,
+        array $teethData,
+        array $odontogramFindings = [],
+        array &$processedToothSurfaces = []
+    ): void {
+        foreach ($teethData as $toothItem) {
+            $toothNum = is_array($toothItem) ? ($toothItem['teeth_number'] ?? $toothItem['tooth'] ?? null) : $toothItem;
+            if (!$toothNum) {
+                continue;
+            }
+
+            $toothNumStr = (string) $toothNum;
+
+            $hasTop = !empty($toothItem['class_one']) || !empty($toothItem['surfaces']['top']);
+            $hasBottom = !empty($toothItem['class_two']) || !empty($toothItem['surfaces']['bottom']);
+            $hasLeft = !empty($toothItem['class_three']) || !empty($toothItem['surfaces']['left']);
+            $hasRight = !empty($toothItem['class_four']) || !empty($toothItem['surfaces']['right']);
+            $hasCenter = !empty($toothItem['class_five']) || !empty($toothItem['surfaces']['center']);
+            $hasWhole = !empty($toothItem['class_six']) || !empty($toothItem['surfaces']['whole']);
+
+            $findingsToCreate = [];
+
+            // 1. Direct findings in toothItem
+            if (!empty($toothItem['findings']) && is_array($toothItem['findings'])) {
+                foreach ($toothItem['findings'] as $finding) {
+                    $surf = $finding['surface'] ?? 'whole';
+                    $key = "{$toothNumStr}_{$surf}";
+                    $findingsToCreate[$key] = [
+                        'surface' => $surf,
+                        'dental_condition_id' => $finding['dental_condition_id'] ?? $finding['condition_id'] ?? null,
+                        'custom_color' => $finding['custom_color'] ?? $finding['color'] ?? null,
+                        'note' => $finding['note'] ?? null,
+                        'treatment_status' => $finding['treatment_status'] ?? $finding['status'] ?? 'planned',
+                    ];
+                    $processedToothSurfaces[$key] = true;
+
+                    if ($surf === 'top') $hasTop = true;
+                    if ($surf === 'bottom') $hasBottom = true;
+                    if ($surf === 'left') $hasLeft = true;
+                    if ($surf === 'right') $hasRight = true;
+                    if ($surf === 'center') $hasCenter = true;
+                    if ($surf === 'whole') $hasWhole = true;
+                }
+            }
+
+            // 2. Matching from odontogram_findings payload
+            if (!empty($odontogramFindings)) {
+                foreach ($odontogramFindings as $oFinding) {
+                    if (isset($oFinding['tooth']) && (string) $oFinding['tooth'] === $toothNumStr) {
+                        $fServiceId = $oFinding['service_id'] ?? null;
+                        if ($fServiceId === null || $fServiceId == $detail->detailable_id || $fServiceId == $detail->service_id) {
+                            $surf = $oFinding['surface'] ?? 'whole';
+                            $key = "{$toothNumStr}_{$surf}";
+                            if (!isset($findingsToCreate[$key])) {
+                                $findingsToCreate[$key] = [
+                                    'surface' => $surf,
+                                    'dental_condition_id' => $oFinding['dental_condition_id'] ?? $oFinding['condition_id'] ?? null,
+                                    'custom_color' => $oFinding['custom_color'] ?? $oFinding['color'] ?? null,
+                                    'note' => $oFinding['note'] ?? null,
+                                    'treatment_status' => $oFinding['treatment_status'] ?? $oFinding['status'] ?? 'planned',
+                                ];
+                            }
+                            $processedToothSurfaces[$key] = true;
+
+                            if ($surf === 'top') $hasTop = true;
+                            if ($surf === 'bottom') $hasBottom = true;
+                            if ($surf === 'left') $hasLeft = true;
+                            if ($surf === 'right') $hasRight = true;
+                            if ($surf === 'center') $hasCenter = true;
+                            if ($surf === 'whole') $hasWhole = true;
+                        }
+                    }
+                }
+            }
+
+            // 3. Fallback: if surfaces were marked boolean but no specific finding was attached
+            $surfacesMap = [
+                'top' => $hasTop,
+                'bottom' => $hasBottom,
+                'left' => $hasLeft,
+                'right' => $hasRight,
+                'center' => $hasCenter,
+                'whole' => $hasWhole,
+            ];
+
+            foreach ($surfacesMap as $surfName => $isMarked) {
+                if ($isMarked) {
+                    $key = "{$toothNumStr}_{$surfName}";
+                    if (!isset($findingsToCreate[$key])) {
+                        $findingsToCreate[$key] = [
+                            'surface' => $surfName,
+                            'dental_condition_id' => null,
+                            'custom_color' => null,
+                            'note' => null,
+                            'treatment_status' => 'planned',
+                        ];
+                    }
+                    $processedToothSurfaces[$key] = true;
+                }
+            }
+
+            if (!$hasTop && !$hasBottom && !$hasLeft && !$hasRight && !$hasCenter && !$hasWhole) {
+                $hasWhole = true;
+            }
+
+            $numInt = (int) $toothNumStr;
+            $toothType = is_array($toothItem) && !empty($toothItem['tooth_type'])
+                ? $toothItem['tooth_type']
+                : (($numInt >= 51 && $numInt <= 85) ? 'primary' : 'permanent');
+
+            $status = is_array($toothItem)
+                ? ($toothItem['tooth_status'] ?? ($toothItem['findings'][0]['status'] ?? 'planned'))
+                : 'planned';
+
+            $estimateTooth = EstimateTooth::create([
+                'estimate_detail_id' => $detail->id,
+                'teeth_number' => $toothNumStr,
+                'class_one' => $hasTop,
+                'class_two' => $hasBottom,
+                'class_three' => $hasLeft,
+                'class_four' => $hasRight,
+                'class_five' => $hasCenter,
+                'class_six' => $hasWhole,
+                'tooth_type' => $toothType,
+                'tooth_status' => $status,
+            ]);
+
+            foreach ($findingsToCreate as $fData) {
+                EstimateToothFinding::create([
+                    'estimate_teeth_id' => $estimateTooth->id,
+                    'dental_condition_id' => $this->resolveValidConditionId($fData['dental_condition_id'] ?? null),
+                    'surface' => $fData['surface'] ?? 'whole',
+                    'custom_color' => $fData['custom_color'] ?? null,
+                    'note' => $fData['note'] ?? null,
+                    'treatment_status' => $fData['treatment_status'] ?? 'planned',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        }
+    }
+
+    protected function resolveValidConditionId($conditionId): ?int
+    {
+        if (empty($conditionId) || !is_numeric($conditionId)) {
+            return null;
+        }
+
+        static $validConditionIds = null;
+        if ($validConditionIds === null) {
+            if (DentalCondition::count() === 0 && class_exists(\Database\Seeders\DentalConditionSeeder::class)) {
+                try {
+                    (new \Database\Seeders\DentalConditionSeeder())->run();
+                } catch (\Throwable $e) {
+                    // Suppress seeder error if table already has records or unique constraint
+                }
+            }
+            $validConditionIds = DentalCondition::pluck('id')->map(fn($id) => (int) $id)->all();
+        }
+
+        $cId = (int) $conditionId;
+        return in_array($cId, $validConditionIds, true) ? $cId : null;
+    }
+
+    protected function attachUnassignedEstimateOdontogramFindings(
+        Estimate $estimate,
+        array $odontogramFindings = [],
+        array $processedToothSurfaces = []
+    ): void {
+        if (empty($odontogramFindings)) {
+            return;
+        }
+
+        $fallbackDetail = $estimate->estimateDetails()->first();
+        if (!$fallbackDetail) {
+            return;
+        }
+
+        $unassignedByTooth = [];
+        foreach ($odontogramFindings as $oFinding) {
+            $toothNumStr = (string) ($oFinding['tooth'] ?? '');
+            $surf = $oFinding['surface'] ?? 'whole';
+            $key = "{$toothNumStr}_{$surf}";
+            if ($toothNumStr !== '' && empty($processedToothSurfaces[$key])) {
+                $unassignedByTooth[$toothNumStr][] = $oFinding;
+            }
+        }
+
+        foreach ($unassignedByTooth as $toothNumStr => $findingsList) {
+            $hasTop = collect($findingsList)->contains('surface', 'top');
+            $hasBottom = collect($findingsList)->contains('surface', 'bottom');
+            $hasLeft = collect($findingsList)->contains('surface', 'left');
+            $hasRight = collect($findingsList)->contains('surface', 'right');
+            $hasCenter = collect($findingsList)->contains('surface', 'center');
+            $hasWhole = collect($findingsList)->contains('surface', 'whole');
+
+            $numInt = (int) $toothNumStr;
+
+            $estimateTooth = EstimateTooth::create([
+                'estimate_detail_id' => $fallbackDetail->id,
+                'teeth_number' => $toothNumStr,
+                'class_one' => $hasTop,
+                'class_two' => $hasBottom,
+                'class_three' => $hasLeft,
+                'class_four' => $hasRight,
+                'class_five' => $hasCenter,
+                'class_six' => $hasWhole,
+                'tooth_type' => ($numInt >= 51 && $numInt <= 85) ? 'primary' : 'permanent',
+                'tooth_status' => $findingsList[0]['status'] ?? 'planned',
+            ]);
+
+            foreach ($findingsList as $fData) {
+                EstimateToothFinding::create([
+                    'estimate_teeth_id' => $estimateTooth->id,
+                    'dental_condition_id' => $this->resolveValidConditionId($fData['dental_condition_id'] ?? $fData['condition_id'] ?? null),
+                    'surface' => $fData['surface'] ?? 'whole',
+                    'custom_color' => $fData['custom_color'] ?? $fData['color'] ?? null,
+                    'note' => $fData['note'] ?? null,
+                    'treatment_status' => $fData['treatment_status'] ?? $fData['status'] ?? 'planned',
+                    'created_by' => auth()->id(),
+                ]);
+            }
         }
     }
 
@@ -463,11 +610,19 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
                 if ($detail->medical_detail_id) {
                     $medDetail = MedicalDetail::find($detail->medical_detail_id);
                     if ($medDetail) {
-                        TreatmentTeeth::where('medical_detail_id', $medDetail->id)->delete();
+                        $remTeeth = TreatmentTeeth::where('medical_detail_id', $medDetail->id)->get();
+                        foreach ($remTeeth as $rt) {
+                            ToothFinding::where('treatment_teeth_id', $rt->id)->forceDelete();
+                            $rt->delete();
+                        }
                         $medDetail->delete();
                     }
                 }
-                $detail->teeth()->delete();
+                $remTeeth = EstimateTooth::where('estimate_detail_id', $detail->id)->get();
+                foreach ($remTeeth as $rt) {
+                    EstimateToothFinding::where('estimate_teeth_id', $rt->id)->forceDelete();
+                    $rt->delete();
+                }
                 $detail->delete();
             }
 
@@ -477,9 +632,36 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
 
     public function approveItem(int $quoteId, int $itemId)
     {
-        return DB::transaction(function () use ($quoteId, $itemId) {
+        return $this->approveSelectedItemsAndCreateInvoice($quoteId, [$itemId]);
+    }
+
+    public function rejectItem(int $quoteId, int $itemId, ?string $reason = null)
+    {
+        return $this->rejectSelectedItems($quoteId, [$itemId], $reason);
+    }
+
+    public function approveSelectedItemsAndCreateInvoice(int $quoteId, array $itemIds)
+    {
+        return DB::transaction(function () use ($quoteId, $itemIds) {
             $estimate = Estimate::where('id', $quoteId)->lockForUpdate()->firstOrFail();
-            $item = $estimate->estimateDetails()->where('id', $itemId)->lockForUpdate()->firstOrFail();
+
+            if (empty($itemIds)) {
+                throw new \Exception('Please select at least one quote item before approving.');
+            }
+
+            // Lock and fetch selected items
+            $items = $estimate->estimateDetails()->whereIn('id', $itemIds)->lockForUpdate()->get();
+
+            if ($items->count() !== count(array_unique($itemIds))) {
+                throw new \Exception('One or more selected items do not belong to this quote.');
+            }
+
+            // Validate that ALL selected items have DRAFT status
+            foreach ($items as $item) {
+                if ((int) $item->status !== EstimateDetail::DRAFT) {
+                    throw new \Exception("Item '{$item->item_name}' has already been processed or is not in draft status.");
+                }
+            }
 
             // Check whether an Invoice already exists for this Quote workflow
             $invoice = MedicalHistory::where('estimate_id', $estimate->id)->lockForUpdate()->first();
@@ -540,129 +722,203 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
                 }
             }
 
-            // Link approved item into MedicalDetail
-            $itemType = strtolower($item->item_type ?? 'service');
-            $detailableType = $itemType === 'product' ? Product::class : Service::class;
-            $detailableId = (int) ($item->detailable_id ?: $item->service_id);
+            // Transfer each selected item into MedicalDetail
+            foreach ($items as $item) {
+                $itemType = strtolower($item->item_type ?? 'service');
+                $detailableType = $itemType === 'product' ? Product::class : Service::class;
+                $detailableId = (int) ($item->detailable_id ?: $item->service_id);
 
-            $medDetail = null;
-            if ($item->medical_detail_id) {
-                $medDetail = MedicalDetail::find($item->medical_detail_id);
-            }
-
-            if (!$medDetail) {
-                $medDetail = MedicalDetail::create([
-                    'medical_history_id' => $invoice->id,
-                    'detailable_id' => $detailableId,
-                    'detailable_type' => $detailableType,
-                    'service_id' => $itemType === 'service' ? $detailableId : null,
-                    'quantity' => $item->quantity ?: 1,
-                    'unit_price' => $item->unit_price ?: 0,
-                    'cost' => $item->cost ?: 0,
-                    'cost_amount' => $item->cost_amount ?: (($item->cost ?: 0) * ($item->quantity ?: 1)),
-                    'discount' => $item->discount ?: 0,
-                    'discount_as' => $item->discount_as ?: '%',
-                    'amount' => $item->amount ?: 0,
-                    'date' => $item->date ?: Carbon::today(),
-                    'note' => $item->note,
-                ]);
-
-                // Copy teeth to treatment_teeths
-                $itemTeeth = $item->teeth()->get();
-                foreach ($itemTeeth as $tooth) {
-                    TreatmentTeeth::create([
-                        'medical_history_id' => $invoice->id,
-                        'medical_detail_id' => $medDetail->id,
-                        'teeth_number' => $tooth->teeth_number,
-                        'class_one' => $tooth->class_one,
-                        'class_two' => $tooth->class_two,
-                        'class_three' => $tooth->class_three,
-                        'class_four' => $tooth->class_four,
-                        'class_five' => $tooth->class_five,
-                        'class_six' => $tooth->class_six,
-                        'tooth_type' => $tooth->tooth_type,
-                        'tooth_status' => $tooth->tooth_status,
-                    ]);
+                $medDetail = null;
+                if ($item->medical_detail_id) {
+                    $medDetail = MedicalDetail::find($item->medical_detail_id);
                 }
 
-                $this->updateStock($detailableId, $itemType, (int) $item->quantity, 'decrement');
-            } else {
-                $medDetail->update([
-                    'quantity' => $item->quantity ?: 1,
-                    'unit_price' => $item->unit_price ?: 0,
-                    'cost' => $item->cost ?: 0,
-                    'cost_amount' => $item->cost_amount ?: (($item->cost ?: 0) * ($item->quantity ?: 1)),
-                    'discount' => $item->discount ?: 0,
-                    'discount_as' => $item->discount_as ?: '%',
-                    'amount' => $item->amount ?: 0,
-                    'date' => $item->date ?: Carbon::today(),
-                    'note' => $item->note,
+                if (!$medDetail) {
+                    $medDetail = MedicalDetail::create([
+                        'medical_history_id' => $invoice->id,
+                        'detailable_id' => $detailableId,
+                        'detailable_type' => $detailableType,
+                        'service_id' => $itemType === 'service' ? $detailableId : null,
+                        'quantity' => $item->quantity ?: 1,
+                        'unit_price' => $item->unit_price ?: 0,
+                        'cost' => $item->cost ?: 0,
+                        'cost_amount' => $item->cost_amount ?: (($item->cost ?: 0) * ($item->quantity ?: 1)),
+                        'discount' => $item->discount ?: 0,
+                        'discount_as' => $item->discount_as ?: '%',
+                        'amount' => $item->amount ?: 0,
+                        'date' => $item->date ?: Carbon::today(),
+                        'note' => $item->note,
+                    ]);
+
+                    // Copy teeth and tooth findings to treatment_teeths and tooth_findings
+                    $itemTeeth = $item->teeth()->with('toothFindings')->get();
+                    foreach ($itemTeeth as $tooth) {
+                        $treatmentTooth = TreatmentTeeth::create([
+                            'medical_history_id' => $invoice->id,
+                            'medical_detail_id' => $medDetail->id,
+                            'teeth_number' => $tooth->teeth_number,
+                            'class_one' => $tooth->class_one,
+                            'class_two' => $tooth->class_two,
+                            'class_three' => $tooth->class_three,
+                            'class_four' => $tooth->class_four,
+                            'class_five' => $tooth->class_five,
+                            'class_six' => $tooth->class_six,
+                            'tooth_type' => $tooth->tooth_type,
+                            'tooth_status' => $tooth->tooth_status,
+                        ]);
+
+                        foreach ($tooth->toothFindings as $tFinding) {
+                            ToothFinding::create([
+                                'treatment_teeth_id' => $treatmentTooth->id,
+                                'dental_condition_id' => $this->resolveValidConditionId($tFinding->dental_condition_id),
+                                'surface' => $tFinding->surface,
+                                'custom_color' => $tFinding->custom_color,
+                                'note' => $tFinding->note,
+                                'treatment_status' => $tFinding->treatment_status ?: 'observed',
+                                'created_by' => auth()->id() ?? $tFinding->created_by,
+                            ]);
+                        }
+                    }
+
+                    $this->updateStock($detailableId, $itemType, (int) $item->quantity, 'decrement');
+                } else {
+                    $medDetail->update([
+                        'quantity' => $item->quantity ?: 1,
+                        'unit_price' => $item->unit_price ?: 0,
+                        'cost' => $item->cost ?: 0,
+                        'cost_amount' => $item->cost_amount ?: (($item->cost ?: 0) * ($item->quantity ?: 1)),
+                        'discount' => $item->discount ?: 0,
+                        'discount_as' => $item->discount_as ?: '%',
+                        'amount' => $item->amount ?: 0,
+                        'date' => $item->date ?: Carbon::today(),
+                        'note' => $item->note,
+                    ]);
+
+                    $existingTTeeth = TreatmentTeeth::where('medical_detail_id', $medDetail->id)->get();
+                    foreach ($existingTTeeth as $extt) {
+                        ToothFinding::where('treatment_teeth_id', $extt->id)->forceDelete();
+                        $extt->delete();
+                    }
+
+                    $itemTeeth = $item->teeth()->with('toothFindings')->get();
+                    foreach ($itemTeeth as $tooth) {
+                        $treatmentTooth = TreatmentTeeth::create([
+                            'medical_history_id' => $invoice->id,
+                            'medical_detail_id' => $medDetail->id,
+                            'teeth_number' => $tooth->teeth_number,
+                            'class_one' => $tooth->class_one,
+                            'class_two' => $tooth->class_two,
+                            'class_three' => $tooth->class_three,
+                            'class_four' => $tooth->class_four,
+                            'class_five' => $tooth->class_five,
+                            'class_six' => $tooth->class_six,
+                            'tooth_type' => $tooth->tooth_type,
+                            'tooth_status' => $tooth->tooth_status,
+                        ]);
+
+                        foreach ($tooth->toothFindings as $tFinding) {
+                            ToothFinding::create([
+                                'treatment_teeth_id' => $treatmentTooth->id,
+                                'dental_condition_id' => $this->resolveValidConditionId($tFinding->dental_condition_id),
+                                'surface' => $tFinding->surface,
+                                'custom_color' => $tFinding->custom_color,
+                                'note' => $tFinding->note,
+                                'treatment_status' => $tFinding->treatment_status ?: 'observed',
+                                'created_by' => auth()->id() ?? $tFinding->created_by,
+                            ]);
+                        }
+                    }
+                }
+
+                $item->update([
+                    'status' => EstimateDetail::APPROVED,
+                    'approved_by' => auth()->id(),
+                    'approved_at' => Carbon::now(),
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejected_note' => null,
+                    'medical_detail_id' => $medDetail->id,
                 ]);
             }
-
-            $item->update([
-                'status' => EstimateDetail::APPROVED,
-                'approved_by' => auth()->id(),
-                'approved_at' => Carbon::now(),
-                'rejected_by' => null,
-                'rejected_at' => null,
-                'rejected_note' => null,
-                'medical_detail_id' => $medDetail->id,
-            ]);
 
             $invoice->recalculateFinancials(true);
             $estimate->recalculateStatus();
 
             return [
                 'success' => true,
-                'message' => 'The item was approved',
-                'item' => $item->fresh(['teeth']),
+                'message' => count($items) . ' quote item(s) approved and invoice created/updated.',
+                'invoice_id' => $invoice->id,
+                'redirect_url' => route('invoices.edit', $invoice->id),
                 'estimate' => $estimate->fresh(),
             ];
         });
     }
 
-    public function rejectItem(int $quoteId, int $itemId, ?string $reason = null)
+    public function rejectSelectedItems(int $quoteId, array $itemIds, ?string $reason = null)
     {
-        return DB::transaction(function () use ($quoteId, $itemId, $reason) {
+        return DB::transaction(function () use ($quoteId, $itemIds, $reason) {
             $estimate = Estimate::where('id', $quoteId)->lockForUpdate()->firstOrFail();
-            $item = $estimate->estimateDetails()->where('id', $itemId)->lockForUpdate()->firstOrFail();
 
-            if ($item->medical_detail_id) {
-                $medDetail = MedicalDetail::find($item->medical_detail_id);
-                if ($medDetail) {
-                    $invoice = MedicalHistory::find($medDetail->medical_history_id);
-                    TreatmentTeeth::where('medical_detail_id', $medDetail->id)->delete();
-                    $itemType = strtolower($item->item_type ?? 'service');
-                    $detailableId = (int) ($item->detailable_id ?: $item->service_id);
-                    $this->updateStock($detailableId, $itemType, (int) $item->quantity, 'increment');
-                    $medDetail->delete();
+            if (empty($itemIds)) {
+                throw new \Exception('Please select at least one quote item before rejecting.');
+            }
 
-                    if ($invoice) {
-                        $invoice->recalculateFinancials(true);
-                    }
+            // Lock and fetch selected items
+            $items = $estimate->estimateDetails()->whereIn('id', $itemIds)->lockForUpdate()->get();
+
+            if ($items->count() !== count(array_unique($itemIds))) {
+                throw new \Exception('One or more selected items do not belong to this quote.');
+            }
+
+            // Validate that ALL selected items have DRAFT status
+            foreach ($items as $item) {
+                if ((int) $item->status !== EstimateDetail::DRAFT) {
+                    throw new \Exception("Item '{$item->item_name}' has already been processed or is not in draft status.");
                 }
             }
 
-            $item->update([
-                'status' => EstimateDetail::REJECTED,
-                'rejected_by' => auth()->id(),
-                'rejected_at' => Carbon::now(),
-                'rejected_note' => $reason,
-                'approved_by' => null,
-                'approved_at' => null,
-                'medical_detail_id' => null,
-            ]);
+            foreach ($items as $item) {
+                if ($item->medical_detail_id) {
+                    $medDetail = MedicalDetail::find($item->medical_detail_id);
+                    if ($medDetail) {
+                        $invoice = MedicalHistory::find($medDetail->medical_history_id);
+                        TreatmentTeeth::where('medical_detail_id', $medDetail->id)->delete();
+                        $itemType = strtolower($item->item_type ?? 'service');
+                        $detailableId = (int) ($item->detailable_id ?: $item->service_id);
+                        $this->updateStock($detailableId, $itemType, (int) $item->quantity, 'increment');
+                        $medDetail->delete();
+
+                        if ($invoice) {
+                            $invoice->recalculateFinancials(true);
+                        }
+                    }
+                }
+
+                $item->update([
+                    'status' => EstimateDetail::REJECTE,
+                    'rejected_by' => auth()->id(),
+                    'rejected_at' => Carbon::now(),
+                    'rejected_note' => $reason,
+                    'approved_by' => null,
+                    'approved_at' => null,
+                    'medical_detail_id' => null,
+                ]);
+            }
 
             $estimate->recalculateStatus();
 
             return [
                 'success' => true,
-                'message' => 'The item was rejected!',
-                'item' => $item->fresh(['teeth']),
+                'message' => count($items) . ' quote item(s) rejected successfully.',
                 'estimate' => $estimate->fresh(),
             ];
         });
+    }
+
+    public function calculateQuoteStatus(int $quoteId): int
+    {
+        $estimate = Estimate::findOrFail($quoteId);
+        return $estimate->recalculateStatus();
     }
 
     public function addItem(int $quoteId, array $itemData)
@@ -707,22 +963,13 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
                     $teeth = explode('|', $teeth);
                 }
                 if (is_array($teeth)) {
-                    foreach ($teeth as $t) {
-                        $toothNum = is_array($t) ? ($t['teeth_number'] ?? null) : $t;
-                        if (!empty($toothNum)) {
-                            $detail->teeth()->create([
-                                'teeth_number' => (string) $toothNum,
-                                'class_one' => is_array($t) ? !empty($t['class_one']) : false,
-                                'class_two' => is_array($t) ? !empty($t['class_two']) : false,
-                                'class_three' => is_array($t) ? !empty($t['class_three']) : false,
-                                'class_four' => is_array($t) ? !empty($t['class_four']) : false,
-                                'class_five' => is_array($t) ? !empty($t['class_five']) : false,
-                                'class_six' => is_array($t) ? !empty($t['class_six']) : false,
-                                'tooth_type' => is_array($t) ? ($t['tooth_type'] ?? null) : null,
-                                'tooth_status' => is_array($t) ? ($t['tooth_status'] ?? null) : null,
-                            ]);
-                        }
-                    }
+                    $processed = [];
+                    $this->syncEstimateTeethAndFindings(
+                        $detail,
+                        $teeth,
+                        $itemData['odontogram_findings'] ?? [],
+                        $processed
+                    );
                 }
             }
 
@@ -731,7 +978,7 @@ class EstimateRepository extends BaseRepository implements EstimateRepositoryInt
             return [
                 'success' => true,
                 'message' => 'Item added successfully.',
-                'item' => $detail->fresh(['teeth']),
+                'item' => $detail->fresh(['teeth.toothFindings.condition']),
                 'estimate' => $estimate->fresh(),
             ];
         });

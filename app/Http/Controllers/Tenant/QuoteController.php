@@ -260,38 +260,15 @@ class QuoteController extends Controller
             'patient',
             'doctor.user.profile',
             'assistant.profile',
-            'estimateDetails.detailable',
-            'estimateDetails.teeth',
-            'estimateDetails.approvedByUser',
-            'estimateDetails.rejectedByUser',
             'invoice',
         ])->findOrFail($id);
 
+        $details = $this->formatQuoteDetailsResponse($quote);
+
         return response()->json([
             'success' => true,
-            'quote' => $quote,
-            'items' => $quote->estimateDetails->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'estimate_id' => $item->estimate_id,
-                    'date' => $item->date ? Carbon::parse($item->date)->format('Y-m-d') : '',
-                    'item_name' => $item->item_name,
-                    'item_type' => $item->item_type,
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'discount' => $item->discount,
-                    'discount_as' => $item->discount_as,
-                    'discount_dollars' => $item->discount_as === '%' ? ($item->quantity * $item->unit_price * ($item->discount / 100)) : $item->discount,
-                    'amount' => $item->amount,
-                    'status' => $item->status,
-                    'status_label' => $item->status_label,
-                    'teeth' => $item->teeth,
-                    'teeth_numbers' => $item->teeth_numbers,
-                    'approved_at' => $item->approved_at ? Carbon::parse($item->approved_at)->format('Y-m-d H:i') : null,
-                    'rejected_at' => $item->rejected_at ? Carbon::parse($item->rejected_at)->format('Y-m-d H:i') : null,
-                    'rejected_note' => $item->rejected_note,
-                ];
-            }),
+            'quote' => $details['quote'],
+            'items' => $details['items'],
         ]);
     }
 
@@ -300,6 +277,11 @@ class QuoteController extends Controller
         $this->authorizeAccess(['quotes:quotes:approve', 'quote:approve']);
 
         $result = $this->estimateRepository->approveItem($id, $itemId);
+
+        $quote = Estimate::with(['patient', 'doctor.user.profile', 'assistant.profile', 'invoice'])->findOrFail($id);
+        $details = $this->formatQuoteDetailsResponse($quote);
+        $result['quote'] = $details['quote'];
+        $result['items'] = $details['items'];
 
         return response()->json($result);
     }
@@ -311,7 +293,115 @@ class QuoteController extends Controller
         $reason = $request->input('reason') ?: $request->input('rejected_note') ?: 'Rejected by user';
         $result = $this->estimateRepository->rejectItem($id, $itemId, $reason);
 
+        $quote = Estimate::with(['patient', 'doctor.user.profile', 'assistant.profile', 'invoice'])->findOrFail($id);
+        $details = $this->formatQuoteDetailsResponse($quote);
+        $result['quote'] = $details['quote'];
+        $result['items'] = $details['items'];
+
         return response()->json($result);
+    }
+
+    public function approveSelectedItems(Request $request, int $id): JsonResponse
+    {
+        $this->authorizeAccess(['quotes:quotes:approve', 'quote:approve']);
+
+        $itemIds = $request->input('item_ids', []);
+        if (empty($itemIds) || !is_array($itemIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select at least one quote item before approving.',
+            ], 422);
+        }
+
+        try {
+            $result = $this->estimateRepository->approveSelectedItemsAndCreateInvoice($id, $itemIds);
+
+            $quote = Estimate::with(['patient', 'doctor.user.profile', 'assistant.profile', 'invoice'])->findOrFail($id);
+            $details = $this->formatQuoteDetailsResponse($quote);
+            $result['quote'] = $details['quote'];
+            $result['items'] = $details['items'];
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function rejectSelectedItems(Request $request, int $id): JsonResponse
+    {
+        $this->authorizeAccess(['quotes:quotes:reject', 'quote:reject']);
+
+        $itemIds = $request->input('item_ids', []);
+        if (empty($itemIds) || !is_array($itemIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select at least one quote item before rejecting.',
+            ], 422);
+        }
+
+        $reason = $request->input('reason') ?: $request->input('rejected_note') ?: 'Rejected by user';
+
+        try {
+            $result = $this->estimateRepository->rejectSelectedItems($id, $itemIds, $reason);
+
+            $quote = Estimate::with(['patient', 'doctor.user.profile', 'assistant.profile', 'invoice'])->findOrFail($id);
+            $details = $this->formatQuoteDetailsResponse($quote);
+            $result['quote'] = $details['quote'];
+            $result['items'] = $details['items'];
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    protected function formatQuoteDetailsResponse(Estimate $quote): array
+    {
+        $items = $quote->estimateDetails()
+            ->withTrashed()
+            ->with([
+                'detailable',
+                'teeth.toothFindings.condition',
+                'approvedByUser',
+                'rejectedByUser',
+            ])
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => (int) $item->id,
+                    'estimate_id' => (int) $item->estimate_id,
+                    'date' => $item->date ? Carbon::parse($item->date)->format('Y-m-d') : '',
+                    'item_name' => $item->item_name,
+                    'item_type' => $item->item_type,
+                    'quantity' => (int) $item->quantity,
+                    'unit_price' => (float) $item->unit_price,
+                    'discount' => (float) $item->discount,
+                    'discount_as' => $item->discount_as,
+                    'discount_dollars' => $item->discount_as === '%' ? ($item->quantity * $item->unit_price * ($item->discount / 100)) : (float) $item->discount,
+                    'amount' => (float) $item->amount,
+                    'status' => (int) $item->status,
+                    'status_label' => $item->status_label,
+                    'medical_detail_id' => $item->medical_detail_id ? (int) $item->medical_detail_id : null,
+                    'is_invoiced' => !empty($item->medical_detail_id),
+                    'teeth' => $item->teeth,
+                    'teeth_numbers' => $item->teeth_numbers,
+                    'approved_at' => $item->approved_at ? Carbon::parse($item->approved_at)->format('Y-m-d H:i') : null,
+                    'rejected_at' => $item->rejected_at ? Carbon::parse($item->rejected_at)->format('Y-m-d H:i') : null,
+                    'rejected_note' => $item->rejected_note,
+                ];
+            });
+
+        return [
+            'quote' => $quote,
+            'items' => $items,
+        ];
     }
 
     public function addItem(Request $request, int $id): JsonResponse

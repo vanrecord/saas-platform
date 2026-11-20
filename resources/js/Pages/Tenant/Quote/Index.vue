@@ -332,13 +332,23 @@
             <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
               <thead class="bg-slate-100 dark:bg-slate-800/80 text-[11px] font-bold text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
                 <tr>
+                  <th class="py-2.5 px-3 text-center w-10">
+                    <input
+                      type="checkbox"
+                      :checked="isAllSelected"
+                      :indeterminate.prop="isIndeterminate"
+                      :disabled="!eligibleDraftItems.length"
+                      @change="toggleSelectAll"
+                      class="rounded border-slate-300 text-[#0D63D6] focus:ring-blue-500 h-4 w-4 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      title="Select all eligible draft items"
+                    />
+                  </th>
                   <th class="py-2.5 px-3">Operate Date <span class="text-slate-400 text-[10px]">⇅</span></th>
                   <th class="py-2.5 px-3">Service <span class="text-slate-400 text-[10px]">⇅</span></th>
                   <th class="py-2.5 px-3 text-center">Quantity <span class="text-slate-400 text-[10px]">⇅</span></th>
-                  <th class="py-2.5 px-3 text-right">Discoun($) <span class="text-slate-400 text-[10px]">⇅</span></th>
+                  <th class="py-2.5 px-3 text-right">Discount($) <span class="text-slate-400 text-[10px]">⇅</span></th>
                   <th class="py-2.5 px-3 text-right">Amount($) <span class="text-slate-400 text-[10px]">⇅</span></th>
                   <th class="py-2.5 px-3 text-center">Status <span class="text-slate-400 text-[10px]">⇅</span></th>
-                  <th class="py-2.5 px-3 text-center">Action</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -346,59 +356,78 @@
                   v-for="(item, idx) in filteredDetailItems"
                   :key="item.id || idx"
                   class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition"
+                  :class="{ 'bg-blue-50/40 dark:bg-blue-900/10': selectedItemIds.includes(item.id) }"
                 >
-                  <!-- 1. Operate Date -->
+                  <!-- 1. Checkbox Column -->
+                  <td class="py-2.5 px-3 text-center">
+                    <input
+                      type="checkbox"
+                      :value="item.id"
+                      v-model="selectedItemIds"
+                      :disabled="Number(item.status) !== 1"
+                      class="rounded border-slate-300 text-[#0D63D6] focus:ring-blue-500 h-4 w-4 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    />
+                  </td>
+
+                  <!-- 2. Operate Date -->
                   <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
                     {{ formatDate(item.date) }}
                   </td>
 
-                  <!-- 2. Service -->
+                  <!-- 3. Service -->
                   <td class="py-2.5 px-3 font-medium text-slate-800 dark:text-white">
                     <div>
                       <span>{{ item.item_name || item.service?.name || 'Item #' + (item.service_id || item.id) }}</span>
                       <span v-if="item.teeth_numbers && item.teeth_numbers.length" class="ml-1 text-[11px] text-blue-600 font-mono">
                         (Teeth: {{ item.teeth_numbers.join(', ') }})
                       </span>
+                      <span
+                        v-if="item.is_invoiced || item.medical_detail_id"
+                        class="ml-1.5 inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                        title="Included in Invoice"
+                      >
+                        Invoiced
+                      </span>
                     </div>
                   </td>
 
-                  <!-- 3. Quantity -->
+                  <!-- 4. Quantity -->
                   <td class="py-2.5 px-3 text-center font-mono">
                     {{ item.quantity }}
                   </td>
 
-                  <!-- 4. Discoun($) -->
+                  <!-- 5. Discount($) -->
                   <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-400">
                     {{ (Number(item.discount) || 0).toFixed(0) }}
                   </td>
 
-                  <!-- 5. Amount($) -->
+                  <!-- 6. Amount($) -->
                   <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-800 dark:text-white">
                     {{ (Number(item.amount) || 0).toFixed(0) }}
                   </td>
 
-                  <!-- 6. Status Badge matching Specification -->
+                  <!-- 7. Status Badge matching Specification -->
                   <td class="py-2.5 px-3 text-center">
                     <span
-                      v-if="item.status === 2"
+                      v-if="Number(item.status) === 2"
                       class="inline-block px-2.5 py-1 text-[11px] font-bold rounded bg-[#00a65a] text-white"
                     >
                       Approved
                     </span>
                     <span
-                      v-else-if="item.status === 3"
+                      v-else-if="Number(item.status) === 3"
                       class="inline-block px-2.5 py-1 text-[11px] font-bold rounded bg-[#f56954] text-white"
                     >
                       Rejected
                     </span>
                     <span
-                      v-else-if="item.status === 4"
+                      v-else-if="Number(item.status) === 4"
                       class="inline-block px-2.5 py-1 text-[11px] font-bold rounded bg-blue-600 text-white"
                     >
                       Completed
                     </span>
                     <span
-                      v-else-if="item.status === 5"
+                      v-else-if="Number(item.status) === 5"
                       class="inline-block px-2.5 py-1 text-[11px] font-bold rounded bg-purple-600 text-white"
                     >
                       Verified
@@ -409,33 +438,6 @@
                     >
                       Draft
                     </span>
-                  </td>
-
-                  <!-- 7. Action Buttons (Approve in Green, Reject in Yellow/Orange) -->
-                  <td class="py-2.5 px-3 text-center">
-                    <div class="flex items-center justify-center space-x-1.5">
-                      <!-- Approve Button (Green) -->
-                      <button
-                        v-if="item.status !== 2 && can(['all', 'quotes:quotes:approve', 'quote:approve'])"
-                        type="button"
-                        @click="approveItem(item)"
-                        :disabled="isProcessingAction === item.id"
-                        class="px-2.5 py-1 bg-[#00a65a] hover:bg-[#008d4c] text-white text-[11px] font-bold rounded transition shadow-2xs disabled:opacity-50 cursor-pointer"
-                      >
-                        Approve
-                      </button>
-
-                      <!-- Reject Button (Yellow/Amber) -->
-                      <button
-                        v-if="item.status !== 3 && can(['all', 'quotes:quotes:reject', 'quote:reject'])"
-                        type="button"
-                        @click="promptRejectItem(item)"
-                        :disabled="isProcessingAction === item.id"
-                        class="px-2.5 py-1 bg-[#f39c12] hover:bg-[#e08e0b] text-white text-[11px] font-bold rounded transition shadow-2xs disabled:opacity-50 cursor-pointer"
-                      >
-                        Reject
-                      </button>
-                    </div>
                   </td>
                 </tr>
 
@@ -478,49 +480,67 @@
         </div>
 
         <!-- Modal Footer matching Screenshot ([Print], [Approve], [Reject], [Cancel]) -->
-        <div class="px-6 py-3.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end space-x-2">
-          <!-- Print Button (Cyan / Teal) -->
-          <a
-            v-if="activeQuote"
-            :href="route('quotes.print', activeQuote.id)"
-            target="_blank"
-            class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#00c0ef] hover:bg-[#00a7d0] text-white text-xs font-bold rounded transition shadow-2xs"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4" />
-            </svg>
-            Print
-          </a>
+        <div class="px-6 py-3.5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <!-- Selection info badge on the left side of footer -->
+          <div class="text-xs text-slate-600 dark:text-slate-400">
+            <span v-if="selectedItemIds.length > 0" class="font-medium text-[#0D63D6] dark:text-blue-400">
+              Selected <strong>{{ selectedItemIds.length }}</strong> item(s) (Total: ${{ selectedItemsAmount.toFixed(2) }})
+            </span>
+            <span v-else class="text-slate-400">
+              Select draft items using checkboxes to approve or reject.
+            </span>
+          </div>
 
-          <!-- Approve All Drafts (Green) -->
-          <button
-            type="button"
-            @click="approveAllDrafts"
-            class="px-4 py-2 bg-[#00a65a] hover:bg-[#008d4c] text-white text-xs font-bold rounded transition shadow-2xs cursor-pointer"
-          >
-            Approve
-          </button>
+          <div class="flex items-center space-x-2 self-end sm:self-auto shrink-0">
+            <!-- Print Button (Cyan / Teal) -->
+            <a
+              v-if="activeQuote"
+              :href="route('quotes.print', activeQuote.id)"
+              target="_blank"
+              class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#00c0ef] hover:bg-[#00a7d0] text-white text-xs font-bold rounded transition shadow-2xs"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4" />
+              </svg>
+              Print
+            </a>
 
-          <!-- Reject All Drafts (Yellow/Amber) -->
-          <button
-            type="button"
-            @click="rejectAllDrafts"
-            class="px-4 py-2 bg-[#f39c12] hover:bg-[#e08e0b] text-white text-xs font-bold rounded transition shadow-2xs cursor-pointer"
-          >
-            Reject
-          </button>
+            <!-- ONE Approve Button (Green) -->
+            <button
+              v-if="can(['all', 'quotes:quotes:approve', 'quote:approve'])"
+              type="button"
+              @click="approveSelected"
+              :disabled="isProcessingAction"
+              class="px-4 py-2 bg-[#00a65a] hover:bg-[#008d4c] text-white text-xs font-bold rounded transition shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <span v-if="isProcessingAction && currentAction === 'approve'">Approving...</span>
+              <span v-else>Approve</span>
+            </button>
 
-          <!-- Cancel Button (Red) -->
-          <button
-            type="button"
-            @click="closeDetailModal"
-            class="inline-flex items-center gap-1 px-4 py-2 bg-[#dd4b39] hover:bg-[#d73925] text-white text-xs font-bold rounded transition shadow-2xs cursor-pointer"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Cancel
-          </button>
+            <!-- ONE Reject Button (Yellow/Amber) -->
+            <button
+              v-if="can(['all', 'quotes:quotes:reject', 'quote:reject'])"
+              type="button"
+              @click="rejectSelected"
+              :disabled="isProcessingAction"
+              class="px-4 py-2 bg-[#f39c12] hover:bg-[#e08e0b] text-white text-xs font-bold rounded transition shadow-2xs cursor-pointer disabled:opacity-50"
+            >
+              <span v-if="isProcessingAction && currentAction === 'reject'">Rejecting...</span>
+              <span v-else>Reject</span>
+            </button>
+
+            <!-- Cancel Button (Red) -->
+            <button
+              type="button"
+              @click="closeDetailModal"
+              class="inline-flex items-center gap-1 px-4 py-2 bg-[#dd4b39] hover:bg-[#d73925] text-white text-xs font-bold rounded transition shadow-2xs cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -530,6 +550,7 @@
 <script>
 import TenantLayout from "@/Layouts/TenantLayout.vue";
 import { Head, Link } from "@inertiajs/inertia-vue3";
+import { Inertia } from "@inertiajs/inertia";
 import JetBanner from "@/Jetstream/Banner.vue";
 import { Table } from "@/Components/Datatables";
 import DateInput from "@/Components/Forms/DateInput.vue";
@@ -576,8 +597,10 @@ export default {
       showDetailModal: false,
       activeQuote: null,
       detailItems: [],
+      selectedItemIds: [],
       detailSearch: "",
-      isProcessingAction: null,
+      isProcessingAction: false,
+      currentAction: null,
       isAddingItem: false,
       activeServices: [],
       activeProducts: [],
@@ -591,6 +614,26 @@ export default {
     };
   },
   computed: {
+    eligibleDraftItems() {
+      return this.detailItems.filter((i) => Number(i.status) === 1);
+    },
+    isAllSelected() {
+      return (
+        this.eligibleDraftItems.length > 0 &&
+        this.eligibleDraftItems.every((i) => this.selectedItemIds.includes(i.id))
+      );
+    },
+    isIndeterminate() {
+      const selectedDraftCount = this.eligibleDraftItems.filter((i) =>
+        this.selectedItemIds.includes(i.id)
+      ).length;
+      return selectedDraftCount > 0 && selectedDraftCount < this.eligibleDraftItems.length;
+    },
+    selectedItemsAmount() {
+      return this.detailItems
+        .filter((i) => this.selectedItemIds.includes(i.id))
+        .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+    },
     filteredDetailItems() {
       if (!this.detailSearch) return this.detailItems;
       const q = this.detailSearch.toLowerCase();
@@ -669,12 +712,24 @@ export default {
         preserveScroll: true,
       });
     },
+    toggleSelectAll(event) {
+      if (event.target.checked) {
+        this.selectedItemIds = this.eligibleDraftItems.map((i) => i.id);
+      } else {
+        this.selectedItemIds = [];
+      }
+    },
     async openQuoteDetail(quote) {
       this.activeQuote = quote;
       this.detailSearch = "";
+      this.selectedItemIds = [];
       this.showDetailModal = true;
+      await this.refreshQuoteDetail();
+    },
+    async refreshQuoteDetail() {
+      if (!this.activeQuote) return;
       try {
-        const resp = await axios.get(route("quotes.show", quote.id));
+        const resp = await axios.get(route("quotes.show", this.activeQuote.id));
         if (resp.data) {
           this.activeQuote = resp.data.quote;
           this.detailItems = resp.data.items || [];
@@ -689,167 +744,188 @@ export default {
       this.showDetailModal = false;
       this.activeQuote = null;
       this.detailItems = [];
+      this.selectedItemIds = [];
       this.detailSearch = "";
+      this.isProcessingAction = false;
+      this.currentAction = null;
     },
-    async approveItem(item) {
+    async approveSelected() {
       if (!this.activeQuote) return;
-      this.isProcessingAction = item.id;
-      try {
-        const resp = await axios.post(
-          route("quotes.items.approve", { quote: this.activeQuote.id, item: item.id })
-        );
-        if (resp.data.success) {
-          item.status = 2;
-          item.status_label = "Approved";
-          if (resp.data.estimate) {
-            this.activeQuote.status = resp.data.estimate.status;
-          }
-          if (this.toast && typeof this.toast.success === "function") {
-            this.toast.success("Item approved successfully.");
-          }
-          this.$inertia.reload({ preserveScroll: true });
-        }
-      } catch (err) {
-        alert(err.response?.data?.message || "Failed to approve item.");
-      } finally {
-        this.isProcessingAction = null;
-      }
-    },
-    async promptRejectItem(item) {
-      const reason = prompt("Please enter the reason for rejection:", "");
-      if (reason === null) return;
 
-      this.isProcessingAction = item.id;
-      try {
-        const resp = await axios.post(
-          route("quotes.items.reject", { quote: this.activeQuote.id, item: item.id }),
-          { reason: reason || "Rejected by user" }
-        );
-        if (resp.data.success) {
-          item.status = 3;
-          item.status_label = "Rejected";
-          item.rejected_note = reason;
-          if (resp.data.estimate) {
-            this.activeQuote.status = resp.data.estimate.status;
-          }
-          if (this.toast && typeof this.toast.info === "function") {
-            this.toast.info("Item marked as rejected.");
-          }
-          this.$inertia.reload({ preserveScroll: true });
-        }
-      } catch (err) {
-        alert(err.response?.data?.message || "Failed to reject item.");
-      } finally {
-        this.isProcessingAction = null;
-      }
-    },
-    async approveAllDrafts() {
-      const drafts = this.detailItems.filter((i) => i.status === 1);
-      if (!drafts.length) {
-        alert("No draft items to approve.");
-        return;
-      }
-      for (const d of drafts) {
-        await this.approveItem(d);
-      }
-    },
-    async rejectAllDrafts() {
-      const drafts = this.detailItems.filter((i) => i.status === 1);
-      if (!drafts.length) {
-        alert("No draft items to reject.");
-        return;
-      }
-      const reason = prompt("Reason for rejecting all draft items:", "Rejected in bulk");
-      if (reason === null) return;
-      for (const d of drafts) {
-        await axios.post(
-          route("quotes.items.reject", { quote: this.activeQuote.id, item: d.id }),
-          { reason }
-        );
-        d.status = 3;
-        d.status_label = "Rejected";
-      }
-      this.$inertia.reload({ preserveScroll: true });
-    },
-    onNewItemSelect() {
-      const val = this.newItem.detailable_id;
-      if (!val) return;
-      if (val.startsWith("service_")) {
-        const id = parseInt(val.replace("service_", ""));
-        const s = this.activeServices.find((x) => x.id === id);
-        this.newItem.item_type = "service";
-        this.newItem.unit_price = s ? s.price : 0;
-      } else if (val.startsWith("product_")) {
-        const id = parseInt(val.replace("product_", ""));
-        const p = this.activeProducts.find((x) => x.id === id);
-        this.newItem.item_type = "product";
-        this.newItem.unit_price = p ? p.price : 0;
-      }
-      this.recalculateNewItem();
-    },
-    recalculateNewItem() {
-      const qty = Number(this.newItem.quantity) || 1;
-      const price = Number(this.newItem.unit_price) || 0;
-      this.newItem.amount = qty * price;
-    },
-    async addNewItemToQuote() {
-      if (!this.activeQuote || !this.newItem.detailable_id) return;
-      this.isAddingItem = true;
-      try {
-        const isProduct = this.newItem.detailable_id.startsWith("product_");
-        const cleanId = parseInt(this.newItem.detailable_id.replace(/^(service_|product_)/, ""));
-
-        const payload = {
-          item_type: isProduct ? "product" : "service",
-          detailable_id: cleanId,
-          service_id: isProduct ? null : cleanId,
-          quantity: this.newItem.quantity || 1,
-          unit_price: this.newItem.unit_price || 0,
-          amount: this.newItem.amount || 0,
-          date: dayjs().format("YYYY-MM-DD"),
-        };
-
-        const resp = await axios.post(
-          route("quotes.items.add", { quote: this.activeQuote.id }),
-          payload
-        );
-
-        if (resp.data.success) {
-          const it = resp.data.item;
-          this.detailItems.push({
-            id: it.id,
-            date: it.date,
-            item_name: it.item_name,
-            quantity: it.quantity,
-            discount: it.discount,
-            amount: it.amount,
-            status: it.status,
-            status_label: it.status_label,
-            teeth_numbers: it.teeth_numbers || [],
+      // Step 1: Validate selected items
+      if (!this.selectedItemIds.length) {
+        if (this.$swal) {
+          this.$swal({
+            icon: "warning",
+            title: "No Items Selected",
+            text: "Please select at least one quote item before approving.",
           });
+        } else {
+          alert("Please select at least one quote item before approving.");
+        }
+        return;
+      }
 
-          if (resp.data.estimate) {
+      // Step 2: Confirm operation
+      const count = this.selectedItemIds.length;
+      const totalAmount = this.selectedItemsAmount.toFixed(2);
+      let confirmed = false;
+
+      if (this.$swal) {
+        const result = await this.$swal({
+          title: "Confirm Approval",
+          html: `Are you sure you want to approve the <strong>${count}</strong> selected quote item(s) ($${totalAmount}) and create an invoice using these items?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Yes, Approve & Invoice",
+          cancelButtonText: "Cancel",
+          customClass: {
+            confirmButton: "inline-flex items-center mx-2 px-4 py-2 bg-[#00a65a] hover:bg-[#008d4c] text-white rounded-md font-semibold text-xs uppercase tracking-widest cursor-pointer",
+            cancelButton: "inline-flex items-center justify-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-md font-semibold text-xs uppercase tracking-widest cursor-pointer",
+          },
+          buttonsStyling: false,
+        });
+        confirmed = result.isConfirmed || result.value;
+      } else {
+        confirmed = confirm(`Are you sure you want to approve the ${count} selected quote items ($${totalAmount}) and create an invoice using these items?`);
+      }
+
+      if (!confirmed) return;
+
+      // Step 3 & 4: Call backend
+      this.isProcessingAction = true;
+      this.currentAction = "approve";
+
+      try {
+        const resp = await axios.post(
+          route("quotes.items.approve-selected", { quote: this.activeQuote.id }),
+          { item_ids: this.selectedItemIds }
+        );
+
+        if (resp.data.success) {
+          if (this.toast && typeof this.toast.success === "function") {
+            this.toast.success(resp.data.message || "Items approved and invoice created successfully.");
+          }
+
+          const invoiceId = resp.data.invoice_id || resp.data.quote?.invoice?.id;
+          const redirectUrl = resp.data.redirect_url || (invoiceId ? route("invoices.edit", invoiceId) : null);
+
+          this.selectedItemIds = [];
+          this.closeDetailModal();
+
+          if (redirectUrl) {
+            Inertia.visit(redirectUrl);
+          } else {
+            this.$inertia.reload({ preserveScroll: true });
+          }
+        }
+      } catch (err) {
+        const msg = err.response?.data?.message || err.message || "Failed to approve items.";
+        if (this.$swal) {
+          this.$swal({ icon: "error", title: "Error", text: msg });
+        } else {
+          alert(msg);
+        }
+      } finally {
+        this.isProcessingAction = false;
+        this.currentAction = null;
+      }
+    },
+    async rejectSelected() {
+      if (!this.activeQuote) return;
+
+      // Step 1: Validate selected items
+      if (!this.selectedItemIds.length) {
+        if (this.$swal) {
+          this.$swal({
+            icon: "warning",
+            title: "No Items Selected",
+            text: "Please select at least one quote item before rejecting.",
+          });
+        } else {
+          alert("Please select at least one quote item before rejecting.");
+        }
+        return;
+      }
+
+      // Step 2: Confirm operation & optional reason
+      const count = this.selectedItemIds.length;
+      let reason = "";
+      let confirmed = false;
+
+      if (this.$swal) {
+        const result = await this.$swal({
+          title: "Confirm Rejection",
+          text: `Are you sure you want to reject the ${count} selected quote item(s)?`,
+          input: "text",
+          inputPlaceholder: "Reason for rejection (optional)",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, Reject",
+          cancelButtonText: "Cancel",
+          customClass: {
+            confirmButton: "inline-flex items-center mx-2 px-4 py-2 bg-[#f39c12] hover:bg-[#e08e0b] text-white rounded-md font-semibold text-xs uppercase tracking-widest cursor-pointer",
+            cancelButton: "inline-flex items-center justify-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-md font-semibold text-xs uppercase tracking-widest cursor-pointer",
+          },
+          buttonsStyling: false,
+        });
+        if (result.isConfirmed || result.value !== undefined) {
+          confirmed = true;
+          reason = result.value || "Rejected by user";
+        }
+      } else {
+        reason = prompt(`Are you sure you want to reject the ${count} selected quote item(s)? Reason:`, "Rejected by user");
+        if (reason !== null) {
+          confirmed = true;
+        }
+      }
+
+      if (!confirmed) return;
+
+      // Step 3: Call backend
+      this.isProcessingAction = true;
+      this.currentAction = "reject";
+
+      try {
+        const resp = await axios.post(
+          route("quotes.items.reject-selected", { quote: this.activeQuote.id }),
+          { item_ids: this.selectedItemIds, reason }
+        );
+
+        if (resp.data.success) {
+          // 1. Refresh datatable rows with updated items from server
+          if (resp.data.items) {
+            this.detailItems = resp.data.items;
+          } else {
+            await this.refreshQuoteDetail();
+          }
+
+          if (resp.data.quote) {
+            this.activeQuote = resp.data.quote;
+          } else if (resp.data.estimate) {
             this.activeQuote.status = resp.data.estimate.status;
           }
 
-          // Reset new item input
-          this.newItem = {
-            detailable_id: "",
-            item_type: "service",
-            quantity: 1,
-            unit_price: 0,
-            amount: 0,
-          };
+          // 2. Clear selected checkboxes
+          this.selectedItemIds = [];
 
-          if (this.toast && typeof this.toast.success === "function") {
-            this.toast.success("New item added to quote.");
-          }
+          // 3. Preserve the existing popup (do NOT close modal)
           this.$inertia.reload({ preserveScroll: true });
+
+          if (this.toast && typeof this.toast.info === "function") {
+            this.toast.info(resp.data.message || "Selected items rejected.");
+          }
         }
       } catch (err) {
-        alert(err.response?.data?.message || "Failed to add item to quote.");
+        const msg = err.response?.data?.message || err.message || "Failed to reject items.";
+        if (this.$swal) {
+          this.$swal({ icon: "error", title: "Error", text: msg });
+        } else {
+          alert(msg);
+        }
       } finally {
-        this.isAddingItem = false;
+        this.isProcessingAction = false;
+        this.currentAction = null;
       }
     },
   },

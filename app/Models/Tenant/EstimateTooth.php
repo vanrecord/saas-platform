@@ -5,12 +5,13 @@ namespace App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EstimateTooth extends Model
 {
     use HasFactory;
 
-    protected $table = 'estimate_teeth';
+    protected $table = 'estimate_teeths';
 
     protected $fillable = [
         'estimate_detail_id',
@@ -35,8 +36,22 @@ class EstimateTooth extends Model
         'estimate_detail_id' => 'integer',
     ];
 
+    protected $appends = [
+        'tooth_findings',
+    ];
+
+    public function getToothFindingsAttribute()
+    {
+        return $this->relationLoaded('toothFindings') ? $this->toothFindings : $this->toothFindings()->get();
+    }
+
     public function estimateDetail(): BelongsTo
     {
         return $this->belongsTo(EstimateDetail::class, 'estimate_detail_id');
+    }
+
+    public function toothFindings(): HasMany
+    {
+        return $this->hasMany(EstimateToothFinding::class, 'estimate_teeth_id');
     }
 }
