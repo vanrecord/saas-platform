@@ -23,6 +23,7 @@ use App\Http\Controllers\Tenant\InvoicePrefixController;
 use App\Http\Controllers\Tenant\GeneralSettingController;
 use App\Http\Controllers\Tenant\MedicineController;
 use App\Http\Controllers\Tenant\PrescriptionController;
+use App\Http\Controllers\Tenant\CashDepositController;
 use App\Http\Controllers\Tenant\ClinicTargetController;
 use App\Http\Controllers\Tenant\DoctorTargetController;
 use App\Http\Controllers\Tenant\PaymentController;
@@ -121,6 +122,24 @@ Route::middleware([
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->name('tenant.payments.destroy');
         Route::get('/payments/{payment}/print', [PaymentController::class, 'printReceipt'])->name('tenant.payments.print');
         Route::get('/api/payments/patients-search', [PaymentController::class, 'searchPatients'])->name('tenant.payments.patients-search');
+
+        // Cash Deposits (Accounting)
+        Route::prefix('cash-deposits')->name('cash-deposits.')->group(function () {
+            Route::get('/', [CashDepositController::class, 'index'])->name('index');
+            Route::post('/', [CashDepositController::class, 'store'])->name('store');
+            Route::get('/patient-search', [CashDepositController::class, 'patientSearch'])->name('patient-search');
+            Route::get('/patient-details/{patient_id}', [CashDepositController::class, 'patientDetails'])->name('patient-details');
+            Route::get('/credit-balance', [CashDepositController::class, 'getCreditBalance'])->name('credit-balance');
+            Route::get('/{fundTransfer}', [CashDepositController::class, 'show'])->name('show');
+            Route::put('/{fundTransfer}', [CashDepositController::class, 'update'])->name('update');
+            Route::delete('/{fundTransfer}', [CashDepositController::class, 'destroy'])->name('destroy');
+            Route::post('/{fundTransfer}/verify', [CashDepositController::class, 'verify'])->name('verify');
+            Route::get('/{fundTransfer}/print', [CashDepositController::class, 'print'])->name('print');
+        });
+
+        // Legacy Cash Deposit Route Aliases
+        Route::post('/cash-deposit/store', [CashDepositController::class, 'store'])->name('cash-deposit.store');
+        Route::get('/cash-deposit/{patient_id}', [CashDepositController::class, 'patientDetails'])->name('cash-deposit.show');
 
         // General Settings
         Route::get('settings/general', [GeneralSettingController::class, 'index'])->name('settings.general.index');

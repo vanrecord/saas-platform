@@ -537,6 +537,66 @@
                 </div>
               </div>
 
+              <!-- Subsection 4.5: Cash Deposit (Accounting) -->
+              <div class="mb-6">
+                <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                  {{ tm('Cash_Deposit') || 'Cash Deposit' }}
+                </div>
+                <div class="space-y-3">
+                  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark hover:border-gray-300 dark:hover:border-gray-600 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 gap-2 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {{ cashDepositMenu.title }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 font-mono">
+                          {{ getSelectedCount(cashDepositMenu.actions) }}/{{ cashDepositMenu.actions.length }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          @click="selectMenuAll(cashDepositMenu.actions)"
+                          class="text-primary hover:underline font-medium"
+                        >
+                          {{ tm('Select_All') }}
+                        </button>
+                        <span class="text-gray-300 dark:text-gray-600">|</span>
+                        <button
+                          type="button"
+                          @click="clearMenuAll(cashDepositMenu.actions)"
+                          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium"
+                        >
+                          {{ tm('Clear_All') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Action Checkboxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                      <label
+                        v-for="action in cashDepositMenu.actions"
+                        :key="action.permission"
+                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition select-none"
+                        :class="hasPermission(action.permission)
+                          ? 'bg-blue-50/60 dark:bg-blue-900/20 border-primary/40 text-primary dark:text-blue-300 font-semibold shadow-2xs'
+                          : 'bg-gray-50/80 dark:bg-gray-800/60 border-gray-200/80 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'"
+                      >
+                        <input
+                          type="checkbox"
+                          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 focus:ring-2 cursor-pointer"
+                          :checked="hasPermission(action.permission)"
+                          @change="togglePermission(action.permission)"
+                        />
+                        <span class="text-xs">
+                          {{ action.label }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Subsection 5: Administration (Roles, Doctor & Users) -->
               <div>
                 <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
@@ -1122,6 +1182,19 @@ export default defineComponent({
         ],
       }
     },
+    cashDepositMenu() {
+      return {
+        id: 'cash-deposit',
+        title: this.tm('Cash_Deposit') || 'Cash Deposit',
+        actions: [
+          { permission: 'accounting:cashDeposit:view', label: this.tm('View') || 'View' },
+          { permission: 'accounting:cashDeposit:create', label: this.tm('Create') || 'Create' },
+          { permission: 'accounting:cashDeposit:edit', label: this.tm('Edit') || 'Edit' },
+          { permission: 'accounting:cashDeposit:delete', label: this.tm('Delete') || 'Delete' },
+          { permission: 'accounting:cashDeposit:print', label: this.tm('Print') || 'Print' },
+        ],
+      }
+    },
     roleMenu() {
       return {
         id: 'role',
@@ -1239,6 +1312,14 @@ export default defineComponent({
         list.push(a.permission)
         if (a.permission === 'invoice:view-detail') list.push('invoice:view_detail')
       })
+      this.cashDepositMenu.actions.forEach((a) => {
+        list.push(a.permission)
+        if (a.permission === 'accounting:cashDeposit:view') list.push('cash-deposit:view')
+        if (a.permission === 'accounting:cashDeposit:create') list.push('cash-deposit:create', 'cash-deposit:save')
+        if (a.permission === 'accounting:cashDeposit:edit') list.push('cash-deposit:edit')
+        if (a.permission === 'accounting:cashDeposit:delete') list.push('cash-deposit:delete')
+        if (a.permission === 'accounting:cashDeposit:print') list.push('cash-deposit:print')
+      })
       this.roleMenu.actions.forEach((a) => list.push(a.permission))
       this.doctorMenu.actions.forEach((a) => list.push(a.permission))
       this.userMenu.actions.forEach((a) => list.push(a.permission))
@@ -1277,6 +1358,16 @@ export default defineComponent({
         'prescription:edit': 'prescriptions:prescriptions:edit',
         'prescription:delete': 'prescriptions:prescriptions:delete',
         'invoice:view-detail': 'invoice:view_detail',
+        'accounting:cashDeposit:view': 'cash-deposit:view',
+        'cash-deposit:view': 'accounting:cashDeposit:view',
+        'accounting:cashDeposit:create': 'cash-deposit:create',
+        'cash-deposit:create': 'accounting:cashDeposit:create',
+        'accounting:cashDeposit:edit': 'cash-deposit:edit',
+        'cash-deposit:edit': 'accounting:cashDeposit:edit',
+        'accounting:cashDeposit:delete': 'cash-deposit:delete',
+        'cash-deposit:delete': 'accounting:cashDeposit:delete',
+        'accounting:cashDeposit:print': 'cash-deposit:print',
+        'cash-deposit:print': 'accounting:cashDeposit:print',
         'quotes:quotes:view': 'quote:view',
         'quote:view': 'quotes:quotes:view',
         'quotes:quotes:create': 'quote:create',

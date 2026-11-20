@@ -305,6 +305,24 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
                     ],
                 ],
             ],
+            'accounting' => [
+                'id' => 'accounting',
+                'title' => 'Accounting',
+                'type' => 'group',
+                'menus' => [
+                    [
+                        'id' => 'cash-deposit',
+                        'title' => 'Cash Deposit',
+                        'permissions' => [
+                            ['key' => 'accounting:cashDeposit:view', 'action' => 'view', 'label' => 'View'],
+                            ['key' => 'accounting:cashDeposit:create', 'action' => 'create', 'label' => 'Create'],
+                            ['key' => 'accounting:cashDeposit:edit', 'action' => 'edit', 'label' => 'Edit'],
+                            ['key' => 'accounting:cashDeposit:delete', 'action' => 'delete', 'label' => 'Delete'],
+                            ['key' => 'accounting:cashDeposit:print', 'action' => 'print', 'label' => 'Print'],
+                        ],
+                    ],
+                ],
+            ],
             'invoice' => [
                 'id' => 'invoice',
                 'title' => 'Invoice',

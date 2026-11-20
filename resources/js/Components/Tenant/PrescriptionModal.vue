@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" @click="close"></div>
+    <!-- Backdrop (static, does not close on backdrop click) -->
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"></div>
 
     <div class="flex min-h-screen items-center justify-center p-2 sm:p-4 text-center">
       <div

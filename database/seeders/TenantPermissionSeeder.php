@@ -90,6 +90,19 @@ class TenantPermissionSeeder extends Seeder
             // Payment (View Only)
             'payment:view',
 
+            // Cash Deposit
+            'accounting:cashDeposit:view',
+            'accounting:cashDeposit:create',
+            'accounting:cashDeposit:edit',
+            'accounting:cashDeposit:delete',
+            'accounting:cashDeposit:print',
+            'cash-deposit:view',
+            'cash-deposit:create',
+            'cash-deposit:edit',
+            'cash-deposit:delete',
+            'cash-deposit:print',
+            'cash-deposit:save',
+
             // Invoice
             'invoice:view',
             'invoice:create',

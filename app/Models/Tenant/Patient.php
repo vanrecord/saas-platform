@@ -201,6 +201,18 @@ class Patient extends Model implements HasMedia
         return $this->morphOne(\App\Models\Tenant\Address::class, 'addressable');
     }
 
+    public function fundTransfers(): HasMany
+    {
+        return $this->hasMany(FundTransfer::class, 'patient_id');
+    }
+
+    public function updateBalance(float $amount): float
+    {
+        $this->balance = (float) ($this->balance ?? 0) + $amount;
+        $this->save();
+        return (float) $this->balance;
+    }
+
     public function getFormattedAddressAttribute(): string
     {
         if (!empty($this->attributes['address'])) {

@@ -82,6 +82,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\TargetRepositoryInterface::class,
             \App\Repositories\TargetRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\FundTransferRepositoryInterface::class,
+            \App\Repositories\FundTransferRepository::class
+        );
     }
 
     /**
